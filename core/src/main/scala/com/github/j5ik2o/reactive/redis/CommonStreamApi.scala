@@ -18,14 +18,14 @@ trait CommonStreamApi {
   val digitsRegex = """:(\d+)$""".r
   val stringRegex = """\+(\w+)$""".r
   val errorRegex = """\-(\w+)$""".r
-  val dollorRegex = """\$(\d+)$""".r
+  val dollorRegex = """\$([0-9-]+)$""".r
   val listSizeRegex = """\*(\d+)$""".r
 
   def parseException = new ParseException("protocol parse error", 0)
 
   protected val connection: Flow[ByteString, ByteString, Future[OutgoingConnection]]
 
-  protected val toByteString: Flow[String, ByteString, NotUsed] = Flow[String].map{ s => ByteString(s.concat("\r\n")) }
+  protected val toByteString: Flow[String, ByteString, NotUsed] = Flow[String].map { s => ByteString(s.concat("\r\n")) }
 
   protected val sink: Sink[ByteString, Future[Seq[String]]] = Flow[ByteString]
     .via(Framing.delimiter(ByteString("\r\n"), maximumFrameLength = Int.MaxValue, allowTruncation = true))
@@ -116,11 +116,15 @@ trait CommonStreamApi {
 
   private val randomKeySource: Source[String, NotUsed] = Source.single("RANDOMKEY")
 
-  def randomKey(implicit mat: Materializer, ec: ExecutionContext): Future[String] = {
+  def randomKey(implicit mat: Materializer, ec: ExecutionContext): Future[Option[String]] = {
     randomKeySource.log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
-        case stringRegex(s) =>
-          s
+        case dollorRegex(d) =>
+          if (d.toInt == -1) {
+            None
+          } else {
+            Some(v(1))
+          }
         case errorRegex(msg) =>
           throw RedisIOException(Some(msg))
         case _ =>
@@ -185,7 +189,7 @@ trait CommonStreamApi {
   private def expireSource(key: String, timeout: Long) = Source.single(s"EXPIRE $key $timeout")
 
   def expire(key: String, timeout: Long)(implicit mat: Materializer, ec: ExecutionContext): Future[Boolean] = {
-    expireSource(key, timeout).log("request").via(toByteString).via(connection).runWith(sink).map{ v =>
+    expireSource(key, timeout).log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
         case digitsRegex(d) =>
           d.toInt == 1
@@ -202,7 +206,7 @@ trait CommonStreamApi {
   private def expireAtSource(key: String, unixTime: Long) = Source.single(s"EXPIREAT $key $unixTime")
 
   def expireAt(key: String, unixTime: Long)(implicit mat: Materializer, ec: ExecutionContext): Future[Boolean] = {
-    expireAtSource(key, unixTime).log("request").via(toByteString).via(connection).runWith(sink).map{ v =>
+    expireAtSource(key, unixTime).log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
         case digitsRegex(d) =>
           d.toInt == 1
@@ -217,7 +221,7 @@ trait CommonStreamApi {
   // --- PERSIST
   private def persistSource(key: String) = Source.single(s"PERSIST $key")
 
-  def persist(key: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Boolean] =  {
+  def persist(key: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Boolean] = {
     persistSource(key).log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
         case digitsRegex(d) =>
@@ -235,7 +239,7 @@ trait CommonStreamApi {
   private def ttlSource(key: String) = Source.single(s"TTL $key")
 
   def ttl(key: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Int] = {
-    ttlSource(key).log("request").via(toByteString).via(connection).runWith(sink).map{ v =>
+    ttlSource(key).log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
         case digitsRegex(d) =>
           d.toInt
@@ -252,7 +256,7 @@ trait CommonStreamApi {
   private def selectSource(index: Int) = Source.single(s"SELECT $index")
 
   def select(index: Int)(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] = {
-    selectSource(index).log("request").via(toByteString).via(connection).runWith(sink).map{ v =>
+    selectSource(index).log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
         case stringRegex(_) =>
           ()
@@ -269,7 +273,7 @@ trait CommonStreamApi {
   private def moveSource(key: String, index: Int) = Source.single(s"MOVE $key $index")
 
   def move(key: String, index: Int)(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] = {
-    moveSource(key, index).log("request").via(toByteString).via(connection).runWith(sink).map{ v =>
+    moveSource(key, index).log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
         case digitsRegex(d) =>
           d.toInt
@@ -286,7 +290,7 @@ trait CommonStreamApi {
   private val flushDBSource: Source[String, NotUsed] = Source.single("FLUSHDB")
 
   def flushDB(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] = {
-    flushDBSource.log("request").via(toByteString).via(connection).runWith(sink).map{ v =>
+    flushDBSource.log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
         case stringRegex(s) =>
           require(s == "OK")
@@ -304,7 +308,7 @@ trait CommonStreamApi {
   private val flushAllSource: Source[String, NotUsed] = Source.single("FLUSHALL")
 
   def flushAll(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] = {
-    flushAllSource.log("request").via(toByteString).via(connection).runWith(sink).map{ v =>
+    flushAllSource.log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
         case stringRegex(s) =>
           require(s == "OK")
