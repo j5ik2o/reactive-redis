@@ -47,7 +47,13 @@ class KeysStreamAPISpec
       }
     }
     // --- DUMP
-
+    describe("DUMP") {
+      it("should be able to dump key") {
+        val id = UUID.randomUUID().toString
+        api.set(id, "a").futureValue
+        assert(api.dump(id).futureValue.nonEmpty)
+      }
+    }
     // --- EXISTS
     describe("EXISTS") {
       it("should be able to exist the registration key") {
@@ -60,11 +66,26 @@ class KeysStreamAPISpec
         assert(!api.exists(id).futureValue)
       }
     }
-
     // --- EXPIRE
-
+    describe("EXPIRE") {
+      it("should be able to expire data") {
+        val id = UUID.randomUUID().toString
+        api.set(id, "a").futureValue
+        assert(api.expire(id, 2).futureValue)
+        Thread.sleep(3 * 1000)
+        assert(api.get(id).futureValue.isEmpty)
+      }
+    }
     // --- EXPIREAT
-
+    describe("EXPIREAT") {
+      it("should be able to expire data") {
+        val id = UUID.randomUUID().toString
+        api.set(id, "a").futureValue
+        assert(api.expireAt(id, (System.currentTimeMillis() + 2000) / 1000).futureValue)
+        Thread.sleep(3 * 1000)
+        assert(api.get(id).futureValue.isEmpty)
+      }
+    }
     // --- KEYS
     describe("KEYS") {
       it("should be able to find the registration keys") {
@@ -76,6 +97,14 @@ class KeysStreamAPISpec
     // --- MIGRATE
 
     // --- MOVE
+    describe("MOVE") {
+      it("should be able to move the key") {
+        val id = UUID.randomUUID().toString
+        api.set(id, "a").futureValue
+        api.move(id, 1).futureValue
+        assert(api.keys(id).futureValue.isEmpty)
+      }
+    }
 
     // --- OBJECT
 
@@ -138,6 +167,17 @@ class KeysStreamAPISpec
     // --- SORT
 
     // --- TTL
+    describe("TTL") {
+      it("should be able to get TTL of registration key") {
+        val id = UUID.randomUUID().toString
+        api.set(id, "a").futureValue
+        assert(api.expire(id, 2).futureValue)
+        assert(api.ttl(id).futureValue > 0)
+        Thread.sleep(3 * 1000)
+        assert(api.get(id).futureValue.isEmpty)
+      }
+    }
+
     // --- TYPE
     describe("TYPE") {
       describe("should be able to get the type of the registration key") {

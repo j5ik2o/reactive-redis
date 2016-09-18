@@ -11,13 +11,14 @@ import scala.concurrent.Future
 
 trait BaseStreamAPI {
 
-  val digitsRegex = """:(\d+)$""".r
-  val stringRegex = """\+(\w+)$""".r
-  val errorRegex = """\-(\w+)$""".r
-  val dollorRegex = """\$([0-9-]+)$""".r
-  val listSizeRegex = """\*(\d+)$""".r
+  protected val digitsRegex = """:(\d+)$""".r
+  protected val stringRegex = """\+(\w+)$""".r
+  protected val messageRegex = """\+(.*)$""".r
+  protected val errorRegex = """\-(\w+)$""".r
+  protected val dollorRegex = """\$([0-9-]+)$""".r
+  protected val listSizeRegex = """\*(\d+)$""".r
 
-  def parseException = new ParseException("protocol parse error", 0)
+  protected def parseException = new ParseException("protocol parse error", 0)
 
   protected val connection: Flow[ByteString, ByteString, Future[OutgoingConnection]]
 

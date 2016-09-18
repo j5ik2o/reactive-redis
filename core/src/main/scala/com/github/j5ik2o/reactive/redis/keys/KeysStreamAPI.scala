@@ -26,6 +26,17 @@ trait KeysStreamAPI extends BaseStreamAPI {
   }
 
   // --- DUMP
+  private def dumpSource(key: String): Source[String, NotUsed] = Source.single(s"DUMP $key")
+
+  def dump(key: String)(implicit mat: Materializer, ec: ExecutionContext): Future[String] = {
+    dumpSource(key).log("request").via(toByteString).via(connection).runWith(sink).map { v =>
+      v.head match {
+        case errorRegex(msg) =>
+          throw RedisIOException(Some(msg))
+        case s => s
+      }
+    }
+  }
 
   // --- EXISTS
   private def existsSource(key: String): Source[String, NotUsed] = Source.single(s"EXISTS $key")
@@ -62,8 +73,8 @@ trait KeysStreamAPI extends BaseStreamAPI {
   // --- EXPIREAT
   private def expireAtSource(key: String, unixTime: Long) = Source.single(s"EXPIREAT $key $unixTime")
 
-  def expireAt(key: String, unixTime: Long)(implicit mat: Materializer, ec: ExecutionContext): Future[Boolean] = {
-    expireAtSource(key, unixTime).log("request").via(toByteString).via(connection).runWith(sink).map { v =>
+  def expireAt(key: String, unixTimeInSec: Long)(implicit mat: Materializer, ec: ExecutionContext): Future[Boolean] = {
+    expireAtSource(key, unixTimeInSec).log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
         case digitsRegex(d) =>
           d.toInt == 1
