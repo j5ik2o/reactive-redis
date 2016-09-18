@@ -80,18 +80,6 @@ class StringClient(address: InetSocketAddress)
       }.recover { case ex: Exception =>
         GetSetFailure(ex)
       }.pipeTo(sender())
-    case RandomKeyRequest =>
-      randomKey.map { v =>
-        RandomKeySucceeded(v)
-      }.recover { case ex: Exception =>
-        RandomKeyFailure(ex)
-      }.pipeTo(sender())
-    case ExpireRequest(key, timeout) =>
-      expire(key, timeout).map { v =>
-        ExpireSucceeded(v)
-      }.recover { case ex: Exception =>
-        ExpireFailure(ex)
-      }.pipeTo(sender())
   }
 
   override def receive: Receive = handleBase orElse default

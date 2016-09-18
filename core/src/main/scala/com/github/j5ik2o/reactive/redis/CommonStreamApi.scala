@@ -12,7 +12,9 @@ import akka.util.ByteString
 
 import scala.concurrent.{ ExecutionContext, Future }
 
+
 trait CommonStreamApi {
+
   val digitsRegex = """:(\d+)$""".r
   val stringRegex = """\+(\w+)$""".r
   val errorRegex = """\-(\w+)$""".r
@@ -23,24 +25,28 @@ trait CommonStreamApi {
 
   protected val connection: Flow[ByteString, ByteString, Future[OutgoingConnection]]
 
+  protected val toByteString: Flow[String, ByteString, NotUsed] = Flow[String].map{ s => ByteString(s.concat("\r\n")) }
+
   protected val sink: Sink[ByteString, Future[Seq[String]]] = Flow[ByteString]
     .via(Framing.delimiter(ByteString("\r\n"), maximumFrameLength = Int.MaxValue, allowTruncation = true))
     .map(_.utf8String)
+    .log("response")
     .toMat(Sink.fold(Seq.empty[String])((acc, in) => acc :+ in))(Keep.right)
 
   // --- QUIT
 
-  private val quitSource: Source[ByteString, NotUsed] = Source.single(ByteString("QUIT\r\n"))
+  private val quitSource: Source[String, NotUsed] = Source.single("QUIT")
 
-  def quit(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] =
-    connection.runWith(quitSource, Sink.head)._2.map(_ => ())
+  def quit(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] = {
+    quitSource.log("request").via(toByteString).via(connection).map(_ => ()).toMat(Sink.last)(Keep.right).run()
+  }
 
   // --- EXISTS
 
-  private val existsSource: Source[ByteString, NotUsed] = Source.single(ByteString("EXISTS\r\n"))
+  private def existsSource(key: String): Source[String, NotUsed] = Source.single(s"EXISTS $key")
 
-  def exists(implicit mat: Materializer, ec: ExecutionContext): Future[Boolean] =
-    connection.runWith(existsSource, sink)._2.map { v =>
+  def exists(key: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Boolean] = {
+    existsSource(key).log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
         case digitsRegex(d) =>
           d.toInt == 1
@@ -50,13 +56,14 @@ trait CommonStreamApi {
           throw parseException
       }
     }
+  }
 
   // --- DEL
 
-  private def delSource(keys: Seq[String]) = Source.single(ByteString(s"DEL ${keys.mkString(" ")}\r\n"))
+  private def delSource(keys: Seq[String]): Source[String, NotUsed] = Source.single(s"DEL ${keys.mkString(" ")}")
 
-  def del(keys: Seq[String])(implicit mat: Materializer, ec: ExecutionContext): Future[Int] =
-    connection.runWith(delSource(keys), sink)._2.map { v =>
+  def del(keys: Seq[String])(implicit mat: Materializer, ec: ExecutionContext): Future[Int] = {
+    delSource(keys).log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
         case digitsRegex(n) =>
           n.toInt
@@ -65,15 +72,15 @@ trait CommonStreamApi {
         case _ =>
           throw parseException
       }
-
     }
+  }
 
   // --- TYPE
 
-  private def typeSource(key: String): Source[ByteString, NotUsed] = Source.single(ByteString(s"TYPE $key\r\n"))
+  private def typeSource(key: String): Source[String, NotUsed] = Source.single(s"TYPE $key")
 
-  def `type`(key: String)(implicit mat: Materializer, ec: ExecutionContext): Future[ValueType.Value] =
-    connection.runWith(typeSource(key), sink)._2.map { v =>
+  def `type`(key: String)(implicit mat: Materializer, ec: ExecutionContext): Future[ValueType.Value] = {
+    typeSource(key).log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
         case stringRegex(s) =>
           ValueType.withName(s)
@@ -83,13 +90,14 @@ trait CommonStreamApi {
           throw parseException
       }
     }
+  }
 
   // --- KEYS
 
-  private def keysSource(keyPattern: String) = Source.single(ByteString(s"KEYS $keyPattern\r\n"))
+  private def keysSource(keyPattern: String) = Source.single(s"KEYS $keyPattern")
 
-  def keys(keyPattern: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Seq[String]] =
-    connection.runWith(keysSource(keyPattern), sink)._2.map { v =>
+  def keys(keyPattern: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Seq[String]] = {
+    keysSource(keyPattern).log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
         case listSizeRegex(size) =>
           v.tail.filterNot {
@@ -102,13 +110,14 @@ trait CommonStreamApi {
           throw parseException
       }
     }
+  }
 
   // --- RANDOMKEY
 
-  private val randomKeySource: Source[ByteString, NotUsed] = Source.single(ByteString("RANDOMKEY\r\n"))
+  private val randomKeySource: Source[String, NotUsed] = Source.single("RANDOMKEY")
 
-  def randomKey(implicit mat: Materializer, ec: ExecutionContext): Future[String] =
-    connection.runWith(randomKeySource, sink)._2.map { v =>
+  def randomKey(implicit mat: Materializer, ec: ExecutionContext): Future[String] = {
+    randomKeySource.log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
         case stringRegex(s) =>
           s
@@ -118,29 +127,31 @@ trait CommonStreamApi {
           throw parseException
       }
     }
+  }
 
   // --- RENAME
 
-  private def renameSource(oldKey: String, newKey: String): Source[ByteString, NotUsed] = Source.single(ByteString(s"RENAME $oldKey $newKey\r\n"))
+  private def renameSource(oldKey: String, newKey: String): Source[String, NotUsed] = Source.single(s"RENAME $oldKey $newKey")
 
-  def rename(oldKey: String, newKey: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Boolean] =
-    connection.runWith(renameSource(oldKey, newKey), sink)._2.map { v =>
+  def rename(oldKey: String, newKey: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] = {
+    renameSource(oldKey, newKey).log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
-        case digitsRegex(d) =>
-          d.toInt == 1
+        case stringRegex(_) =>
+          ()
         case errorRegex(msg) =>
           throw RedisIOException(Some(msg))
         case _ =>
           throw parseException
       }
     }
+  }
 
   // --- RENAMENX
 
-  private def renameNxSource(oldKey: String, newKey: String): Source[ByteString, NotUsed] = Source.single(ByteString(s"RENAMENX $oldKey $newKey\r\n"))
+  private def renameNxSource(oldKey: String, newKey: String): Source[String, NotUsed] = Source.single(s"RENAMENX $oldKey $newKey")
 
-  def rename(oldKey: String, newKey: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Boolean] =
-    connection.runWith(renameNxSource(oldKey, newKey), sink)._2.map { v =>
+  def renameNx(oldKey: String, newKey: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Boolean] = {
+    renameNxSource(oldKey, newKey).log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
         case digitsRegex(d) =>
           d.toInt == 1
@@ -150,13 +161,14 @@ trait CommonStreamApi {
           throw parseException
       }
     }
+  }
 
   // --- DBSIZE
 
-  private val dbSizeSource: Source[ByteString, NotUsed] = Source.single(ByteString("DBSIZE\r\n"))
+  private val dbSizeSource: Source[String, NotUsed] = Source.single("DBSIZE")
 
-  def dbSize(implicit mat: Materializer, ec: ExecutionContext): Future[Int] =
-    connection.runWith(dbSizeSource, sink)._2.map { v =>
+  def dbSize(implicit mat: Materializer, ec: ExecutionContext): Future[Int] = {
+    dbSizeSource.log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
         case digitsRegex(d) =>
           d.toInt
@@ -166,13 +178,14 @@ trait CommonStreamApi {
           throw parseException
       }
     }
+  }
 
   // --- EXPIRE
 
-  private def expireSource(key: String, timeout: Long) = Source.single(ByteString(s"EXPIRE $key $timeout\r\n"))
+  private def expireSource(key: String, timeout: Long) = Source.single(s"EXPIRE $key $timeout")
 
-  def expire(key: String, timeout: Long)(implicit mat: Materializer, ec: ExecutionContext): Future[Boolean] =
-    connection.runWith(expireSource(key, timeout), sink)._2.map { v =>
+  def expire(key: String, timeout: Long)(implicit mat: Materializer, ec: ExecutionContext): Future[Boolean] = {
+    expireSource(key, timeout).log("request").via(toByteString).via(connection).runWith(sink).map{ v =>
       v.head match {
         case digitsRegex(d) =>
           d.toInt == 1
@@ -182,13 +195,14 @@ trait CommonStreamApi {
           throw parseException
       }
     }
+  }
 
   // --- EXPIREAT
 
-  private def expireAtSource(key: String, unixTime: Long) = Source.single(ByteString(s"EXPIREAT $key $unixTime\r\n"))
+  private def expireAtSource(key: String, unixTime: Long) = Source.single(s"EXPIREAT $key $unixTime")
 
-  def expireAt(key: String, unixTime: Long)(implicit mat: Materializer, ec: ExecutionContext): Future[Boolean] =
-    connection.runWith(expireAtSource(key, unixTime), sink)._2.map { v =>
+  def expireAt(key: String, unixTime: Long)(implicit mat: Materializer, ec: ExecutionContext): Future[Boolean] = {
+    expireAtSource(key, unixTime).log("request").via(toByteString).via(connection).runWith(sink).map{ v =>
       v.head match {
         case digitsRegex(d) =>
           d.toInt == 1
@@ -198,12 +212,13 @@ trait CommonStreamApi {
           throw parseException
       }
     }
+  }
 
   // --- PERSIST
-  private def persistSource(key: String) = Source.single(ByteString(s"PERSIST $key\r\n"))
+  private def persistSource(key: String) = Source.single(s"PERSIST $key")
 
-  def persist(key: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Boolean] =
-    connection.runWith(persistSource(key), sink)._2.map { v =>
+  def persist(key: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Boolean] =  {
+    persistSource(key).log("request").via(toByteString).via(connection).runWith(sink).map { v =>
       v.head match {
         case digitsRegex(d) =>
           d.toInt == 1
@@ -213,12 +228,14 @@ trait CommonStreamApi {
           throw parseException
       }
     }
+  }
 
   // --- TTL
-  private def ttlSource(key: String) = Source.single(ByteString(s"TTL $key\r\n"))
 
-  def ttl(key: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Int] =
-    connection.runWith(persistSource(key), sink)._2.map { v =>
+  private def ttlSource(key: String) = Source.single(s"TTL $key")
+
+  def ttl(key: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Int] = {
+    ttlSource(key).log("request").via(toByteString).via(connection).runWith(sink).map{ v =>
       v.head match {
         case digitsRegex(d) =>
           d.toInt
@@ -228,17 +245,48 @@ trait CommonStreamApi {
           throw parseException
       }
     }
+  }
 
   // --- SELECT
 
+  private def selectSource(index: Int) = Source.single(s"SELECT $index")
+
+  def select(index: Int)(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] = {
+    selectSource(index).log("request").via(toByteString).via(connection).runWith(sink).map{ v =>
+      v.head match {
+        case stringRegex(_) =>
+          ()
+        case errorRegex(msg) =>
+          throw RedisIOException(Some(msg))
+        case _ =>
+          throw parseException
+      }
+    }
+  }
+
   // --- MOVE
+
+  private def moveSource(key: String, index: Int) = Source.single(s"MOVE $key $index")
+
+  def move(key: String, index: Int)(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] = {
+    moveSource(key, index).log("request").via(toByteString).via(connection).runWith(sink).map{ v =>
+      v.head match {
+        case digitsRegex(d) =>
+          d.toInt
+        case errorRegex(msg) =>
+          throw RedisIOException(Some(msg))
+        case _ =>
+          throw parseException
+      }
+    }
+  }
 
   // --- FLUSHDB
 
-  private val flushDBSource: Source[ByteString, NotUsed] = Source.single(ByteString("FLUSHDB\r\n"))
+  private val flushDBSource: Source[String, NotUsed] = Source.single("FLUSHDB")
 
-  def flushDB(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] =
-    connection.runWith(flushDBSource, sink)._2.map { v =>
+  def flushDB(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] = {
+    flushDBSource.log("request").via(toByteString).via(connection).runWith(sink).map{ v =>
       v.head match {
         case stringRegex(s) =>
           require(s == "OK")
@@ -249,13 +297,14 @@ trait CommonStreamApi {
           throw parseException
       }
     }
+  }
 
   // --- FLUSHALL
 
-  private val flushAllSource: Source[ByteString, NotUsed] = Source.single(ByteString("FLUSHALL\r\n"))
+  private val flushAllSource: Source[String, NotUsed] = Source.single("FLUSHALL")
 
-  def flushAll(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] =
-    connection.runWith(flushAllSource, sink)._2.map { v =>
+  def flushAll(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] = {
+    flushAllSource.log("request").via(toByteString).via(connection).runWith(sink).map{ v =>
       v.head match {
         case stringRegex(s) =>
           require(s == "OK")
@@ -265,7 +314,9 @@ trait CommonStreamApi {
         case _ =>
           throw parseException
       }
+
     }
+  }
 
 }
 
@@ -286,7 +337,7 @@ trait CommonStreamActor extends CommonStreamApi {
         QuitSucceeded
       }.pipeTo(sender())
     case ExistsRequest(key) =>
-      exists.map { v =>
+      exists(key).map { v =>
         ExistsSucceeded(v)
       }.recover { case ex: Exception =>
         ExistsFailure(ex)
@@ -315,6 +366,18 @@ trait CommonStreamActor extends CommonStreamApi {
       }.recover { case ex: Exception =>
         RandomKeyFailure(ex)
       }.pipeTo(sender())
+    case RenameRequest(oldKey, newKey) =>
+      rename(oldKey, newKey).map { _ =>
+        RenameSucceeded
+      }.recover { case ex: Exception =>
+        RenameFailure(ex)
+      }.pipeTo(sender())
+    case RenameNxRequest(oldKey, newKey) =>
+      renameNx(oldKey, newKey).map { v =>
+        RenameNxSucceeded(v)
+      }.recover { case ex: Exception =>
+        RenameNxFailure(ex)
+      }.pipeTo(sender())
     case DBSizeRequest =>
       dbSize.map { v =>
         DBSizeSucceeded(v)
@@ -332,6 +395,30 @@ trait CommonStreamActor extends CommonStreamApi {
         ExpireAtSucceeded(v)
       }.recover { case ex: Exception =>
         ExpireAtFailure(ex)
+      }.pipeTo(sender())
+    case PersistRequest(key) =>
+      persist(key).map { v =>
+        PersistSucceeded(v)
+      }.recover { case ex: Exception =>
+        PersistFailure(ex)
+      }.pipeTo(sender())
+    case TTLRequest(key) =>
+      ttl(key).map { v =>
+        TTLSucceeded(v)
+      }.recover { case ex: Exception =>
+        TTLFailure(ex)
+      }.pipeTo(sender())
+    case SelectRequest(index) =>
+      select(index).map { _ =>
+        SelectSucceeded
+      }.recover { case ex: Exception =>
+        SelectFailure(ex)
+      }.pipeTo(sender())
+    case MoveRequest(key, index) =>
+      move(key, index).map { v =>
+        MoveSucceeded
+      }.recover { case ex: Exception =>
+        MoveFailure(ex)
       }.pipeTo(sender())
     case FlushDBRequest =>
       flushDB.map { v =>

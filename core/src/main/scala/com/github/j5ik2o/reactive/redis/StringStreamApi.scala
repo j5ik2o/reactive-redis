@@ -3,17 +3,16 @@ package com.github.j5ik2o.reactive.redis
 import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
-import akka.util.ByteString
 
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait StringStreamApi extends CommonStreamApi {
 
-  private def setSource(key: String, value: String): Source[ByteString, NotUsed] =
-    Source.single(ByteString(s"SET $key $value\r\n"))
+  private def setSource(key: String, value: String): Source[String, NotUsed] =
+    Source.single(s"SET $key $value")
 
-  def set(key: String, value: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] =
-    connection.runWith(setSource(key, value), sink)._2.map { v =>
+  def set(key: String, value: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] = {
+    setSource(key, value).log("request").via(toByteString).via(connection).runWith(sink).map{ v =>
       v.head match {
         case stringRegex(_) =>
           ()
@@ -21,12 +20,13 @@ trait StringStreamApi extends CommonStreamApi {
           throw RedisIOException(Some(v.head))
       }
     }
+  }
 
-  private def getSource(key: String): Source[ByteString, NotUsed] =
-    Source.single(ByteString(s"GET $key\r\n"))
+  private def getSource(key: String): Source[String, NotUsed] =
+    Source.single(s"GET $key")
 
-  def get(key: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Option[String]] =
-    connection.runWith(getSource(key), sink)._2.map { v =>
+  def get(key: String)(implicit mat: Materializer, ec: ExecutionContext): Future[Option[String]] = {
+    getSource(key).log("request").via(toByteString).via(connection).runWith(sink).map{ v =>
       v.head match {
         case dollorRegex(n) =>
           if (n.toInt == -1)
@@ -37,12 +37,13 @@ trait StringStreamApi extends CommonStreamApi {
           throw RedisIOException(Some(v.head))
       }
     }
+  }
 
-  private def getSetSource(key: String, value: String): Source[ByteString, NotUsed] =
-    Source.single(ByteString(s"GETSET $key $value\r\n"))
+  private def getSetSource(key: String, value: String): Source[String, NotUsed] =
+    Source.single(s"GETSET $key $value")
 
-  def getSet(key: String, value: String)(implicit mat: Materializer, ec: ExecutionContext): Future[String] =
-    connection.runWith(getSetSource(key, value), sink)._2.map { v =>
+  def getSet(key: String, value: String)(implicit mat: Materializer, ec: ExecutionContext): Future[String] = {
+    getSetSource(key, value).log("request").via(toByteString).via(connection).runWith(sink).map{ v =>
       v.head match {
         case dollorRegex(s) =>
           v(1)
@@ -50,4 +51,6 @@ trait StringStreamApi extends CommonStreamApi {
           throw RedisIOException(Some(v.head))
       }
     }
+  }
+
 }

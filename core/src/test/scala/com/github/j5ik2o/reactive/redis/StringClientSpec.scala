@@ -25,10 +25,9 @@ class StringClientSpec
 
   implicit val timeout = Timeout(15 seconds)
 
-  var testServer: TestServer = _
+  val testServer: TestServer = new TestServer()
 
   override protected def beforeAll(): Unit = {
-    testServer = new TestServer()
     testServer.start()
     client = system.actorOf(StringClient.props(new InetSocketAddress("127.0.0.1", testServer.address.get.getPort)))
   }
@@ -45,7 +44,7 @@ class StringClientSpec
     testServer.stop()
   }
 
-  describe("StringClientSpec") {
+  describe("StringClient") {
     it("should be set value") {
       val id = UUID.randomUUID.toString
       val value = UUID.randomUUID.toString

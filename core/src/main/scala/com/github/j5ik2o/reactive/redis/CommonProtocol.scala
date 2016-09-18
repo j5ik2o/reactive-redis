@@ -47,6 +47,22 @@ object CommonProtocol {
 
   case class RandomKeyFailure(ex: Exception)
 
+  // --- RENAME
+
+  case class RenameRequest(oldKey: String, newKey: String)
+
+  case object RenameSucceeded
+
+  case class RenameFailure(ex: Exception)
+
+  // --- RENAMENX
+
+  case class RenameNxRequest(oldKey: String, newKey: String)
+
+  case class RenameNxSucceeded(value: Boolean)
+
+  case class RenameNxFailure(ex: Exception)
+
   // --- DBSIZE
 
   case object DBSizeRequest
@@ -86,6 +102,22 @@ object CommonProtocol {
   case class TTLSucceeded(value: Int)
 
   case class TTLFailure(ex: Exception)
+
+  // --- SELECT
+
+  case class SelectRequest(index: Int)
+
+  case object SelectSucceeded
+
+  case class SelectFailure(ex: Exception)
+
+  // --- MOVE
+
+  case class MoveRequest(key: String, index: Int)
+
+  case class MoveSucceeded(value: Boolean)
+
+  case class MoveFailure(ex: Exception)
 
   // --- FLUSHDB
 
