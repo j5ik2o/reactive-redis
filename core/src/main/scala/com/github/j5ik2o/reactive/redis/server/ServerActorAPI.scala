@@ -1,0 +1,71 @@
+package com.github.j5ik2o.reactive.redis.server
+
+import akka.actor.Actor
+import com.github.j5ik2o.reactive.redis.BaseActorAPI
+import akka.pattern.{ ask, pipe }
+
+trait ServerActorAPI extends BaseActorAPI with ServerStreamAPI {
+  this: Actor =>
+
+  import ServerProtocol._
+
+  import context.dispatcher
+
+  val handleServer: Receive = {
+    // --- BGREWRITEAOF
+    // --- BGSAVE
+    // --- CLIENT GETNAME
+    // --- CLIENT KILL
+    // --- CLIENT LIST
+    // --- CLIENT PAUSE
+    // --- CLIENT REPLY
+    // --- CLIENT SETNAME
+    // --- COMMAND
+    // --- COMMAND COUNT
+    // --- COMMAND GETKEYS
+    // --- COMMAND INFO
+    // --- CONFIG GET
+    // --- CONFIG RESETSTAT
+    // --- CONFIG REWRITE
+    // --- CONFIG SET
+
+    // --- DBSIZE
+    case DBSizeRequest =>
+      dbSize.map { v =>
+        DBSizeSucceeded(v)
+      }.recover { case ex: Exception =>
+        DBSizeFailure(ex)
+      }.pipeTo(sender())
+
+    // --- DEBUG OBJECT
+    // --- DEBUG SEGFAULT
+
+    // --- FLUSHALL
+    case FlushAllRequest =>
+      flushAll.map { v =>
+        FlushAllSucceeded
+      }.recover { case ex: Exception =>
+        FlushAllFailure(ex)
+      }.pipeTo(sender())
+
+    // --- FLUSHDB
+    case FlushDBRequest =>
+      flushDB.map { v =>
+        FlushDBSucceeded
+      }.recover { case ex: Exception =>
+        FlushDBFailure(ex)
+      }.pipeTo(sender())
+
+
+    // --- INFO
+    // --- LASTSAVE
+    // --- MONITOR
+    // --- ROLE
+    // --- SAVE
+    // --- SHUTDOWN
+    // --- SLAVEOF
+    // --- SLOWLOG
+    // --- SYNC
+    // --- TIME
+  }
+}

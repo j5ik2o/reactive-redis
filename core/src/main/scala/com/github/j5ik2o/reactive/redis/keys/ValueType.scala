@@ -1,4 +1,4 @@
-package com.github.j5ik2o.reactive.redis
+package com.github.j5ik2o.reactive.redis.keys
 
 object ValueType extends Enumeration {
   val None = Value("none")

@@ -3,45 +3,31 @@ package com.github.j5ik2o.reactive.redis
 import java.net.InetSocketAddress
 import java.util.UUID
 
-import akka.actor.{ ActorRef, ActorSystem, Props }
+import akka.actor.ActorSystem
 import akka.pattern.ask
-import akka.testkit.{ ImplicitSender, TestKit }
-import akka.util.Timeout
-import com.github.j5ik2o.reactive.redis.CommonProtocol._
 import com.github.j5ik2o.reactive.redis.StringClient.Protocol.String._
-import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll, FunSpecLike }
+import com.github.j5ik2o.reactive.redis.connection.ConnectionProtocol._
+import com.github.j5ik2o.reactive.redis.keys.KeysProtocol._
+import com.github.j5ik2o.reactive.redis.keys.ValueType
+import org.scalatest.BeforeAndAfter
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class StringClientSpec
-  extends TestKit(ActorSystem("StringClientSpec"))
-    with FunSpecLike
-    with ImplicitSender
-    with BeforeAndAfter
-    with BeforeAndAfterAll {
-
-  var client: ActorRef = _
-
-  implicit val timeout = Timeout(15 seconds)
-
-  val testServer: TestServer = new TestServer()
+  extends ActorSpec(ActorSystem("StringClientSpec")) with ServerBootable
+    with BeforeAndAfter {
 
   override protected def beforeAll(): Unit = {
-    testServer.start()
-    client = system.actorOf(StringClient.props(new InetSocketAddress("127.0.0.1", testServer.address.get.getPort)))
+    super.beforeAll()
+    val client = system.actorOf(StringClient.props(new InetSocketAddress("127.0.0.1", testServer.address.get.getPort)))
+    clientRef.set(client)
   }
 
   override protected def afterAll(): Unit = {
-    val keysSucceeded = Await.result((client ? KeysRequest("*")).mapTo[KeysSucceeded], 10 seconds)
-    assert(keysSucceeded.values.nonEmpty)
-    val dBSizeSucceeded = Await.result((client ? DBSizeRequest).mapTo[DBSizeSucceeded], 10 seconds)
-    assert(dBSizeSucceeded.value == keysSucceeded.values.size)
-
-    Await.result(client ? FlushAllRequest, 10 seconds)
     Await.result(client ? QuitRequest, 10 seconds)
     system.terminate()
-    testServer.stop()
+    super.afterAll()
   }
 
   describe("StringClient") {

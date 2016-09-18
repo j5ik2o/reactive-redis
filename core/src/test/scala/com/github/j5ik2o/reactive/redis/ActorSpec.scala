@@ -1,0 +1,40 @@
+package com.github.j5ik2o.reactive.redis
+
+import java.util.concurrent.atomic.AtomicReference
+
+import akka.actor.{ ActorRef, ActorSystem }
+import akka.stream.ActorMaterializer
+import akka.testkit.{ ImplicitSender, TestKit }
+import akka.util.Timeout
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.{ BeforeAndAfterAll, FunSpecLike }
+
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
+
+abstract class ActorSpec(_system: ActorSystem)
+  extends TestKit(_system)
+    with ImplicitSender
+    with FunSpecLike
+    with BeforeAndAfterAll
+    with ScalaFutures {
+
+  implicit val materializer = ActorMaterializer()
+
+  implicit val timeout = Timeout(15 seconds)
+
+  val clientRef: AtomicReference[ActorRef] = new AtomicReference()
+
+  val apiRef: AtomicReference[StreamAPI] = new AtomicReference()
+
+  def api: StreamAPI = apiRef.get
+
+  def client: ActorRef = clientRef.get
+
+  override protected def afterAll(): Unit = {
+    system.terminate()
+    Await.result(system.whenTerminated, Duration.Inf)
+  }
+
+}

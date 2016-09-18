@@ -1,67 +1,41 @@
-package com.github.j5ik2o.reactive.redis
+package com.github.j5ik2o.reactive.redis.keys
 
 import java.net.InetSocketAddress
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.{ Flow, Tcp }
 import akka.stream.scaladsl.Tcp.OutgoingConnection
-import akka.testkit.TestKit
+import akka.stream.scaladsl.{ Flow, Tcp }
 import akka.util.ByteString
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll, FunSpecLike }
+import com.github.j5ik2o.reactive.redis.{ ActorSpec, ServerBootable, StreamAPI }
 
 import scala.concurrent.Future
 
-class CommonStreamApiSpec
-  extends TestKit(ActorSystem("CommonStreamApiSpec"))
-    with FunSpecLike
-    with BeforeAndAfterAll
-    with BeforeAndAfter
-    with ScalaFutures {
-
-  implicit val materializer = ActorMaterializer()
+class KeysStreamAPISpec
+  extends ActorSpec(ActorSystem("ConnectionStreamAPISpec"))
+    with ServerBootable {
 
   import system.dispatcher
 
-  val testServer = new TestServer()
-
-  var api: StringStreamApi = _
-
-
   override protected def beforeAll(): Unit = {
-    testServer.start()
+    super.beforeAll()
     val address = new InetSocketAddress("127.0.0.1", testServer.address.get.getPort)
-    api = new StringStreamApi {
+    val api = new StreamAPI {
       override protected val connection: Flow[ByteString, ByteString, Future[OutgoingConnection]] =
         Tcp().outgoingConnection(address)
     }
+    apiRef.set(api)
   }
 
   override protected def afterAll(): Unit = {
     api.quit.futureValue
     system.terminate()
-    testServer.stop()
+    super.afterAll()
   }
 
-  after {
-    api.flushAll.futureValue
-  }
-
-  describe("CommonStreamApi") {
-    describe("exists") {
-      it("should be able to exist the registration key") {
-        val id = UUID.randomUUID().toString
-        api.set(id, "a").futureValue
-        assert(api.exists(id).futureValue)
-      }
-      it("shouldn't be able to exist the un-registration key") {
-        val id = UUID.randomUUID().toString
-        assert(!api.exists(id).futureValue)
-      }
-    }
-    describe("del") {
+  describe("KeysStreamAPI") {
+    // --- DEL
+    describe("DEL") {
       it("should be able to delete the existing key") {
         val id = UUID.randomUUID().toString
         api.set(id, "a").futureValue
@@ -72,23 +46,49 @@ class CommonStreamApiSpec
         assert(api.del(Seq(id)).futureValue == 0)
       }
     }
-    describe("type") {
-      describe("should be able to get the type of the registration key") {
-        it("the string type") {
-          val id = UUID.randomUUID().toString
-          api.set(id, "a").futureValue
-          assert(api.`type`(id).futureValue == ValueType.String)
-        }
+    // --- DUMP
+
+    // --- EXISTS
+    describe("EXISTS") {
+      it("should be able to exist the registration key") {
+        val id = UUID.randomUUID().toString
+        api.set(id, "a").futureValue
+        assert(api.exists(id).futureValue)
+      }
+      it("shouldn't be able to exist the un-registration key") {
+        val id = UUID.randomUUID().toString
+        assert(!api.exists(id).futureValue)
       }
     }
-    describe("keys") {
+
+    // --- EXPIRE
+
+    // --- EXPIREAT
+
+    // --- KEYS
+    describe("KEYS") {
       it("should be able to find the registration keys") {
         val id = UUID.randomUUID().toString
         api.set(id, "a").futureValue
         assert(api.keys("*").futureValue.contains(id))
       }
     }
-    describe("ramdomkey") {
+    // --- MIGRATE
+
+    // --- MOVE
+
+    // --- OBJECT
+
+    // --- PERSIST
+
+    // --- PEXPIRE
+
+    // --- PEXPIREAT
+
+    // --- PTTL
+
+    // --- RANDOMKEY
+    describe("RANDOMKEY") {
       it("should be able to generate the random key, if the registration keys exists") {
         for {_ <- 1 to 10} {
           val id = UUID.randomUUID().toString
@@ -103,7 +103,8 @@ class CommonStreamApiSpec
         assert(randomKey.isEmpty)
       }
     }
-    describe("rename") {
+    // --- RENAME
+    describe("RENAME") {
       it("should be able to rename it, if the new id doesn't exist") {
         val id = UUID.randomUUID().toString
         val newId = UUID.randomUUID().toString
@@ -112,7 +113,8 @@ class CommonStreamApiSpec
         assert(api.exists(newId).futureValue)
       }
     }
-    describe("renamenx") {
+    // --- RENAMENX
+    describe("RENAMENX") {
       it("should be able to rename it, if the new id doesn't exist") {
         val id = UUID.randomUUID().toString
         val newId = UUID.randomUUID().toString
@@ -128,6 +130,28 @@ class CommonStreamApiSpec
         assert(!api.renameNx(id, newId).futureValue)
       }
     }
+
+    // --- RESTORE
+
+    // --- SCAN
+
+    // --- SORT
+
+    // --- TTL
+    // --- TYPE
+    describe("TYPE") {
+      describe("should be able to get the type of the registration key") {
+        it("the string type") {
+          val id = UUID.randomUUID().toString
+          api.set(id, "a").futureValue
+          assert(api.`type`(id).futureValue == ValueType.String)
+        }
+      }
+    }
+
+    // --- WAIT
+
+
   }
 
 }

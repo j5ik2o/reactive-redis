@@ -3,10 +3,13 @@ package com.github.j5ik2o.reactive.redis
 import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
+import com.github.j5ik2o.reactive.redis.connection.ConnectionStreamAPI
+import com.github.j5ik2o.reactive.redis.keys.KeysStreamAPI
+import com.github.j5ik2o.reactive.redis.server.ServerStreamAPI
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-trait StringStreamApi extends CommonStreamApi {
+trait StringStreamAPI extends BaseStreamAPI {
 
   private def setSource(key: String, value: String): Source[String, NotUsed] =
     Source.single(s"SET $key $value")

@@ -7,8 +7,10 @@ import akka.pattern.pipe
 import akka.stream.scaladsl.Tcp.OutgoingConnection
 import akka.stream.scaladsl.{ Flow, Tcp }
 import akka.util.ByteString
-import com.github.j5ik2o.reactive.redis.CommonProtocol._
 import com.github.j5ik2o.reactive.redis.StringClient.Protocol.String._
+import com.github.j5ik2o.reactive.redis.connection.ConnectionActorAPI
+import com.github.j5ik2o.reactive.redis.keys.KeysActorAPI
+import com.github.j5ik2o.reactive.redis.server.ServerActorAPI
 
 import scala.concurrent.Future
 
@@ -52,7 +54,7 @@ object StringClient {
 
 class StringClient(address: InetSocketAddress)
   extends Actor with ActorLogging
-    with StringStreamApi with CommonStreamActor {
+    with StringStreamAPI with ConnectionActorAPI with KeysActorAPI with ServerActorAPI {
 
   log.info(address.toString)
 
@@ -82,6 +84,6 @@ class StringClient(address: InetSocketAddress)
       }.pipeTo(sender())
   }
 
-  override def receive: Receive = handleBase orElse default
+  override def receive: Receive = handleConnection orElse handleKeys orElse handleServer orElse default
 
 }
