@@ -31,30 +31,18 @@ trait ServerActorAPI extends BaseActorAPI with ServerStreamAPI {
 
     // --- DBSIZE
     case DBSizeRequest =>
-      dbSize.map { v =>
-        DBSizeSucceeded(v)
-      }.recover { case ex: Exception =>
-        DBSizeFailure(ex)
-      }.pipeTo(sender())
+      run(dbSize).pipeTo(sender())
 
     // --- DEBUG OBJECT
     // --- DEBUG SEGFAULT
 
     // --- FLUSHALL
     case FlushAllRequest =>
-      flushAll.map { v =>
-        FlushAllSucceeded
-      }.recover { case ex: Exception =>
-        FlushAllFailure(ex)
-      }.pipeTo(sender())
+      run(flushAll).pipeTo(sender())
 
     // --- FLUSHDB
     case FlushDBRequest =>
-      flushDB.map { v =>
-        FlushDBSucceeded
-      }.recover { case ex: Exception =>
-        FlushDBFailure(ex)
-      }.pipeTo(sender())
+      run(flushDB).pipeTo(sender())
 
 
     // --- INFO

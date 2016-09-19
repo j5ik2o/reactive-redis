@@ -13,16 +13,17 @@ trait ConnectionActorAPI extends BaseActorAPI with ConnectionStreamAPI {
   import context.dispatcher
 
   val handleConnection: Receive = {
-    case QuitRequest =>
-      quit.map { v =>
-        QuitSucceeded
-      }.pipeTo(sender())
-    case SelectRequest(index) =>
-      select(index).map { _ =>
-        SelectSucceeded
-      }.recover { case ex: Exception =>
-        SelectFailure(ex)
-      }.pipeTo(sender())
+//    case QuitRequest =>
+//      quit.map { v =>
+//        QuitSucceeded
+//      }.pipeTo(sender())
+//    case SelectRequest(index) =>
+//      select(index).map { _ =>
+//        SelectSucceeded
+//      }.recover { case ex: Exception =>
+//        SelectFailure(ex)
+//      }.pipeTo(sender())
+    case _ =>
   }
 
 }

@@ -2,25 +2,27 @@ package com.github.j5ik2o.reactive.redis.server
 
 import akka.NotUsed
 import akka.stream.Materializer
-import akka.stream.scaladsl.Source
-import com.github.j5ik2o.reactive.redis.{ BaseStreamAPI, RedisIOException }
+import akka.stream.scaladsl.{ Keep, Sink, Source }
+import com.github.j5ik2o.reactive.redis.server.ServerProtocol._
+import com.github.j5ik2o.reactive.redis.{ BaseStreamAPI, CommandRequest, RedisIOException }
 
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait ServerStreamAPI extends BaseStreamAPI {
+  import com.github.j5ik2o.reactive.redis.ResponseRegexs._
   // --- BGREWRITEAOF
   // --- BGSAVE
-  private val bgSaveSource: Source[String, NotUsed] = Source.single("BGSAVE")
+  val bgSaveSource = Source.single("BGSAVE")
 
   def bgSave(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] = {
-    bgSaveSource.log("request").via(toByteString).via(connection).runWith(sink).map { v =>
+    bgSaveSource.log("request").via(toByteStringFlow).via(connection).runWith(sink).map { v =>
       v.head match {
         case messageRegex(s) =>
           ()
         case errorRegex(msg) =>
           throw RedisIOException(Some(msg))
-        case _ =>
-          throw parseException
+        case m =>
+          throw parseException(Some(m))
       }
     }
   }
@@ -42,71 +44,19 @@ trait ServerStreamAPI extends BaseStreamAPI {
   // --- CONFIG SET
 
   // --- DBSIZE
-  private val dbSizeSource: Source[String, NotUsed] = Source.single("DBSIZE")
-
-  def dbSize(implicit mat: Materializer, ec: ExecutionContext): Future[Int] = {
-    dbSizeSource.log("request").via(toByteString).via(connection).runWith(sink).map { v =>
-      v.head match {
-        case digitsRegex(d) =>
-          d.toInt
-        case errorRegex(msg) =>
-          throw RedisIOException(Some(msg))
-        case _ =>
-          throw parseException
-      }
-    }
-  }
+  val dbSize: Source[DBSizeRequest.type, NotUsed] = Source.single(DBSizeRequest)
 
   // --- DEBUG OBJECT
   // --- DEBUG SEGFAULT
 
   // --- FLUSHALL
-  private val flushAllSource: Source[String, NotUsed] = Source.single("FLUSHALL")
-
-  def flushAll(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] = {
-    flushAllSource.log("request").via(toByteString).via(connection).runWith(sink).map { v =>
-      v.head match {
-        case stringRegex(s) =>
-          require(s == "OK")
-          ()
-        case errorRegex(msg) =>
-          throw RedisIOException(Some(msg))
-        case _ =>
-          throw parseException
-      }
-    }
-  }
+  val flushAll: Source[FlushAllRequest.type, NotUsed] = Source.single(FlushAllRequest)
 
   // --- FLUSHDB
-  private val flushDBSource: Source[String, NotUsed] = Source.single("FLUSHDB")
-
-  def flushDB(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] = {
-    flushDBSource.log("request").via(toByteString).via(connection).runWith(sink).map { v =>
-      v.head match {
-        case stringRegex(s) =>
-          require(s == "OK")
-          ()
-        case errorRegex(msg) =>
-          throw RedisIOException(Some(msg))
-        case _ =>
-          throw parseException
-      }
-    }
-  }
+  val flushDB: Source[FlushDBRequest.type, NotUsed] = Source.single(FlushDBRequest)
 
   // --- INFO
-  private val infoSource: Source[String, NotUsed] = Source.single("INFO")
-
-  def info(implicit mat: Materializer, ec: ExecutionContext): Future[Seq[String]] = {
-    infoSource.log("request").via(toByteString).via(connection).runWith(sink).map { v =>
-      v.head match {
-        case errorRegex(msg) =>
-          throw RedisIOException(Some(msg))
-        case _ =>
-          v
-      }
-    }
-  }
+  val info: Source[InfoRequest.type, NotUsed] = Source.single(InfoRequest)
 
   // --- LASTSAVE
 
@@ -117,23 +67,7 @@ trait ServerStreamAPI extends BaseStreamAPI {
   // --- SAVE
 
   // --- SHUTDOWN
-  private def shutdownSource(save: Option[Boolean]): Source[String, NotUsed] = Source.single(s"SHUTDOWN ${
-    save.map {
-      case true => "SAVE"
-      case false => "NOSAVE"
-    }.getOrElse("SAVE")
-  }")
-
-  def shutdown(save: Option[Boolean] = Some(true))(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] = {
-    shutdownSource(save).log("request").via(toByteString).via(connection).runWith(sink).map { v =>
-      v.headOption match {
-        case Some(errorRegex(msg)) =>
-          throw RedisIOException(Some(msg))
-        case _ =>
-          ()
-      }
-    }
-  }
+  def shutdown(save: Boolean = true): Source[ShutdownRequest, NotUsed] = Source.single(ShutdownRequest(save))
 
   // --- SLAVEOF
 
@@ -142,22 +76,7 @@ trait ServerStreamAPI extends BaseStreamAPI {
   // --- SYNC
 
   // --- TIME
-  private val timeSource: Source[String, NotUsed] = Source.single("TIME")
+  val time: Source[TimeRequest.type, NotUsed] = Source.single(TimeRequest)
 
-  def time(implicit mat: Materializer, ec: ExecutionContext): Future[Seq[Int]] = {
-    timeSource.log("request").via(toByteString).via(connection).runWith(sink).map { v =>
-      v.head match {
-        case listSizeRegex(d) =>
-          v.tail.filterNot {
-            case dollorRegex(_) => true
-            case _ => false
-          }.map(_.toInt)
-        case errorRegex(msg) =>
-          throw RedisIOException(Some(msg))
-        case _ =>
-          throw parseException
-      }
-    }
-  }
 
 }

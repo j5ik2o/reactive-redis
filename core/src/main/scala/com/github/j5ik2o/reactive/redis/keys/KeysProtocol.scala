@@ -1,6 +1,9 @@
 package com.github.j5ik2o.reactive.redis.keys
 
+import com.github.j5ik2o.reactive.redis._
+
 object KeysProtocol {
+
   // --- DEL
   case class DelRequest(keys: Seq[String])
 
@@ -34,11 +37,36 @@ object KeysProtocol {
   case class ExpireAtFailure(ex: Exception)
 
   // --- KEYS
-  case class KeysRequest(keyPattern: String = "*")
+  case class KeysRequest(keyPattern: String = "*") extends CommandRequest {
 
-  case class KeysSucceeded(values: Seq[String])
+    class Parser extends CommandResponseParser[ResponseType] {
+      override protected val responseParser: Parser[KeysResponse] = {
+        stringArrayWithCrLf ^^ { array =>
+          responseAsSucceeded(array.values.map(_.value))
+        }
+      }
+    }
 
-  case class KeysFailure(ex: Exception)
+    override def encodeAsString: String = s"KEYS $keyPattern"
+
+    override type ResultType = Seq[String]
+
+    override type ResponseType = KeysResponse
+
+    override def responseAsSucceeded(arguments: Seq[String]): KeysResponse =
+      KeysSucceeded(arguments)
+
+    override def responseAsFailed(ex: Exception): KeysResponse =
+      KeysFailure(ex)
+
+    override val parser: CommandResponseParser[ResponseType] = new Parser
+  }
+
+  sealed trait KeysResponse extends CommandResponse
+
+  case class KeysSucceeded(values: Seq[String]) extends KeysResponse
+
+  case class KeysFailure(ex: Exception) extends KeysResponse
 
   // --- MIGRATE
 

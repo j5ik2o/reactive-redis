@@ -7,6 +7,7 @@ import akka.pattern.pipe
 import akka.stream.scaladsl.Tcp.OutgoingConnection
 import akka.stream.scaladsl.{ Flow, Tcp }
 import akka.util.ByteString
+import com.github.j5ik2o.reactive.redis.CommandResponseParser.{ ErrorExpr, SimpleExpr }
 import com.github.j5ik2o.reactive.redis.StringClient.Protocol.String._
 import com.github.j5ik2o.reactive.redis.connection.ConnectionActorAPI
 import com.github.j5ik2o.reactive.redis.keys.KeysActorAPI
@@ -23,11 +24,38 @@ object StringClient {
     object String {
 
       // ---
-      case class SetRequest(key: String, value: String)
+      case class SetRequest(key: String, value: String) extends CommandRequest {
+        class Parser extends CommandResponseParser[ResponseType] {
+          override protected val responseParser: Parser[SetResponse] = {
+            simpleWithCrLfOrErrorWithCrLf ^^ {
+              case ErrorExpr(msg) =>
+                responseAsFailed(RedisIOException(Some(msg)))
+              case SimpleExpr(msg) =>
+                responseAsSucceeded(())
+              case _ =>
+                sys.error("it's unexpected")
+            }
+          }
+        }
+        override def encodeAsString: String = s"SET $key $value"
 
-      case object SetSucceeded
+        override type ResultType = Unit
+        override type ResponseType = SetResponse
 
-      case class SetFailure(ex: Exception)
+        override def responseAsSucceeded(arguments: Unit): SetResponse =
+          SetSucceeded
+
+        override def responseAsFailed(ex: Exception): SetResponse =
+          SetFailed(ex)
+
+        override val parser: CommandResponseParser[SetResponse] = new Parser
+      }
+
+      sealed trait SetResponse extends CommandResponse
+
+      case object SetSucceeded extends SetResponse
+
+      case class SetFailed(ex: Exception) extends SetResponse
 
       // ---
 
@@ -65,11 +93,7 @@ class StringClient(address: InetSocketAddress)
 
   val default: Receive = {
     case SetRequest(key, value) =>
-      set(key, value).map { _ =>
-        SetSucceeded
-      }.recover { case ex: Exception =>
-        SetFailure(ex)
-      }.pipeTo(sender())
+      run(set(key, value)).pipeTo(sender())
     case GetRequest(key) =>
       get(key).map { v =>
         GetSucceeded(v)

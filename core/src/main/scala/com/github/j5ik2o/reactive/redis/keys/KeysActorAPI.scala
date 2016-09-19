@@ -48,11 +48,7 @@ trait KeysActorAPI extends BaseActorAPI with KeysStreamAPI {
 
     // --- KEYS
     case KeysRequest(keyPattern) =>
-      keys(keyPattern).map { v =>
-        KeysSucceeded(v)
-      }.recover { case ex: Exception =>
-        KeysFailure(ex)
-      }.pipeTo(sender())
+      run(keys(keyPattern)).pipeTo(sender())
 
     // --- MIGRATE
 
