@@ -7,7 +7,7 @@ import akka.pattern.pipe
 import akka.stream.scaladsl.Tcp.OutgoingConnection
 import akka.stream.scaladsl.{ Flow, Tcp }
 import akka.util.ByteString
-import com.github.j5ik2o.reactive.redis.CommandResponseParser.{ ErrorExpr, SimpleExpr }
+import com.github.j5ik2o.reactive.redis.CommandResponseParser.{ ErrorExpr, SimpleExpr, StringExpr, StringOptExpr }
 import com.github.j5ik2o.reactive.redis.StringClient.Protocol.String._
 import com.github.j5ik2o.reactive.redis.connection.ConnectionActorAPI
 import com.github.j5ik2o.reactive.redis.keys.KeysActorAPI
@@ -25,6 +25,7 @@ object StringClient {
 
       // ---
       case class SetRequest(key: String, value: String) extends CommandRequest {
+
         class Parser extends CommandResponseParser[ResponseType] {
           override protected val responseParser: Parser[SetResponse] = {
             simpleWithCrLfOrErrorWithCrLf ^^ {
@@ -37,6 +38,7 @@ object StringClient {
             }
           }
         }
+
         override def encodeAsString: String = s"SET $key $value"
 
         override type ResultType = Unit
@@ -59,19 +61,65 @@ object StringClient {
 
       // ---
 
-      case class GetRequest(key: String)
+      case class GetRequest(key: String) extends CommandRequest {
+        class Parser extends CommandResponseParser[ResponseType] {
+          override protected val responseParser: Parser[GetResponse] =  {
+            bulkStringWithCrLf ^^ {
+              case StringOptExpr(s) =>
+                responseAsSucceeded(s)
+            }
+          }
+        }
+        override def encodeAsString: String = s"GET $key"
 
-      case class GetSucceeded(value: Option[String])
+        override type ResultType = Option[String]
+        override type ResponseType = GetResponse
 
-      case class GetFailure(ex: Exception)
+        override def responseAsSucceeded(arguments: Option[String]): GetResponse =
+          GetSucceeded(arguments)
+
+        override def responseAsFailed(ex: Exception): GetResponse =
+          GetFailure(ex)
+
+        override val parser: CommandResponseParser[GetResponse] = new Parser()
+      }
+
+      sealed trait GetResponse extends CommandResponse
+
+      case class GetSucceeded(value: Option[String]) extends GetResponse
+
+      case class GetFailure(ex: Exception) extends GetResponse
 
       // ---
 
-      case class GetSetRequest(key: String, value: String)
+      case class GetSetRequest(key: String, value: String) extends CommandRequest {
+        class Parser extends CommandResponseParser[ResponseType] {
+          override protected val responseParser: Parser[GetSetResponse] = {
+            bulkStringWithCrLf ^^ {
+              case StringOptExpr(s) =>
+                responseAsSucceeded(s)
+            }
+          }
+        }
+        override def encodeAsString: String = s"GETSET $key $value"
 
-      case class GetSetSucceeded(value: String)
+        override type ResultType = Option[String]
+        override type ResponseType = GetSetResponse
 
-      case class GetSetFailure(ex: Exception)
+        override def responseAsSucceeded(arguments: Option[String]): GetSetResponse =
+          GetSetSucceeded(arguments)
+
+        override def responseAsFailed(ex: Exception): GetSetResponse =
+          GetSetFailure(ex)
+
+        override val parser: CommandResponseParser[GetSetResponse] = new Parser()
+      }
+
+      sealed trait GetSetResponse extends CommandResponse
+
+      case class GetSetSucceeded(value: Option[String]) extends GetSetResponse
+
+      case class GetSetFailure(ex: Exception) extends GetSetResponse
 
     }
 
@@ -95,17 +143,9 @@ class StringClient(address: InetSocketAddress)
     case SetRequest(key, value) =>
       run(set(key, value)).pipeTo(sender())
     case GetRequest(key) =>
-      get(key).map { v =>
-        GetSucceeded(v)
-      }.recover { case ex: Exception =>
-        GetFailure(ex)
-      }.pipeTo(sender())
+      run(get(key)).pipeTo(sender())
     case GetSetRequest(key, value) =>
-      getSet(key, value).map { v =>
-        GetSetSucceeded(v)
-      }.recover { case ex: Exception =>
-        GetSetFailure(ex)
-      }.pipeTo(sender())
+      run(getSet(key, value)).pipeTo(sender())
   }
 
   override def receive: Receive = handleConnection orElse handleKeys orElse handleServer orElse default

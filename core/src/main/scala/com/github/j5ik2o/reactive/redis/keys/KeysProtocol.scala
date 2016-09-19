@@ -1,5 +1,6 @@
 package com.github.j5ik2o.reactive.redis.keys
 
+import com.github.j5ik2o.reactive.redis.CommandResponseParser.ArrayExpr
 import com.github.j5ik2o.reactive.redis._
 
 object KeysProtocol {
@@ -41,8 +42,9 @@ object KeysProtocol {
 
     class Parser extends CommandResponseParser[ResponseType] {
       override protected val responseParser: Parser[KeysResponse] = {
-        stringArrayWithCrLf ^^ { array =>
-          responseAsSucceeded(array.values.map(_.value))
+        stringArrayWithCrLf ^^ {
+          case ArrayExpr(values) =>
+            responseAsSucceeded(values.map(_.value))
         }
       }
     }
@@ -73,9 +75,11 @@ object KeysProtocol {
   // --- MOVE
   case class MoveRequest(key: String, index: Int)
 
-  case class MoveSucceeded(value: Boolean)
+  sealed trait MoveResponse extends CommandResponse
 
-  case class MoveFailure(ex: Exception)
+  case class MoveSucceeded(value: Boolean) extends MoveResponse
+
+  case class MoveFailure(ex: Exception) extends MoveResponse
 
   // --- OBJECT
 
@@ -83,9 +87,11 @@ object KeysProtocol {
 
   case class PersistRequest(key: String)
 
-  case class PersistSucceeded(value: Boolean)
+  sealed trait PersistResponse extends CommandResponse
 
-  case class PersistFailure(ex: Exception)
+  case class PersistSucceeded(value: Boolean) extends PersistResponse
+
+  case class PersistFailure(ex: Exception) extends PersistResponse
 
   // --- PEXPIRE
 
@@ -96,25 +102,31 @@ object KeysProtocol {
   // --- RANDOMKEY
   case object RandomKeyRequest
 
-  case class RandomKeySucceeded(value: String)
+  sealed trait RandomKeyResponse extends CommandResponse
 
-  case class RandomKeyFailure(ex: Exception)
+  case class RandomKeySucceeded(value: Option[String]) extends RandomKeyResponse
+
+  case class RandomKeyFailure(ex: Exception) extends RandomKeyResponse
 
   // --- RENAME
 
   case class RenameRequest(oldKey: String, newKey: String)
 
-  case object RenameSucceeded
+  sealed trait RenameResponse extends CommandResponse
 
-  case class RenameFailure(ex: Exception)
+  case object RenameSucceeded extends RenameResponse
+
+  case class RenameFailure(ex: Exception) extends RenameResponse
 
   // --- RENAMENX
 
   case class RenameNxRequest(oldKey: String, newKey: String)
 
-  case class RenameNxSucceeded(value: Boolean)
+  sealed trait RenameNxResponse extends CommandResponse
 
-  case class RenameNxFailure(ex: Exception)
+  case class RenameNxSucceeded(value: Boolean) extends RenameNxResponse
+
+  case class RenameNxFailure(ex: Exception) extends RenameNxResponse
 
   // --- RESTORE
 

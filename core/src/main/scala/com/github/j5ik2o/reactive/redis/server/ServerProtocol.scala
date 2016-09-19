@@ -7,6 +7,39 @@ object ServerProtocol {
 
   // --- BGREWRITEAOF
   // --- BGSAVE
+  case object BgSaveRequest extends CommandRequest {
+
+    class Parser extends CommandResponseParser[ResponseType] {
+      override protected val responseParser: Parser[BgSaveResponse] = {
+        simpleWithCrLfOrErrorWithCrLf ^^ {
+          case SimpleExpr(msg) =>
+            responseAsSucceeded(())
+          case ErrorExpr(msg) =>
+            responseAsFailed(RedisIOException(Some(msg)))
+          case _ =>
+            sys.error("it's unexpected.")
+        }
+      }
+    }
+
+    override def encodeAsString: String = "BGSAVE"
+
+    override type ResultType = Unit
+    override type ResponseType = BgSaveResponse
+
+    override def responseAsSucceeded(arguments: Unit): BgSaveResponse = BgSaveSucceeded
+
+    override def responseAsFailed(ex: Exception): BgSaveResponse = BgSaveFailed(ex)
+
+    override val parser: CommandResponseParser[BgSaveResponse] = new Parser()
+  }
+
+  sealed trait BgSaveResponse extends CommandResponse
+
+  case object BgSaveSucceeded extends BgSaveResponse
+
+  case class BgSaveFailed(ex: Exception) extends BgSaveResponse
+
   // --- CLIENT GETNAME
   // --- CLIENT KILL
   // --- CLIENT LIST
@@ -98,6 +131,7 @@ object ServerProtocol {
 
   // --- FLUSHDB
   case object FlushDBRequest extends CommandRequest {
+
     class Parser extends CommandResponseParser[ResponseType] {
       override protected val responseParser: Parser[FlushDBResponse] = {
         simpleWithCrLfOrErrorWithCrLf ^^ {
@@ -110,6 +144,7 @@ object ServerProtocol {
         }
       }
     }
+
     override def encodeAsString: String = "FLUSHDB"
 
     override type ResultType = Unit
@@ -133,16 +168,18 @@ object ServerProtocol {
 
   // --- INFO
   case object InfoRequest extends CommandRequest {
+
     class Parser extends CommandResponseParser[ResponseType] {
       override protected val responseParser: Parser[InfoResponse] = {
         bulkStringWithCrLf ^^ {
-          case StringExpr(value) =>
-            responseAsSucceeded(value)
+          case StringOptExpr(value) =>
+            responseAsSucceeded(value.get)
           case _ =>
             sys.error("it's unexpected.")
         }
       }
     }
+
     override def encodeAsString: String = "INFO"
 
     override type ResultType = String
@@ -169,6 +206,7 @@ object ServerProtocol {
   // --- SAVE
   // --- SHUTDOWN
   case class ShutdownRequest(save: Boolean) extends CommandRequest {
+
     class Parser extends CommandResponseParser[ResponseType] {
       override protected val responseParser: Parser[ShutdownResponse] = {
         simpleWithCrLfOrErrorWithCrLf ^^ {
@@ -181,7 +219,9 @@ object ServerProtocol {
         }
       }
     }
+
     val saveOption = if (save) "SAVE" else "NOSAVE"
+
     override def encodeAsString: String = s"SHUTDOWN $saveOption"
 
     override type ResultType = Unit
@@ -205,14 +245,15 @@ object ServerProtocol {
   // --- SLAVEOF
   // --- SLOWLOG
   // --- SYNC
+
   // --- TIME
   case object TimeRequest extends CommandRequest {
 
     class Parser extends CommandResponseParser[ResponseType] {
       override protected val responseParser: Parser[TimeResponse] = {
-        numberArrayWithCrLf ^^ {
+        stringArrayWithCrLf ^^ {
           case ArrayExpr(values) =>
-            responseAsSucceeded((values(0).value, values(1).value))
+            responseAsSucceeded((values(0).value.toInt, values(1).value.toInt))
         }
       }
     }

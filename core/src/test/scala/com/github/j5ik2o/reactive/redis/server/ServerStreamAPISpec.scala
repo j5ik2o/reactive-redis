@@ -7,7 +7,7 @@ import akka.actor.ActorSystem
 import akka.stream.scaladsl.Tcp.OutgoingConnection
 import akka.stream.scaladsl.{ Flow, Tcp }
 import akka.util.ByteString
-import com.github.j5ik2o.reactive.redis.server.ServerProtocol.DBSizeSucceeded
+import com.github.j5ik2o.reactive.redis.server.ServerProtocol.{ DBSizeSucceeded, TimeSucceeded }
 import com.github.j5ik2o.reactive.redis.{ ActorSpec, ServerBootable, StreamAPI }
 
 import scala.concurrent.Future
@@ -15,8 +15,6 @@ import scala.concurrent.Future
 class ServerStreamAPISpec
   extends ActorSpec(ActorSystem("ServerStreamAPISpec"))
     with ServerBootable {
-
-  import system.dispatcher
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
@@ -40,7 +38,7 @@ class ServerStreamAPISpec
     describe("BGSAVE") {
       it("should be able to save data in the background") {
         api.run(api.set("a", "1")).futureValue
-        api.bgSave.futureValue
+        api.run(api.bgSave).futureValue
       }
     }
     // --- CLIENT GETNAME
@@ -105,16 +103,20 @@ class ServerStreamAPISpec
     describe("TIME") {
       it("should be able to get time on the server") {
         val result = api.run(api.time).futureValue
-//        val now = ZonedDateTime.now()
-//        val dateTime = ZonedDateTime.ofInstant(Instant.ofEpochSecond(result(0)), ZoneId.systemDefault())
-//        assert(now.toInstant.getEpochSecond == dateTime.toInstant.getEpochSecond)
+        result match {
+          case Seq(TimeSucceeded(unixTime, millis)) =>
+            val now = ZonedDateTime.now()
+            val instant = Instant.ofEpochSecond(unixTime)
+            val dateTime = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault())
+            assert(now.toInstant.getEpochSecond == dateTime.toInstant.getEpochSecond)
+        }
       }
     }
 
     // --- SHUTDOWN
     describe("SHUTDOWN") {
       it("should be able to shut down the server") {
-        api.run(api.shutdown()).futureValue
+        // api.run(api.shutdown()).futureValue
       }
     }
 

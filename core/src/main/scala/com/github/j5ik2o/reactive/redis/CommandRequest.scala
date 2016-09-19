@@ -27,6 +27,10 @@ object CommandResponseParser {
     override val size: Int = value.length
   }
 
+  case class StringOptExpr(value: Option[String]) extends Expr with HasSize {
+    override val size: Int = value.fold(0)(_.length)
+  }
+
   case class ArrayExpr[A <: Expr](values: Seq[A] = Seq.empty) extends Expr
 
 }
@@ -45,7 +49,8 @@ abstract class CommandResponseParser[RT] extends RegexParsers {
 
   lazy val NUMBER: Parser[NumberExpr] = elem(':') ~> """[0-9]+""".r ^^ { n => NumberExpr(n.toInt) }
 
-  lazy val VALUE: Parser[StringExpr] = """.*[^\r\n]""".r ^^ { s => StringExpr(s) }
+  lazy val STRING: Parser[String] = """.*[^\r\n]""".r
+  lazy val VALUE: Parser[StringExpr] = STRING ^^ { s => StringExpr(s)}
 
   lazy val NUMBER_OR_VALUE: Parser[Expr with HasSize] = NUMBER | VALUE
 
@@ -83,13 +88,17 @@ abstract class CommandResponseParser[RT] extends RegexParsers {
   }
 
   lazy val numberArrayWithCrLf: Parser[ArrayExpr[NumberExpr]] = arrayPrefixWithCrLf ~ repsep(NUMBER_ARRAY_VALUE, CRLF) ^^ { case size ~ values =>
+    println(">>>===" + values)
     require(size == values.size)
     ArrayExpr(values)
   }
 
   lazy val stringArrayWithCrLfOrErrorWithCrLf: Parser[Expr] = stringArrayWithCrLf | errorWithCrLf
 
-  lazy val bulkString = STRING_ARRAY_VALUE
+  lazy val bulkString = LENGTH ~ CRLF ~ opt(STRING) ^^ {
+    case l ~ _ ~ s =>
+      StringOptExpr(s)
+  }
 
   lazy val bulkStringWithCrLf = bulkString <~ CRLF
 

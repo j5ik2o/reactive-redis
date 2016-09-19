@@ -21,6 +21,8 @@ object ConnectionProtocol {
             responseAsFailed(RedisIOException(Some(msg)))
           case SimpleExpr(msg) =>
             responseAsSucceeded(())
+          case _ =>
+            sys.error("It's unexpected.")
         }
       }
     }
@@ -55,6 +57,8 @@ object ConnectionProtocol {
             responseAsFailed(RedisIOException(Some(msg)))
           case SimpleExpr(msg) =>
             responseAsSucceeded(())
+          case _ =>
+            sys.error("It's unexpected.")
         }
       }
     }

@@ -12,21 +12,7 @@ trait ServerStreamAPI extends BaseStreamAPI {
   import com.github.j5ik2o.reactive.redis.ResponseRegexs._
   // --- BGREWRITEAOF
   // --- BGSAVE
-  val bgSaveSource = Source.single("BGSAVE")
-
-  def bgSave(implicit mat: Materializer, ec: ExecutionContext): Future[Unit] = {
-    bgSaveSource.log("request").via(toByteStringFlow).via(connection).runWith(sink).map { v =>
-      v.head match {
-        case messageRegex(s) =>
-          ()
-        case errorRegex(msg) =>
-          throw RedisIOException(Some(msg))
-        case m =>
-          throw parseException(Some(m))
-      }
-    }
-  }
-
+  val bgSave = Source.single(BgSaveRequest)
 
   // --- CLIENT GETNAME
   // --- CLIENT KILL
