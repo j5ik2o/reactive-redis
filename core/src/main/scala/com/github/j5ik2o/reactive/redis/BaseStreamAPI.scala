@@ -1,10 +1,12 @@
 package com.github.j5ik2o.reactive.redis
 
+import java.net.InetSocketAddress
 import java.text.ParseException
 
 import akka.NotUsed
+import akka.actor.ActorSystem
 import akka.stream.scaladsl.Tcp.OutgoingConnection
-import akka.stream.scaladsl.{ Flow, Framing, GraphDSL, Keep, Sink, Source, Unzip, Zip }
+import akka.stream.scaladsl.{ Flow, Framing, GraphDSL, Keep, Sink, Source, Tcp, Unzip, Zip }
 import akka.stream.{ FlowShape, Materializer }
 import akka.util.ByteString
 
@@ -20,25 +22,28 @@ object DSLSupport {
   }
 
 }
+object RedisAPIExecutor {
+  type CON = Flow[ByteString, ByteString, Future[OutgoingConnection]]
 
-trait BaseStreamAPI {
+  def apply(connection : RedisAPIExecutor.CON) = new RedisAPIExecutor(connection)
+  def apply(address: InetSocketAddress)(implicit system: ActorSystem) = new RedisAPIExecutor(Tcp().outgoingConnection(address))
+}
 
+class RedisAPIExecutor(connection : RedisAPIExecutor.CON) {
+  private lazy val toByteStringFlow: Flow[String, ByteString, NotUsed] = Flow[String].map { s => ByteString(s) }
 
-  protected def parseException(msg: Option[String] = None) = new ParseException(msg.orNull, 0)
-
-  protected val connection: Flow[ByteString, ByteString, Future[OutgoingConnection]]
-
-  protected lazy val toByteStringFlow: Flow[String, ByteString, NotUsed] = Flow[String].map { s => ByteString(s) }
-
-  protected lazy val parseFlow: Flow[ByteString, String, NotUsed] = Flow[ByteString]
+  private lazy val parseFlow: Flow[ByteString, String, NotUsed] = Flow[ByteString]
     //.via(Framing.delimiter(ByteString("\r\n"), maximumFrameLength = Int.MaxValue, allowTruncation = true))
     .map(_.utf8String)
     .log("response")
-    //.fold(Seq.empty[String])((acc, in) => acc :+ in)
+  //.fold(Seq.empty[String])((acc, in) => acc :+ in)
 
-  protected def requestFlow = Flow[String].via(toByteStringFlow).fold(ByteString.empty)((acc, in) => acc ++ in).via(connection).via(parseFlow)
+  private lazy val internalRequestFlow = Flow[String].via(toByteStringFlow)
+    .fold(ByteString.empty)((acc, in) => acc ++ in)
+    .via(connection)
+    .via(parseFlow)
 
-  def mainFlow: Flow[CommandRequest, (String, Seq[CommandRequest]), NotUsed] = Flow.fromGraph(GraphDSL.create() { implicit builder =>
+  private lazy val requestFlow: Flow[CommandRequest, (String, Seq[CommandRequest]), NotUsed] = Flow.fromGraph(GraphDSL.create() { implicit builder =>
     import GraphDSL.Implicits._
     // String, Seq[CR]
     val flowShape = builder.add(Flow[CommandRequest].fold(("", Seq.empty[CommandRequest])) { (acc, in) =>
@@ -47,12 +52,12 @@ trait BaseStreamAPI {
     val unzip = builder.add(Unzip[String, Seq[CommandRequest]]())
     val zip = builder.add(Zip[String, Seq[CommandRequest]]())
     flowShape ~> unzip.in
-    unzip.out0 ~> requestFlow ~> zip.in0
+    unzip.out0 ~> internalRequestFlow ~> zip.in0
     unzip.out1 ~> zip.in1
     FlowShape(flowShape.in, zip.out)
   })
 
-  def resultFlow[A <: CommandRequest] = Flow[(String, Seq[CommandRequest])].map { case (result, requests) =>
+  private def resultFlow[A <: CommandRequest] = Flow[(String, Seq[CommandRequest])].map { case (result, requests) =>
     requests.foldLeft((Seq.empty[A#ResponseType], new CharSequenceReader(result))){ (acc, request) =>
       val p = request.parser
       val (parseResult, next) = p.parseResponse(acc._2)
@@ -60,20 +65,20 @@ trait BaseStreamAPI {
     }._1
   }
 
-  def run[A <: CommandRequest](source: Source[A, NotUsed])(implicit mat: Materializer) = {
+  def execute[A <: CommandRequest](source: Source[A, NotUsed])(implicit mat: Materializer) = {
     source
       .log("request", (cmd) => cmd.encodeAsString)
-      .via(mainFlow)
+      .via(requestFlow)
       .via(resultFlow[A])
       .toMat(Sink.head)(Keep.right)
       .run()
   }
 
-  protected val sink: Sink[ByteString, Future[Seq[String]]] = Flow[ByteString]
-    .via(Framing.delimiter(ByteString("\r\n"), maximumFrameLength = Int.MaxValue, allowTruncation = true))
-    .map(_.utf8String)
-    .log("response")
-    .toMat(Sink.fold(Seq.empty[String])((acc, in) => acc :+ in))(Keep.right)
+}
+
+
+trait BaseStreamAPI {
+
 
 
 }

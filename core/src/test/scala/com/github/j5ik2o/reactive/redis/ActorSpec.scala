@@ -29,9 +29,11 @@ abstract class ActorSpec(_system: ActorSystem)
 
   val clientRef: AtomicReference[ActorRef] = new AtomicReference()
 
-  val apiRef: AtomicReference[StreamAPI] = new AtomicReference()
+  val apiRef: AtomicReference[RedisCommandRequests$] = new AtomicReference()
 
-  def api: StreamAPI = apiRef.get
+  def api: RedisCommandRequests$ = apiRef.get
+
+  var executor: RedisAPIExecutor = _
 
   def client: ActorRef = clientRef.get
 

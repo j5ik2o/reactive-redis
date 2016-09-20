@@ -5,7 +5,7 @@ import com.github.j5ik2o.reactive.redis.keys.KeysStreamAPI
 import com.github.j5ik2o.reactive.redis.server.ServerStreamAPI
 import com.github.j5ik2o.reactive.redis.transactions.TransactionsStreamAPI
 
-trait StreamAPI
+trait RedisCommandRequests
   extends ConnectionStreamAPI
     with ServerStreamAPI
     with KeysStreamAPI
@@ -13,4 +13,6 @@ trait StreamAPI
     with TransactionsStreamAPI {
 
 }
+
+object RedisCommandRequests extends RedisCommandRequests
 

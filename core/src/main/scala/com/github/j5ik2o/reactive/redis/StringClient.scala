@@ -148,12 +148,13 @@ class StringClient(address: InetSocketAddress)
     Tcp().outgoingConnection(address)
 
   val default: Receive = {
-    case SetRequest(key, value) =>
-      run(set(key, value)).pipeTo(sender())
-    case GetRequest(key) =>
-      run(get(key)).pipeTo(sender())
-    case GetSetRequest(key, value) =>
-      run(getSet(key, value)).pipeTo(sender())
+    PartialFunction.empty[Any, Unit]
+//    case SetRequest(key, value) =>
+//      run(set(key, value)).pipeTo(sender())
+//    case GetRequest(key) =>
+//      run(get(key)).pipeTo(sender())
+//    case GetSetRequest(key, value) =>
+//      run(getSet(key, value)).pipeTo(sender())
   }
 
   override def receive: Receive = handleConnection orElse handleKeys orElse handleServer orElse default

@@ -11,6 +11,8 @@ import akka.pattern.ask
 trait ServerBootable extends BeforeAndAfter {
   this: ActorSpec =>
 
+  import RedisCommandRequests._
+
   val testServer: TestServer = new TestServer()
 
   import system.dispatcher
@@ -25,7 +27,7 @@ trait ServerBootable extends BeforeAndAfter {
 
   after {
     if (Option(api).isDefined)
-      api.run(api.flushDB).futureValue
+      executor.execute(flushDB).futureValue
     if (Option(client).isDefined){
       Await.result(client ? FlushDBRequest, Duration.Inf)
     }

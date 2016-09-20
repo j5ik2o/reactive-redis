@@ -16,7 +16,7 @@ trait ConnectionStreamAPI extends BaseStreamAPI {
   // --- PING
 
   // --- QUIT
-  val quit = Source.single(QuitRequest)
+  val quitRequest = Source.single(QuitRequest)
 
   // --- SELECT
   def select(index: Int)(implicit c: ClassTag[SelectRequest]): Source[SelectRequest, NotUsed] = Source.single(SelectRequest(index))

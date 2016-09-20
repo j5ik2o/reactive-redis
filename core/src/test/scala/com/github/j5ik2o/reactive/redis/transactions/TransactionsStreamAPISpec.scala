@@ -3,32 +3,22 @@ package com.github.j5ik2o.reactive.redis.transactions
 import java.net.InetSocketAddress
 
 import akka.actor.ActorSystem
-import akka.stream.scaladsl.{ Flow, Source, Tcp }
-import akka.stream.scaladsl.Tcp.OutgoingConnection
-import akka.util.ByteString
-import com.github.j5ik2o.reactive.redis.{ ActorSpec, ServerBootable, StreamAPI }
-import org.scalatest.FunSpecLike
-
-import scala.concurrent.Future
+import com.github.j5ik2o.reactive.redis.{ ActorSpec, RedisAPIExecutor, ServerBootable }
 
 class TransactionsStreamAPISpec
   extends ActorSpec(ActorSystem("TransactionsStreamAPISpec"))
     with ServerBootable {
 
-  import system.dispatcher
+  import com.github.j5ik2o.reactive.redis.RedisCommandRequests._
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     val address = new InetSocketAddress("127.0.0.1", testServer.address.get.getPort)
-    val api = new StreamAPI {
-      override protected val connection: Flow[ByteString, ByteString, Future[OutgoingConnection]] =
-        Tcp().outgoingConnection(address)
-    }
-    apiRef.set(api)
+    executor = RedisAPIExecutor(address)
   }
 
   override protected def afterAll(): Unit = {
-    api.run(api.quit).futureValue
+    executor.execute(quitRequest).futureValue
     system.terminate()
     super.afterAll()
   }

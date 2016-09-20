@@ -1,18 +1,14 @@
 package com.github.j5ik2o.reactive.redis.server
 
 import akka.NotUsed
-import akka.stream.Materializer
-import akka.stream.scaladsl.{ Keep, Sink, Source }
+import akka.stream.scaladsl.Source
+import com.github.j5ik2o.reactive.redis.BaseStreamAPI
 import com.github.j5ik2o.reactive.redis.server.ServerProtocol._
-import com.github.j5ik2o.reactive.redis.{ BaseStreamAPI, CommandRequest, RedisIOException }
-
-import scala.concurrent.{ ExecutionContext, Future }
 
 trait ServerStreamAPI extends BaseStreamAPI {
-  import com.github.j5ik2o.reactive.redis.ResponseRegexs._
   // --- BGREWRITEAOF
   // --- BGSAVE
-  val bgSave = Source.single(BgSaveRequest)
+  val bgSaveRequest = Source.single(BgSaveRequest)
 
   // --- CLIENT GETNAME
   // --- CLIENT KILL
@@ -30,19 +26,19 @@ trait ServerStreamAPI extends BaseStreamAPI {
   // --- CONFIG SET
 
   // --- DBSIZE
-  val dbSize: Source[DBSizeRequest.type, NotUsed] = Source.single(DBSizeRequest)
+  val dbSizeRequest: Source[DBSizeRequest.type, NotUsed] = Source.single(DBSizeRequest)
 
   // --- DEBUG OBJECT
   // --- DEBUG SEGFAULT
 
   // --- FLUSHALL
-  val flushAll: Source[FlushAllRequest.type, NotUsed] = Source.single(FlushAllRequest)
+  val flushAllRequest: Source[FlushAllRequest.type, NotUsed] = Source.single(FlushAllRequest)
 
   // --- FLUSHDB
   val flushDB: Source[FlushDBRequest.type, NotUsed] = Source.single(FlushDBRequest)
 
   // --- INFO
-  val info: Source[InfoRequest.type, NotUsed] = Source.single(InfoRequest)
+  val infoRequest: Source[InfoRequest.type, NotUsed] = Source.single(InfoRequest)
 
   // --- LASTSAVE
 

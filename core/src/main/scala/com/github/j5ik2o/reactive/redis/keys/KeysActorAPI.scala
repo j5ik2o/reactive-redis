@@ -29,7 +29,7 @@ trait KeysActorAPI extends BaseActorAPI with KeysStreamAPI {
 
     // --- KEYS
     case KeysRequest(keyPattern) =>
-      run(keys(keyPattern)).pipeTo(sender())
+      //run(keys(keyPattern)).pipeTo(sender())
 
     // --- MIGRATE
 
