@@ -1,16 +1,17 @@
 package com.github.j5ik2o.reactive.redis
 
-import com.github.j5ik2o.reactive.redis.connection.ConnectionStreamAPI
-import com.github.j5ik2o.reactive.redis.keys.KeysStreamAPI
-import com.github.j5ik2o.reactive.redis.server.ServerStreamAPI
-import com.github.j5ik2o.reactive.redis.transactions.TransactionsStreamAPI
+import com.github.j5ik2o.reactive.redis.connection.ConnectionCommandRequests
+import com.github.j5ik2o.reactive.redis.keys.KeysCommandRequests
+import com.github.j5ik2o.reactive.redis.server.ServerCommandRequests
+import com.github.j5ik2o.reactive.redis.strings.StringCommandRequests
+import com.github.j5ik2o.reactive.redis.transactions.TransactionsCommandRequests
 
 trait RedisCommandRequests
-  extends ConnectionStreamAPI
-    with ServerStreamAPI
-    with KeysStreamAPI
-    with StringStreamAPI
-    with TransactionsStreamAPI {
+    extends ConnectionCommandRequests
+    with ServerCommandRequests
+    with KeysCommandRequests
+    with TransactionsCommandRequests
+    with StringCommandRequests {
 
 }
 

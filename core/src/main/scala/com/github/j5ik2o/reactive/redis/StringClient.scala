@@ -12,6 +12,7 @@ import com.github.j5ik2o.reactive.redis.StringClient.Protocol.String._
 import com.github.j5ik2o.reactive.redis.connection.ConnectionActorAPI
 import com.github.j5ik2o.reactive.redis.keys.KeysActorAPI
 import com.github.j5ik2o.reactive.redis.server.ServerActorAPI
+import com.github.j5ik2o.reactive.redis.strings.StringCommandRequests
 
 import scala.concurrent.Future
 
@@ -24,7 +25,20 @@ object StringClient {
     object String {
 
       // ---
-      case class SetRequest(key: String, value: String) extends CommandRequest {
+      object SetRequest {
+
+        def apply(key: String, value: String): SetRequest = new SetRequestImpl(key, value)
+
+        def unapply(self: SetRequest): Option[(String, String)] = Some(self.key, self.value)
+
+      }
+
+      trait SetRequest extends CommandRequest {
+        val key: String
+        val value: String
+      }
+
+      private class SetRequestImpl(val key: String, val value: String) extends SetRequest {
 
         class Parser extends CommandResponseParser[ResponseType] {
           override protected val responseParser: Parser[SetResponse] = {
@@ -60,10 +74,22 @@ object StringClient {
       case class SetFailed(ex: Exception) extends SetResponse
 
       // ---
+      object GetRequest {
 
-      case class GetRequest(key: String) extends CommandRequest {
+        def apply(key: String): GetRequest = new GetRequestImpl(key)
+
+        def unapply(self: GetRequest): Option[String] = Some(self.key)
+
+      }
+
+      trait GetRequest extends CommandRequest {
+        val key: String
+      }
+
+      private class GetRequestImpl(val key: String) extends GetRequest {
+
         class Parser extends CommandResponseParser[ResponseType] {
-          override protected val responseParser: Parser[ResponseType] =  {
+          override protected val responseParser: Parser[ResponseType] = {
             bulkStringWithCrLfOrErrorWithCrLf ^^ {
               case StringOptExpr(s) =>
                 responseAsSucceeded(s)
@@ -74,6 +100,7 @@ object StringClient {
             }
           }
         }
+
         override def encodeAsString: String = s"GET $key"
 
         override type ResultType = Option[String]
@@ -96,7 +123,21 @@ object StringClient {
 
       // ---
 
-      case class GetSetRequest(key: String, value: String) extends CommandRequest {
+      object GetSetRequest {
+
+        def apply(key: String, value: String): GetSetRequest = new GetSetRequestImpl(key, value)
+
+        def unapply(self: GetSetRequest): Option[(String, String)] = Some((self.key, self.value))
+
+      }
+
+      trait GetSetRequest extends CommandRequest {
+        val key: String
+        val value: String
+      }
+
+      class GetSetRequestImpl(val key: String, val value: String) extends GetSetRequest {
+
         class Parser extends CommandResponseParser[ResponseType] {
           override protected val responseParser: Parser[GetSetResponse] = {
             bulkStringWithCrLfOrErrorWithCrLf ^^ {
@@ -109,6 +150,7 @@ object StringClient {
             }
           }
         }
+
         override def encodeAsString: String = s"GETSET $key $value"
 
         override type ResultType = Option[String]
@@ -135,10 +177,9 @@ object StringClient {
 
 }
 
-
 class StringClient(address: InetSocketAddress)
-  extends Actor with ActorLogging
-    with StringStreamAPI with ConnectionActorAPI with KeysActorAPI with ServerActorAPI {
+    extends Actor with ActorLogging
+    with StringCommandRequests with ConnectionActorAPI with KeysActorAPI with ServerActorAPI {
 
   log.info(address.toString)
 
@@ -149,12 +190,12 @@ class StringClient(address: InetSocketAddress)
 
   val default: Receive = {
     PartialFunction.empty[Any, Unit]
-//    case SetRequest(key, value) =>
-//      run(set(key, value)).pipeTo(sender())
-//    case GetRequest(key) =>
-//      run(get(key)).pipeTo(sender())
-//    case GetSetRequest(key, value) =>
-//      run(getSet(key, value)).pipeTo(sender())
+    //    case SetRequest(key, value) =>
+    //      run(set(key, value)).pipeTo(sender())
+    //    case GetRequest(key) =>
+    //      run(get(key)).pipeTo(sender())
+    //    case GetSetRequest(key, value) =>
+    //      run(getSet(key, value)).pipeTo(sender())
   }
 
   override def receive: Receive = handleConnection orElse handleKeys orElse handleServer orElse default

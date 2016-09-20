@@ -73,30 +73,35 @@ abstract class CommandResponseParser[RT] extends RegexParsers {
 
   private lazy val arrayPrefixWithCrLf: Parser[Int] = ARRAY_PREFIX <~ CRLF
 
-  private lazy val stringArrayElement: Parser[StringExpr] = LENGTH ~ CRLF ~ VALUE ^^ { case size ~ _ ~ value =>
-    require(size.value == value.size)
-    value
+  private lazy val stringArrayElement: Parser[StringExpr] = LENGTH ~ CRLF ~ VALUE ^^ {
+    case size ~ _ ~ value =>
+      require(size.value == value.size)
+      value
   }
 
-  private lazy val stringArrayWithCrLf: Parser[ArrayExpr[StringExpr]] = arrayPrefixWithCrLf ~ repsep(stringArrayElement, CRLF) ^^ { case size ~ values =>
-    require(size == values.size)
-    ArrayExpr(values)
+  private lazy val stringArrayWithCrLf: Parser[ArrayExpr[StringExpr]] = arrayPrefixWithCrLf ~ repsep(stringArrayElement, CRLF) ^^ {
+    case size ~ values =>
+      require(size == values.size)
+      ArrayExpr(values)
   }
 
-  private lazy val numberArrayElement: Parser[NumberExpr] = LENGTH ~ CRLF ~ NUMBER ^^ { case size ~ _ ~ value =>
-    require(size.value == value.size)
-    value
+  private lazy val numberArrayElement: Parser[NumberExpr] = LENGTH ~ CRLF ~ NUMBER ^^ {
+    case size ~ _ ~ value =>
+      require(size.value == value.size)
+      value
   }
 
-  private lazy val numberArrayWithCrLf: Parser[ArrayExpr[NumberExpr]] = arrayPrefixWithCrLf ~ repsep(numberArrayElement, CRLF) ^^ { case size ~ values =>
-    require(size == values.size)
-    ArrayExpr(values)
+  private lazy val numberArrayWithCrLf: Parser[ArrayExpr[NumberExpr]] = arrayPrefixWithCrLf ~ repsep(numberArrayElement, CRLF) ^^ {
+    case size ~ values =>
+      require(size == values.size)
+      ArrayExpr(values)
   }
 
   lazy val stringArrayWithCrLfOrErrorWithCrLf: Parser[Expr] = stringArrayWithCrLf | errorWithCrLf
 
-  private lazy val bulkStringWithCrLf: Parser[StringOptExpr] = LENGTH ~ CRLF ~ opt(STRING <~ CRLF) ^^ { case l ~ _ ~ s =>
-    StringOptExpr(s)
+  private lazy val bulkStringWithCrLf: Parser[StringOptExpr] = LENGTH ~ CRLF ~ opt(STRING <~ CRLF) ^^ {
+    case l ~ _ ~ s =>
+      StringOptExpr(s)
   }
 
   lazy val bulkStringWithCrLfOrErrorWithCrLf: Parser[Expr] = bulkStringWithCrLf | errorWithCrLf
@@ -109,12 +114,11 @@ abstract class CommandResponseParser[RT] extends RegexParsers {
 
   def parseResponse(in: Reader[Char]) = parse(responseParser, in) match {
     case Success(result, next) => (result, next)
-    case Failure(msg, _) => throw new Exception(msg)
-    case Error(msg, _) => throw new Exception(msg)
+    case Failure(msg, _)       => throw new Exception(msg)
+    case Error(msg, _)         => throw new Exception(msg)
   }
 
 }
-
 
 trait CommandRequest extends RegexParsers {
 
@@ -134,9 +138,28 @@ trait CommandRequest extends RegexParsers {
 
   val parser: CommandResponseParser[ResponseType]
 
-  protected class SimpleReplyParser(responseAsSucceeded: Unit => ResponseType,
-                                    responseAsFailed: String => ResponseType)
-    extends CommandResponseParser[ResponseType] {
+  protected class SimpleReplyParser(
+    responseAsSucceeded: String => ResponseType,
+    responseAsFailed:    String => ResponseType
+  )
+      extends CommandResponseParser[ResponseType] {
+    override protected val responseParser: Parser[ResponseType] = {
+      simpleWithCrLfOrErrorWithCrLf ^^ {
+        case SimpleExpr(msg) =>
+          responseAsSucceeded(msg)
+        case ErrorExpr(msg) =>
+          responseAsFailed(msg)
+        case _ =>
+          sys.error("It's unexpected.")
+      }
+    }
+  }
+
+  protected class UnitReplyParser(
+    responseAsSucceeded: Unit => ResponseType,
+    responseAsFailed:    String => ResponseType
+  )
+      extends CommandResponseParser[ResponseType] {
     override protected val responseParser: Parser[ResponseType] = {
       simpleWithCrLfOrErrorWithCrLf ^^ {
         case SimpleExpr(_) =>
@@ -149,9 +172,11 @@ trait CommandRequest extends RegexParsers {
     }
   }
 
-  protected class BulkStringParser(responseAsSucceeded: (Option[String]) => ResponseType,
-                                   responseAsFailed: String => ResponseType)
-    extends CommandResponseParser[ResponseType] {
+  protected class BulkStringParser(
+    responseAsSucceeded: (Option[String]) => ResponseType,
+    responseAsFailed:    String => ResponseType
+  )
+      extends CommandResponseParser[ResponseType] {
     override protected val responseParser: Parser[ResponseType] = {
       bulkStringWithCrLfOrErrorWithCrLf ^^ {
         case StringOptExpr(msg) =>
@@ -164,9 +189,11 @@ trait CommandRequest extends RegexParsers {
     }
   }
 
-  protected class IntegerReplyParser(responseAsSucceeded: (Int) => ResponseType,
-                                     responseAsFailed: String => ResponseType)
-    extends CommandResponseParser[ResponseType] {
+  protected class IntegerReplyParser(
+    responseAsSucceeded: (Int) => ResponseType,
+    responseAsFailed:    String => ResponseType
+  )
+      extends CommandResponseParser[ResponseType] {
     override protected val responseParser: Parser[ResponseType] = {
       integerReplyWithCrLfOrErrorWithCrLf ^^ {
         case NumberExpr(n) =>
@@ -179,13 +206,15 @@ trait CommandRequest extends RegexParsers {
     }
   }
 
-  protected class StringArrayParser(responseAsSucceeded: (Seq[String]) => ResponseType,
-                                    responseAsFailed: String => ResponseType)
-    extends CommandResponseParser[ResponseType] {
+  protected class StringArrayParser(
+    responseAsSucceeded: (Seq[String]) => ResponseType,
+    responseAsFailed:    String => ResponseType
+  )
+      extends CommandResponseParser[ResponseType] {
     override protected val responseParser: Parser[ResponseType] = {
       stringArrayWithCrLfOrErrorWithCrLf ^^ {
-        case ArrayExpr(values: Seq[StringExpr]) =>
-          responseAsSucceeded(values.map(_.value))
+        case ArrayExpr(values) =>
+          responseAsSucceeded(values.asInstanceOf[Seq[StringExpr]].map(_.value))
         case ErrorExpr(msg) =>
           responseAsFailed(msg)
         case _ =>

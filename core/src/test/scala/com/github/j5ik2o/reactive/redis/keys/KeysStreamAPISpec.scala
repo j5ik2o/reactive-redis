@@ -9,7 +9,7 @@ import com.github.j5ik2o.reactive.redis._
 import com.github.j5ik2o.reactive.redis.keys.KeysProtocol._
 
 class KeysStreamAPISpec
-  extends ActorSpec(ActorSystem("ConnectionStreamAPISpec"))
+    extends ActorSpec(ActorSystem("ConnectionStreamAPISpec"))
     with ServerBootable {
 
   import RedisCommandRequests._
@@ -17,11 +17,11 @@ class KeysStreamAPISpec
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     val address = new InetSocketAddress("127.0.0.1", testServer.address.get.getPort)
-    executor = RedisAPIExecutor(address)
+    executor = Some(RedisAPIExecutor(address))
   }
 
   override protected def afterAll(): Unit = {
-    executor.execute(quitRequest).futureValue
+    executor.foreach(_.execute(quitRequest).futureValue)
     system.terminate()
     super.afterAll()
   }
@@ -31,41 +31,41 @@ class KeysStreamAPISpec
     describe("DEL") {
       it("should be able to delete the existing key") {
         val id = UUID.randomUUID().toString
-        executor.execute(set(id, "a")).futureValue
-        assert(executor.execute(del(Seq(id))).futureValue == Seq(DelSucceeded(1)))
+        executor.foreach(_.execute(setRequest(id, "a")).futureValue)
+        assert(executor.map(_.execute(delRequest(Seq(id))).futureValue).contains(Seq(DelSucceeded(1))))
       }
       it("shouldn't be able to delete the not existing key") {
         val id = UUID.randomUUID().toString
-        assert(executor.execute(del(Seq(id))).futureValue == Seq(DelSucceeded(0)))
+        assert(executor.map(_.execute(delRequest(Seq(id))).futureValue).contains(Seq(DelSucceeded(0))))
       }
     }
     //    // --- DUMP
     describe("DUMP") {
       it("should be able to dump key") {
         val id = UUID.randomUUID().toString
-        executor.execute(set(id, "a")).futureValue
-        assert(executor.execute(dump(id)).futureValue.head.asInstanceOf[DumpSucceeded].value.nonEmpty)
+        executor.foreach(_.execute(setRequest(id, "a")).futureValue)
+        assert(executor.map(_.execute(dumpRequest(id)).futureValue).get.head.asInstanceOf[DumpSucceeded].value.nonEmpty)
       }
       // --- EXISTS
       describe("EXISTS") {
         it("should be able to exist the registration key") {
           val id = UUID.randomUUID().toString
-          executor.execute(set(id, "a")).futureValue
-          assert(executor.execute(exists(id)).futureValue.head.asInstanceOf[ExistsSucceeded].value == 1)
+          executor.foreach(_.execute(setRequest(id, "a")).futureValue)
+          assert(executor.map(_.execute(existsRequest(id)).futureValue).get.head.asInstanceOf[ExistsSucceeded].value == 1)
         }
         it("shouldn't be able to exist the un-registration key") {
           val id = UUID.randomUUID().toString
-          assert(executor.execute(exists(id)).futureValue.head.asInstanceOf[ExistsSucceeded].value == 0)
+          assert(executor.map(_.execute(existsRequest(id)).futureValue).get.head.asInstanceOf[ExistsSucceeded].value == 0)
         }
       }
       // --- EXPIRE
       describe("EXPIRE") {
         it("should be able to expire data") {
           val id = UUID.randomUUID().toString
-          executor.execute(set(id, "a")).futureValue
-          assert(executor.execute(expire(id, 2)).futureValue.head.asInstanceOf[ExpireSucceeded].value == 1)
+          executor.foreach(_.execute(setRequest(id, "a")).futureValue)
+          assert(executor.map(_.execute(expireRequest(id, 2)).futureValue).get.head.asInstanceOf[ExpireSucceeded].value == 1)
           Thread.sleep(3 * 1000)
-          assert(executor.execute(get(id)).futureValue.head.asInstanceOf[GetSucceeded].value.isEmpty)
+          assert(executor.map(_.execute(getRequest(id)).futureValue).get.head.asInstanceOf[GetSucceeded].value.isEmpty)
         }
       }
       //    // --- EXPIREAT
@@ -82,12 +82,12 @@ class KeysStreamAPISpec
     describe("KEYS") {
       it("should be able to find the registration keys") {
         val id = UUID.randomUUID().toString
-        assert(executor.execute(set(id, "a").concat(keys("*"))).futureValue == Seq(SetSucceeded, KeysSucceeded(Seq(id))))
+        assert(executor.map(_.execute(setRequest(id, "a").concat(keysRequest("*"))).futureValue).contains(Seq(SetSucceeded, KeysSucceeded(Seq(id)))))
       }
       it("shouldn't be able to find the unregistration keys") {
         val id = UUID.randomUUID().toString
         // api.run(api.set(id, "a")).futureValue
-        assert(executor.execute(keys(id)).futureValue == Seq(KeysSucceeded(Seq.empty)))
+        assert(executor.map(_.execute(keysRequest(id)).futureValue).contains(Seq(KeysSucceeded(Seq.empty))))
       }
     }
     // --- MIGRATE
@@ -96,9 +96,9 @@ class KeysStreamAPISpec
     describe("MOVE") {
       it("should be able to move the key") {
         val id = UUID.randomUUID().toString
-        val cmds = set(id, "a") concat move(id, 1)
-        executor.execute(cmds).futureValue
-        assert(executor.execute(keys(id)).futureValue.head.asInstanceOf[KeysSucceeded].values.isEmpty)
+        val cmds = setRequest(id, "a") concat moveRequest(id, 1)
+        executor.foreach(_.execute(cmds).futureValue)
+        assert(executor.map(_.execute(keysRequest(id)).futureValue).get.head.asInstanceOf[KeysSucceeded].values.isEmpty)
       }
     }
     //
@@ -114,19 +114,19 @@ class KeysStreamAPISpec
     //
     //    // --- RANDOMKEY
     describe("RANDOMKEY") {
-      //      it("should be able to generate the random key, if the registration keys exists") {
-      //        for {_ <- 1 to 10} {
-      //          val id = UUID.randomUUID().toString
-      //          api.set(id, "a").futureValue
-      //        }
-      //        val randomKey = api.randomKey.futureValue
-      //        assert(api.exists(randomKey.get).futureValue)
-      //        assert(randomKey.isDefined)
-      //      }
-      //      it("shouldn't be able to generate the random key, if the registration keys are nothing") {
-      //        val randomKey = api.randomKey.futureValue
-      //        assert(randomKey.isEmpty)
-      //      }
+      it("should be able to generate the random key, if the registration keys exists") {
+        for { _ <- 1 to 10 } {
+          val id = UUID.randomUUID().toString
+          executor.foreach(_.execute(setRequest(id, "a")).futureValue)
+        }
+        val randomKey = executor.map(_.execute(randomKeyRequest).futureValue.head.asInstanceOf[RandomKeySucceeded].value).get
+        assert(executor.map(_.execute(existsRequest(randomKey.get)).futureValue).get.head.asInstanceOf[ExistsSucceeded].value == 1)
+        assert(randomKey.isDefined)
+      }
+      it("shouldn't be able to generate the random key, if the registration keys are nothing") {
+        val randomKey = executor.map(_.execute(randomKeyRequest).futureValue).get.head.asInstanceOf[RandomKeySucceeded].value
+        assert(randomKey.isEmpty)
+      }
       //    }
       //    // --- RENAME
       //    describe("RENAME") {
@@ -165,12 +165,12 @@ class KeysStreamAPISpec
       // --- TTL
       describe("TTL") {
         it("should be able to get TTL of registration key") {
-          //              val id = UUID.randomUUID().toString
-          //              api.run(api.set(id, "a")).futureValue
-          //              assert(api.run(api.expire(id, 2)).futureValue)
-          //              assert(api.run(api.ttl(id)).futureValue > 0)
-          //              Thread.sleep(3 * 1000)
-          //              assert(api.run(api.get(id)).futureValue.isEmpty)
+          val id = UUID.randomUUID().toString
+          executor.foreach(_.execute(setRequest(id, "a")).futureValue)
+          assert(executor.map(_.execute(expireRequest(id, 2)).futureValue).get.head.asInstanceOf[ExpireSucceeded].value == 1)
+          assert(executor.map(_.execute(ttlRequest(id)).futureValue).get.head.asInstanceOf[TTLSucceeded].value > 0)
+          Thread.sleep(3 * 1000)
+          assert(executor.map(_.execute(getRequest(id)).futureValue).get.head.asInstanceOf[GetSucceeded].value.isEmpty)
         }
       }
       // --- TYPE
@@ -178,14 +178,13 @@ class KeysStreamAPISpec
         describe("should be able to get the type of the registration key") {
           it("the string type") {
             val id = UUID.randomUUID().toString
-            executor.execute(set(id, "a")).futureValue
-            assert(executor.execute(`type`(id)).futureValue == Seq(TypeSucceeded(ValueType.String)))
+            executor.foreach(_.execute(setRequest(id, "a")).futureValue)
+            assert(executor.map(_.execute(typeRequest(id)).futureValue) contains Seq(TypeSucceeded(ValueType.String)))
           }
         }
       }
 
       // --- WAIT
-
 
     }
 

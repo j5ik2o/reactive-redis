@@ -40,7 +40,6 @@ object ConnectionProtocol {
     override val parser: CommandResponseParser[QuitResponse] = new Parser()
   }
 
-
   sealed trait QuitResponse extends CommandResponse
 
   case object QuitSucceeded extends QuitResponse

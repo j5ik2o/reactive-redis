@@ -25,11 +25,11 @@ object DSLSupport {
 object RedisAPIExecutor {
   type CON = Flow[ByteString, ByteString, Future[OutgoingConnection]]
 
-  def apply(connection : RedisAPIExecutor.CON) = new RedisAPIExecutor(connection)
+  def apply(connection: RedisAPIExecutor.CON) = new RedisAPIExecutor(connection)
   def apply(address: InetSocketAddress)(implicit system: ActorSystem) = new RedisAPIExecutor(Tcp().outgoingConnection(address))
 }
 
-class RedisAPIExecutor(connection : RedisAPIExecutor.CON) {
+class RedisAPIExecutor(connection: RedisAPIExecutor.CON) {
   private lazy val toByteStringFlow: Flow[String, ByteString, NotUsed] = Flow[String].map { s => ByteString(s) }
 
   private lazy val parseFlow: Flow[ByteString, String, NotUsed] = Flow[ByteString]
@@ -57,12 +57,13 @@ class RedisAPIExecutor(connection : RedisAPIExecutor.CON) {
     FlowShape(flowShape.in, zip.out)
   })
 
-  private def resultFlow[A <: CommandRequest] = Flow[(String, Seq[CommandRequest])].map { case (result, requests) =>
-    requests.foldLeft((Seq.empty[A#ResponseType], new CharSequenceReader(result))){ (acc, request) =>
-      val p = request.parser
-      val (parseResult, next) = p.parseResponse(acc._2)
-      (acc._1 :+ parseResult.asInstanceOf[A#ResponseType], next.asInstanceOf[CharSequenceReader])
-    }._1
+  private def resultFlow[A <: CommandRequest] = Flow[(String, Seq[CommandRequest])].map {
+    case (result, requests) =>
+      requests.foldLeft((Seq.empty[A#ResponseType], new CharSequenceReader(result))) { (acc, request) =>
+        val p = request.parser
+        val (parseResult, next) = p.parseResponse(acc._2)
+        (acc._1 :+ parseResult.asInstanceOf[A#ResponseType], next.asInstanceOf[CharSequenceReader])
+      }._1
   }
 
   def execute[A <: CommandRequest](source: Source[A, NotUsed])(implicit mat: Materializer) = {
@@ -76,9 +77,3 @@ class RedisAPIExecutor(connection : RedisAPIExecutor.CON) {
 
 }
 
-
-trait BaseStreamAPI {
-
-
-
-}

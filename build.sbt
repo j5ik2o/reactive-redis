@@ -1,9 +1,32 @@
+import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+
+import scalariform.formatter.preferences._
+
 val akkaVersion = "2.4.10"
 
+val formatPreferences = FormattingPreferences()
+  .setPreference(RewriteArrowSymbols, false)
+  .setPreference(AlignParameters, true)
+  .setPreference(AlignSingleLineCaseStatements, true)
+  .setPreference(SpacesAroundMultiImports, true)
+  .setPreference(DoubleIndentClassDeclaration, true)
+  .setPreference(AlignArguments, true)
+
 lazy val commonSettings = Seq(
-  organization := "com.github.j5ik2o",
-  version := "1.0.0",
-  scalaVersion := "2.11.8"
+  organization := "com.github.j5ik2o"
+  , version := "1.0.0"
+  , scalaVersion := "2.11.8"
+  , scalacOptions ++= Seq(
+    "-feature"
+    , "-deprecation"
+    , "-unchecked"
+    , "-encoding", "UTF-8"
+    , "-Xfatal-warnings"
+    , "-language:existentials"
+    , "-language:implicitConversions"
+    , "-language:postfixOps"
+    , "-language:higherKinds"
+  )
 )
 
 lazy val root = (project in file("."))
@@ -27,5 +50,8 @@ lazy val core = (project in file("core"))
       , "ch.qos.logback" % "logback-classic" % "1.1.7"
       , "org.scalatest" %% "scalatest" % "3.0.0" % "test"
       , "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4"
-    )
+    ),
+    SbtScalariform.scalariformSettings ++ Seq(
+      ScalariformKeys.preferences in Compile := formatPreferences
+      , ScalariformKeys.preferences in Test := formatPreferences)
   )

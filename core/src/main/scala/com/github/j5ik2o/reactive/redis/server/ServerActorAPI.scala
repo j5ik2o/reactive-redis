@@ -4,7 +4,7 @@ import akka.actor.Actor
 import com.github.j5ik2o.reactive.redis.BaseActorAPI
 import akka.pattern.{ ask, pipe }
 
-trait ServerActorAPI extends BaseActorAPI with ServerStreamAPI {
+trait ServerActorAPI extends BaseActorAPI with ServerCommandRequests {
   this: Actor =>
 
   import ServerProtocol._
@@ -30,20 +30,19 @@ trait ServerActorAPI extends BaseActorAPI with ServerStreamAPI {
     // --- CONFIG SET
 
     // --- DBSIZE
-    case DBSizeRequest =>
-      //run(dbSize).pipeTo(sender())
+    case DBSizeRequest   =>
+    //run(dbSize).pipeTo(sender())
 
     // --- DEBUG OBJECT
     // --- DEBUG SEGFAULT
 
     // --- FLUSHALL
     case FlushAllRequest =>
-      //run(flushAll).pipeTo(sender())
+    //run(flushAll).pipeTo(sender())
 
     // --- FLUSHDB
-    case FlushDBRequest =>
-      //run(flushDB).pipeTo(sender())
-
+    case FlushDBRequest  =>
+    //run(flushDB).pipeTo(sender())
 
     // --- INFO
     // --- LASTSAVE

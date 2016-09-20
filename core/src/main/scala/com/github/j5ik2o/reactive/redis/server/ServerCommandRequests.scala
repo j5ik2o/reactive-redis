@@ -2,13 +2,12 @@ package com.github.j5ik2o.reactive.redis.server
 
 import akka.NotUsed
 import akka.stream.scaladsl.Source
-import com.github.j5ik2o.reactive.redis.BaseStreamAPI
 import com.github.j5ik2o.reactive.redis.server.ServerProtocol._
 
-trait ServerStreamAPI extends BaseStreamAPI {
+trait ServerCommandRequests {
   // --- BGREWRITEAOF
   // --- BGSAVE
-  val bgSaveRequest = Source.single(BgSaveRequest)
+  val bgSaveRequest: Source[BgSaveRequest, NotUsed] = Source.single(BgSaveRequest())
 
   // --- CLIENT GETNAME
   // --- CLIENT KILL
@@ -26,19 +25,19 @@ trait ServerStreamAPI extends BaseStreamAPI {
   // --- CONFIG SET
 
   // --- DBSIZE
-  val dbSizeRequest: Source[DBSizeRequest.type, NotUsed] = Source.single(DBSizeRequest)
+  val dbSizeRequest: Source[DBSizeRequest, NotUsed] = Source.single(DBSizeRequest())
 
   // --- DEBUG OBJECT
   // --- DEBUG SEGFAULT
 
   // --- FLUSHALL
-  val flushAllRequest: Source[FlushAllRequest.type, NotUsed] = Source.single(FlushAllRequest)
+  val flushAllRequest: Source[FlushAllRequest, NotUsed] = Source.single(FlushAllRequest())
 
   // --- FLUSHDB
-  val flushDB: Source[FlushDBRequest.type, NotUsed] = Source.single(FlushDBRequest)
+  val flushDB: Source[FlushDBRequest, NotUsed] = Source.single(FlushDBRequest())
 
   // --- INFO
-  val infoRequest: Source[InfoRequest.type, NotUsed] = Source.single(InfoRequest)
+  val infoRequest: Source[InfoRequest, NotUsed] = Source.single(InfoRequest())
 
   // --- LASTSAVE
 
@@ -58,7 +57,6 @@ trait ServerStreamAPI extends BaseStreamAPI {
   // --- SYNC
 
   // --- TIME
-  val time: Source[TimeRequest.type, NotUsed] = Source.single(TimeRequest)
-
+  val time: Source[TimeRequest, NotUsed] = Source.single(TimeRequest())
 
 }

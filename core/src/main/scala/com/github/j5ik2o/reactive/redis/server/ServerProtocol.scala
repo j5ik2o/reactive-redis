@@ -7,7 +7,17 @@ object ServerProtocol {
 
   // --- BGREWRITEAOF
   // --- BGSAVE
-  case object BgSaveRequest extends CommandRequest {
+  object BgSaveRequest {
+
+    def apply(): BgSaveRequest = BgSaveRequestImpl
+
+    def unapply(self: BgSaveRequest): Option[Unit] = Some(())
+
+  }
+
+  trait BgSaveRequest extends CommandRequest
+
+  private object BgSaveRequestImpl extends BgSaveRequest {
 
     class Parser extends CommandResponseParser[ResponseType] {
       override protected val responseParser: Parser[BgSaveResponse] = {
@@ -25,6 +35,7 @@ object ServerProtocol {
     override def encodeAsString: String = "BGSAVE"
 
     override type ResultType = Unit
+
     override type ResponseType = BgSaveResponse
 
     override def responseAsSucceeded(arguments: Unit): BgSaveResponse = BgSaveSucceeded
@@ -56,7 +67,17 @@ object ServerProtocol {
   // --- CONFIG SET ---------------------------------------------------------------------------------------------------
 
   // --- DBSIZE -------------------------------------------------------------------------------------------------------
-  case object DBSizeRequest extends CommandRequest {
+  object DBSizeRequest {
+
+    def apply(): DBSizeRequest = DBSizeRequestImpl
+
+    def unapply(self: DBSizeRequest): Option[Unit] = Some(())
+
+  }
+
+  trait DBSizeRequest extends CommandRequest
+
+  object DBSizeRequestImpl extends DBSizeRequest {
 
     class Parser extends CommandResponseParser[ResponseType] {
       override protected val responseParser: Parser[DBSizeResponse] = {
@@ -94,7 +115,15 @@ object ServerProtocol {
   // --- DEBUG SEGFAULT -----------------------------------------------------------------------------------------------
 
   // --- FLUSHALL -----------------------------------------------------------------------------------------------------
-  case object FlushAllRequest extends CommandRequest {
+  object FlushAllRequest {
+    def apply(): FlushAllRequest = FlushAllRequestImpl
+
+    def unapply(self: FlushAllRequest): Option[Unit] = Some(())
+  }
+
+  trait FlushAllRequest extends CommandRequest
+
+  object FlushAllRequestImpl extends FlushAllRequest {
 
     class Parser extends CommandResponseParser[ResponseType] {
       override protected val responseParser: Parser[FlushAllResponse] = {
@@ -130,7 +159,17 @@ object ServerProtocol {
   case class FlushAllFailed(ex: Exception) extends FlushAllResponse
 
   // --- FLUSHDB ------------------------------------------------------------------------------------------------------
-  case object FlushDBRequest extends CommandRequest {
+  object FlushDBRequest {
+
+    def apply(): FlushDBRequest = FlushDBRequestImpl
+
+    def unapply(self: FlushDBRequest): Option[Unit] = Some(())
+
+  }
+
+  trait FlushDBRequest extends CommandRequest
+
+  object FlushDBRequestImpl extends FlushDBRequest {
 
     class Parser extends CommandResponseParser[ResponseType] {
       override protected val responseParser: Parser[FlushDBResponse] = {
@@ -165,9 +204,18 @@ object ServerProtocol {
 
   case class FlushDBFailed(ex: Exception) extends FlushDBResponse
 
-
   // --- INFO ---------------------------------------------------------------------------------------------------------
-  case object InfoRequest extends CommandRequest {
+  object InfoRequest {
+
+    def apply(): InfoRequest = InfoRequestImpl
+
+    def unapply(self: InfoRequest): Option[Unit] = Some(())
+
+  }
+
+  trait InfoRequest extends CommandRequest
+
+  private object InfoRequestImpl extends InfoRequest {
 
     class Parser extends CommandResponseParser[ResponseType] {
       override protected val responseParser: Parser[InfoResponse] = {
@@ -185,6 +233,7 @@ object ServerProtocol {
     override def encodeAsString: String = "INFO"
 
     override type ResultType = String
+
     override type ResponseType = InfoResponse
 
     override def responseAsSucceeded(arguments: String): InfoResponse =
@@ -207,7 +256,17 @@ object ServerProtocol {
   // --- ROLE ---------------------------------------------------------------------------------------------------------
   // --- SAVE ---------------------------------------------------------------------------------------------------------
   // --- SHUTDOWN -----------------------------------------------------------------------------------------------------
-  case class ShutdownRequest(save: Boolean) extends CommandRequest {
+  object ShutdownRequest {
+    def apply(save: Boolean): ShutdownRequest = new ShutdownRequestImpl(save)
+
+    def unapply(self: ShutdownRequest): Option[Boolean] = Some(self.save)
+  }
+
+  trait ShutdownRequest extends CommandRequest {
+    val save: Boolean
+  }
+
+  private class ShutdownRequestImpl(val save: Boolean) extends ShutdownRequest {
 
     class Parser extends CommandResponseParser[ResponseType] {
       override protected val responseParser: Parser[ShutdownResponse] = {
@@ -249,13 +308,22 @@ object ServerProtocol {
   // --- SYNC ---------------------------------------------------------------------------------------------------------
 
   // --- TIME ---------------------------------------------------------------------------------------------------------
-  case object TimeRequest extends CommandRequest {
+  object TimeRequest {
+    def apply(): TimeRequest = TimeRequestImpl
+
+    def unapply(self: TimeRequest): Option[Unit] = Some(())
+  }
+
+  trait TimeRequest extends CommandRequest
+
+  object TimeRequestImpl extends TimeRequest {
 
     class Parser extends CommandResponseParser[ResponseType] {
       override protected val responseParser: Parser[TimeResponse] = {
         stringArrayWithCrLfOrErrorWithCrLf ^^ {
-          case ArrayExpr(values: Seq[StringExpr]) =>
-            responseAsSucceeded((values(0).value.toInt, values(1).value.toInt))
+          case ArrayExpr(values) =>
+            val valuesTyped = values.asInstanceOf[Seq[StringExpr]]
+            responseAsSucceeded((valuesTyped(0).value.toInt, valuesTyped(1).value.toInt))
           case ErrorExpr(msg) =>
             responseAsFailed(RedisIOException(Some(msg)))
           case _ =>
@@ -267,6 +335,7 @@ object ServerProtocol {
     override def encodeAsString: String = "TIME"
 
     override type ResultType = (Int, Int)
+
     override type ResponseType = TimeResponse
 
     override def responseAsSucceeded(arguments: (Int, Int)): TimeResponse =

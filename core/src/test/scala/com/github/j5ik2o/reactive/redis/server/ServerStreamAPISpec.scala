@@ -1,14 +1,15 @@
 package com.github.j5ik2o.reactive.redis.server
 
 import java.net.InetSocketAddress
-import java.time.{ Instant, ZoneId, ZonedDateTime }
 
 import akka.actor.ActorSystem
-import com.github.j5ik2o.reactive.redis.server.ServerProtocol.{ DBSizeSucceeded, TimeSucceeded }
+import akka.stream.scaladsl.Source
+import com.github.j5ik2o.reactive.redis.StringClient.Protocol.String.SetRequest
+import com.github.j5ik2o.reactive.redis.server.ServerProtocol.{ BgSaveSucceeded, DBSizeRequest, DBSizeSucceeded, TimeSucceeded }
 import com.github.j5ik2o.reactive.redis.{ ActorSpec, RedisAPIExecutor, ServerBootable }
 
 class ServerStreamAPISpec
-  extends ActorSpec(ActorSystem("ServerStreamAPISpec"))
+    extends ActorSpec(ActorSystem("ServerStreamAPISpec"))
     with ServerBootable {
 
   import com.github.j5ik2o.reactive.redis.RedisCommandRequests._
@@ -16,11 +17,10 @@ class ServerStreamAPISpec
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     val address = new InetSocketAddress("127.0.0.1", testServer.address.get.getPort)
-    executor = RedisAPIExecutor(address)
+    executor = Some(RedisAPIExecutor(address))
   }
 
   override protected def afterAll(): Unit = {
-    //api.quit.futureValue
     system.terminate()
     super.afterAll()
   }
@@ -30,8 +30,8 @@ class ServerStreamAPISpec
     // --- BGSAVE
     describe("BGSAVE") {
       it("should be able to save data in the background") {
-        executor.execute(set("a", "1")).futureValue
-        executor.execute(bgSaveRequest).futureValue
+        executor.foreach(_.execute(setRequest("a", "1")).futureValue)
+        assert(executor.map(_.execute(bgSaveRequest).futureValue).get.head.isInstanceOf[BgSaveSucceeded.type])
       }
     }
     // --- CLIENT GETNAME
@@ -52,9 +52,8 @@ class ServerStreamAPISpec
     // --- DBSIZE
     describe("DBSIZE") {
       it("should be able to get the size of the db") {
-        executor.execute(set("a", "1")).futureValue
-        executor.execute(dbSizeRequest).futureValue match {
-          case Seq(DBSizeSucceeded(size)) =>
+        executor.map(_.execute(setRequest("a", "1") ++ dbSizeRequest).futureValue).get match {
+          case Seq(_, DBSizeSucceeded(size)) =>
             assert(size > 0)
           case _ =>
             fail()
@@ -67,20 +66,20 @@ class ServerStreamAPISpec
     // --- FLUSHALL
     describe("FLUSHALL") {
       it("should be able to flush all dbs") {
-        executor.execute(flushAllRequest).futureValue
+        executor.foreach(_.execute(flushAllRequest).futureValue)
       }
     }
     // --- FLUSHDB
     describe("FLUSHDB") {
       it("should be able to flush the db") {
-        executor.execute(flushDB).futureValue
+        executor.foreach(_.execute(flushDB).futureValue)
       }
     }
 
     // --- INFO
     describe("INFO") {
       it("should be able to get the information") {
-        val result = executor.execute(infoRequest).futureValue
+        val result = executor.map(_.execute(infoRequest).futureValue).get
         result.foreach(println)
         assert(result.nonEmpty)
       }
@@ -95,13 +94,10 @@ class ServerStreamAPISpec
     // --- TIME
     describe("TIME") {
       it("should be able to get time on the server") {
-        val result = executor.execute(time).futureValue
+        val result = executor.map(_.execute(time).futureValue).get
         result match {
           case Seq(TimeSucceeded(unixTime, millis)) =>
-            val now = ZonedDateTime.now()
-            val instant = Instant.ofEpochSecond(unixTime)
-            val dateTime = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault())
-            assert(now.toInstant.getEpochSecond == dateTime.toInstant.getEpochSecond)
+            assert(unixTime > 0 && millis > 0)
         }
       }
     }

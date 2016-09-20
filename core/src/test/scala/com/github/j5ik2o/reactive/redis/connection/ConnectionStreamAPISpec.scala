@@ -7,7 +7,7 @@ import com.github.j5ik2o.reactive.redis.connection.ConnectionProtocol._
 import com.github.j5ik2o.reactive.redis.{ ActorSpec, RedisAPIExecutor, ServerBootable }
 
 class ConnectionStreamAPISpec
-  extends ActorSpec(ActorSystem("ConnectionStreamAPISpec"))
+    extends ActorSpec(ActorSystem("ConnectionStreamAPISpec"))
     with ServerBootable {
 
   import com.github.j5ik2o.reactive.redis.RedisCommandRequests._
@@ -15,18 +15,18 @@ class ConnectionStreamAPISpec
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     val address = new InetSocketAddress("127.0.0.1", testServer.address.get.getPort)
-    executor = RedisAPIExecutor(address)
+    executor = Some(RedisAPIExecutor(address))
   }
 
   override protected def afterAll(): Unit = {
-    assert(executor.execute(quitRequest).futureValue == Seq(QuitSucceeded))
+    assert(executor.map(_.execute(quitRequest).futureValue).contains(Seq(QuitSucceeded)))
     system.terminate()
     super.afterAll()
   }
 
   describe("ConnectionStreamAPI") {
     it("select") {
-      assert(executor.execute(select(1).concat(select(2))).futureValue == Seq(SelectSucceeded, SelectSucceeded))
+      assert(executor.map(_.execute(selectRequest(1).concat(selectRequest(2))).futureValue).contains(Seq(SelectSucceeded, SelectSucceeded)))
 
     }
   }

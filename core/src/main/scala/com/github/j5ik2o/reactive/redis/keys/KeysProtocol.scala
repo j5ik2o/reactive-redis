@@ -1,12 +1,21 @@
 package com.github.j5ik2o.reactive.redis.keys
 
-import com.github.j5ik2o.reactive.redis.CommandResponseParser._
 import com.github.j5ik2o.reactive.redis._
 
 object KeysProtocol {
 
   // --- DEL  ---------------------------------------------------------------------------------------------------
-  case class DelRequest(keys: Seq[String]) extends CommandRequest {
+  object DelRequest {
+    def apply(keys: Seq[String]): DelRequest = new DelRequestImpl(keys)
+
+    def unapply(self: DelRequest): Option[Seq[String]] = Some(self.keys)
+  }
+
+  trait DelRequest extends CommandRequest {
+    val keys: Seq[String]
+  }
+
+  private class DelRequestImpl(val keys: Seq[String]) extends DelRequest {
 
     override def encodeAsString: String = s"DEL ${keys.mkString(" ")}"
 
@@ -33,8 +42,15 @@ object KeysProtocol {
   case class DelFailed(ex: Exception) extends DelResponse
 
   // --- DUMP  ---------------------------------------------------------------------------------------------------
+  object DumpRequest {
+    def apply(key: String): DumpRequest = new DumpRequestImpl(key)
+    def unapply(self: DumpRequest): Option[String] = Some(self.key)
+  }
+  trait DumpRequest extends CommandRequest {
+    val key: String
+  }
 
-  case class DumpRequest(key: String) extends CommandRequest {
+  private class DumpRequestImpl(val key: String) extends DumpRequest {
 
     override def encodeAsString: String = s"DUMP $key"
 
@@ -59,23 +75,9 @@ object KeysProtocol {
 
   case class DumpFailed(ex: Exception) extends DumpResponse
 
-
   // --- EXISTS  ---------------------------------------------------------------------------------------------------
 
   case class ExistsRequest(key: String) extends CommandRequest {
-
-    class Parser extends CommandResponseParser[ResponseType] {
-      override protected val responseParser: Parser[ResponseType] = {
-        integerReplyWithCrLfOrErrorWithCrLf ^^ {
-          case NumberExpr(n) =>
-            responseAsSucceeded(n)
-          case ErrorExpr(msg) =>
-            responseAsFailed(RedisIOException(Some(msg)))
-          case _ =>
-            sys.error("It's unexpected.")
-        }
-      }
-    }
 
     override def encodeAsString: String = s"EXISTS $key"
 
@@ -88,7 +90,10 @@ object KeysProtocol {
     override def responseAsFailed(ex: Exception): ExistsResponse =
       ExistsFailed(ex)
 
-    override val parser: CommandResponseParser[ExistsResponse] = new Parser()
+    override val parser: CommandResponseParser[ExistsResponse] = new IntegerReplyParser(
+      responseAsSucceeded,
+      msg => responseAsFailed(RedisIOException(Some(msg)))
+    )
   }
 
   sealed trait ExistsResponse extends CommandResponse
@@ -101,22 +106,10 @@ object KeysProtocol {
 
   case class ExpireRequest(key: String, timeout: Long) extends CommandRequest {
 
-    class Parser extends CommandResponseParser[ResponseType] {
-      override protected val responseParser: Parser[ResponseType] = {
-        integerReplyWithCrLfOrErrorWithCrLf ^^ {
-          case NumberExpr(n) =>
-            responseAsSucceeded(n)
-          case ErrorExpr(msg) =>
-            responseAsFailed(RedisIOException(Some(msg)))
-          case _ =>
-            sys.error("It's unexpected.")
-        }
-      }
-    }
-
     override def encodeAsString: String = s"EXPIRE $key $timeout"
 
     override type ResultType = Int
+
     override type ResponseType = ExpireResponse
 
     override def responseAsSucceeded(arguments: Int): ExpireResponse =
@@ -125,7 +118,10 @@ object KeysProtocol {
     override def responseAsFailed(ex: Exception): ExpireResponse =
       ExpireFailed(ex)
 
-    override val parser: CommandResponseParser[ExpireResponse] = new Parser()
+    override val parser: CommandResponseParser[ExpireResponse] = new IntegerReplyParser(
+      responseAsSucceeded,
+      msg => responseAsFailed(RedisIOException(Some(msg)))
+    )
   }
 
   sealed trait ExpireResponse extends CommandResponse
@@ -138,22 +134,10 @@ object KeysProtocol {
 
   case class ExpireAtRequest(key: String, unixTimeout: Long) extends CommandRequest {
 
-    class Parser extends CommandResponseParser[ResponseType] {
-      override protected val responseParser: Parser[ResponseType] = {
-        integerReplyWithCrLfOrErrorWithCrLf ^^ {
-          case NumberExpr(n) =>
-            responseAsSucceeded(n)
-          case ErrorExpr(msg) =>
-            responseAsFailed(RedisIOException(Some(msg)))
-          case _ =>
-            sys.error("It's unexpected.")
-        }
-      }
-    }
-
     override def encodeAsString: String = ???
 
     override type ResultType = Int
+
     override type ResponseType = ExpireAtResponse
 
     override def responseAsSucceeded(arguments: Int): ExpireAtResponse =
@@ -162,7 +146,10 @@ object KeysProtocol {
     override def responseAsFailed(ex: Exception): ExpireAtResponse =
       ExpireAtFailed(ex)
 
-    override val parser: CommandResponseParser[ExpireAtResponse] = new Parser()
+    override val parser: CommandResponseParser[ExpireAtResponse] = new IntegerReplyParser(
+      responseAsSucceeded,
+      msg => responseAsFailed(RedisIOException(Some(msg)))
+    )
   }
 
   sealed trait ExpireAtResponse extends CommandResponse
@@ -233,22 +220,10 @@ object KeysProtocol {
 
   case class PersistRequest(key: String) extends CommandRequest {
 
-    class Parser extends CommandResponseParser[ResponseType] {
-      override protected val responseParser: Parser[ResponseType] = {
-        integerReplyWithCrLfOrErrorWithCrLf ^^ {
-          case NumberExpr(n) =>
-            responseAsSucceeded(n)
-          case ErrorExpr(msg) =>
-            responseAsFailed(RedisIOException(Some(msg)))
-          case _ =>
-            sys.error("It's unexpected.")
-        }
-      }
-    }
-
     override def encodeAsString: String = s"PERSIST $key"
 
     override type ResultType = Int
+
     override type ResponseType = PersistResponse
 
     override def responseAsSucceeded(arguments: Int): PersistResponse =
@@ -257,7 +232,10 @@ object KeysProtocol {
     override def responseAsFailed(ex: Exception): PersistResponse =
       PersistFailed(ex)
 
-    override val parser: CommandResponseParser[PersistResponse] = new Parser()
+    override val parser: CommandResponseParser[PersistResponse] = new IntegerReplyParser(
+      responseAsSucceeded,
+      msg => responseAsFailed(RedisIOException(Some(msg)))
+    )
   }
 
   sealed trait PersistResponse extends CommandResponse
@@ -273,7 +251,15 @@ object KeysProtocol {
   // --- PTTL
 
   // --- RANDOMKEY
-  case object RandomKeyRequest extends CommandRequest {
+  object RandomKeyRequest {
+    def apply(): RandomKeyRequest = RandomKeyRequestImpl
+
+    def unapply(self: RandomKeyRequest): Option[Unit] = Some(())
+  }
+
+  trait RandomKeyRequest extends CommandRequest
+
+  private object RandomKeyRequestImpl extends RandomKeyRequest {
 
     override def encodeAsString: String = "RANDOMKEY"
 
@@ -314,7 +300,7 @@ object KeysProtocol {
     override def responseAsFailed(ex: Exception): RenameResponse =
       RenameFailed(ex)
 
-    override val parser: CommandResponseParser[RenameResponse] = new SimpleReplyParser(
+    override val parser: CommandResponseParser[RenameResponse] = new UnitReplyParser(
       responseAsSucceeded,
       msg => responseAsFailed(RedisIOException(Some(msg)))
     )
@@ -364,19 +350,6 @@ object KeysProtocol {
   // --- TTL ----------------------------------------------------------------------------------------------------------
   case class TTLRequest(key: String) extends CommandRequest {
 
-    class Parser extends CommandResponseParser[ResponseType] {
-      override protected val responseParser: Parser[ResponseType] = {
-        integerReplyWithCrLfOrErrorWithCrLf ^^ {
-          case NumberExpr(d) =>
-            responseAsSucceeded(d)
-          case ErrorExpr(msg) =>
-            responseAsFailed(RedisIOException(Some(msg)))
-          case _ =>
-            sys.error("It's unexpected.")
-        }
-      }
-    }
-
     override def encodeAsString: String = s"TTL $key"
 
     override type ResultType = Int
@@ -388,7 +361,10 @@ object KeysProtocol {
     override def responseAsFailed(ex: Exception): TTLResponse =
       TTLFailed(ex)
 
-    override val parser: CommandResponseParser[TTLResponse] = new Parser()
+    override val parser: CommandResponseParser[TTLResponse] = new IntegerReplyParser(
+      responseAsSucceeded,
+      msg => responseAsFailed(RedisIOException(Some(msg)))
+    )
   }
 
   sealed trait TTLResponse extends CommandResponse
@@ -401,19 +377,6 @@ object KeysProtocol {
 
   case class TypeRequest(key: String) extends CommandRequest {
 
-    class Parser extends CommandResponseParser[ResponseType] {
-      override protected val responseParser: Parser[ResponseType] = {
-        simpleWithCrLfOrErrorWithCrLf ^^ {
-          case SimpleExpr(typeString) =>
-            responseAsSucceeded(ValueType.withName(typeString))
-          case ErrorExpr(msg) =>
-            responseAsFailed(RedisIOException(Some(msg)))
-          case _ =>
-            sys.error("It's unexpected.")
-        }
-      }
-    }
-
     override def encodeAsString: String = s"TYPE $key"
 
     override type ResultType = ValueType.Value
@@ -425,7 +388,10 @@ object KeysProtocol {
     override def responseAsFailed(ex: Exception): TypeResponse =
       TypeFailed(ex)
 
-    override val parser: CommandResponseParser[TypeResponse] = new Parser()
+    override val parser: CommandResponseParser[TypeResponse] = new SimpleReplyParser(
+      typeString => responseAsSucceeded(ValueType.withName(typeString)),
+      msg => responseAsFailed(RedisIOException(Some(msg)))
+    )
   }
 
   sealed trait TypeResponse extends CommandResponse
@@ -437,19 +403,6 @@ object KeysProtocol {
   // --- WAIT ---------------------------------------------------------------------------------------------------------
 
   case class WaitRequest(numSlaves: Int, timeout: Int) extends CommandRequest {
-
-    class Parser extends CommandResponseParser[ResponseType] {
-      override protected val responseParser: Parser[ResponseType] = {
-        integerReplyWithCrLfOrErrorWithCrLf ^^ {
-          case NumberExpr(d) =>
-            responseAsSucceeded(d)
-          case ErrorExpr(msg) =>
-            responseAsFailed(RedisIOException(Some(msg)))
-          case _ =>
-            sys.error("It's unexpected.")
-        }
-      }
-    }
 
     override def encodeAsString: String = s"WAIT $numSlaves $timeout"
 
@@ -463,7 +416,10 @@ object KeysProtocol {
     override def responseAsFailed(ex: Exception): WaitResponse =
       WaitFailed(ex)
 
-    override val parser: CommandResponseParser[WaitResponse] = new Parser()
+    override val parser: CommandResponseParser[WaitResponse] = new IntegerReplyParser(
+      responseAsSucceeded,
+      msg => responseAsFailed(RedisIOException(Some(msg)))
+    )
   }
 
   sealed trait WaitResponse extends CommandResponse

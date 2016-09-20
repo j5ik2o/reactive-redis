@@ -4,7 +4,7 @@ import akka.actor.Actor
 import com.github.j5ik2o.reactive.redis.BaseActorAPI
 import akka.pattern.{ ask, pipe }
 
-trait KeysActorAPI extends BaseActorAPI with KeysStreamAPI {
+trait KeysActorAPI extends BaseActorAPI with KeysCommandRequests {
   this: Actor =>
   import KeysProtocol._
 
@@ -12,34 +12,32 @@ trait KeysActorAPI extends BaseActorAPI with KeysStreamAPI {
 
   val handleKeys: Receive = {
     // --- DEL
-    case DelRequest(keys) =>
+    case DelRequest(keys)                  =>
 
     // --- DUMP
 
     // --- EXISTS
-    case ExistsRequest(key) =>
-
+    case ExistsRequest(key)                =>
 
     // --- EXPIRE
-    case ExpireRequest(key, timeout) =>
+    case ExpireRequest(key, timeout)       =>
 
     // --- EXPIREAT
     case ExpireAtRequest(key, unixTimeout) =>
 
-
     // --- KEYS
-    case KeysRequest(keyPattern) =>
-      //run(keys(keyPattern)).pipeTo(sender())
+    case KeysRequest(keyPattern)           =>
+    //run(keys(keyPattern)).pipeTo(sender())
 
     // --- MIGRATE
 
     // --- MOVE
-    case MoveRequest(key, index) =>
+    case MoveRequest(key, index)           =>
 
     // --- OBJECT
 
     // --- PERSIST
-    case PersistRequest(key) =>
+    case PersistRequest(key)               =>
 
     // --- PEXPIRE
 
@@ -48,13 +46,13 @@ trait KeysActorAPI extends BaseActorAPI with KeysStreamAPI {
     // --- PTTL
 
     // --- RANDOMKEY
-    case RandomKeyRequest =>
+    case RandomKeyRequest                  =>
 
     // --- RENAME
-    case RenameRequest(oldKey, newKey) =>
+    case RenameRequest(oldKey, newKey)     =>
 
     // --- RENAMENX
-    case RenameNxRequest(oldKey, newKey) =>
+    case RenameNxRequest(oldKey, newKey)   =>
 
     // --- RESTORE
 
@@ -63,10 +61,10 @@ trait KeysActorAPI extends BaseActorAPI with KeysStreamAPI {
     // --- SORT
 
     // --- TTL
-    case TTLRequest(key) =>
+    case TTLRequest(key)                   =>
 
     // --- TYPE
-    case TypeRequest(key) =>
+    case TypeRequest(key)                  =>
 
     // --- WAIT
   }

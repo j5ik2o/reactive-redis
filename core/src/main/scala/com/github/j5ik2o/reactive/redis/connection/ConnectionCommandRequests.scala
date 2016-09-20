@@ -7,7 +7,7 @@ import com.github.j5ik2o.reactive.redis.connection.ConnectionProtocol.{ QuitRequ
 
 import scala.reflect.ClassTag
 
-trait ConnectionStreamAPI extends BaseStreamAPI {
+trait ConnectionCommandRequests {
 
   // --- AUTH
 
@@ -16,9 +16,9 @@ trait ConnectionStreamAPI extends BaseStreamAPI {
   // --- PING
 
   // --- QUIT
-  val quitRequest = Source.single(QuitRequest)
+  val quitRequest: Source[QuitRequest.type, NotUsed] = Source.single(QuitRequest)
 
   // --- SELECT
-  def select(index: Int)(implicit c: ClassTag[SelectRequest]): Source[SelectRequest, NotUsed] = Source.single(SelectRequest(index))
+  def selectRequest(index: Int): Source[SelectRequest, NotUsed] = Source.single(SelectRequest(index))
 
 }

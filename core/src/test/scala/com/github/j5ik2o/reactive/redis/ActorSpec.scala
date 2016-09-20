@@ -15,7 +15,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.duration._
 
 abstract class ActorSpec(_system: ActorSystem)
-  extends TestKit(_system)
+    extends TestKit(_system)
     with ImplicitSender
     with FunSpecLike
     with BeforeAndAfterAll
@@ -29,11 +29,7 @@ abstract class ActorSpec(_system: ActorSystem)
 
   val clientRef: AtomicReference[ActorRef] = new AtomicReference()
 
-  val apiRef: AtomicReference[RedisCommandRequests$] = new AtomicReference()
-
-  def api: RedisCommandRequests$ = apiRef.get
-
-  var executor: RedisAPIExecutor = _
+  var executor: Option[RedisAPIExecutor] = None
 
   def client: ActorRef = clientRef.get
 
