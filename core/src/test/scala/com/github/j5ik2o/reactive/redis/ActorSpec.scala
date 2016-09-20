@@ -7,6 +7,7 @@ import akka.stream.ActorMaterializer
 import akka.testkit.{ ImplicitSender, TestKit }
 import akka.util.Timeout
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.time.{ Seconds, Span }
 import org.scalatest.{ BeforeAndAfterAll, FunSpecLike }
 
 import scala.concurrent.Await
@@ -19,6 +20,8 @@ abstract class ActorSpec(_system: ActorSystem)
     with FunSpecLike
     with BeforeAndAfterAll
     with ScalaFutures {
+
+  override implicit def patienceConfig: PatienceConfig = PatienceConfig(scaled(Span(3, Seconds)))
 
   implicit val materializer = ActorMaterializer()
 

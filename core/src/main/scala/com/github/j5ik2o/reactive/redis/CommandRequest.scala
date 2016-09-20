@@ -41,66 +41,65 @@ abstract class CommandResponseParser[RT] extends RegexParsers {
 
   override def skipWhitespace: Boolean = false
 
-  lazy val ERROR: Parser[ErrorExpr] = elem('-') ~> """[a-zA-Z0-9. ]+""".r ^^ { msg => ErrorExpr(msg) }
+  private lazy val CRLF = """\r\n""".r
 
-  lazy val LENGTH: Parser[LengthExpr] = elem('$') ~> """[0-9-]+""".r ^^ { n => LengthExpr(n.toInt) }
+  private lazy val ERROR: Parser[ErrorExpr] = elem('-') ~> """[a-zA-Z0-9. ]+""".r ^^ { msg => ErrorExpr(msg) }
 
-  lazy val SIMPLE: Parser[SimpleExpr] = elem('+') ~> """[a-zA-Z0-9. ]+""".r ^^ { msg => SimpleExpr(msg) }
+  private lazy val LENGTH: Parser[LengthExpr] = elem('$') ~> """[0-9-]+""".r ^^ { n => LengthExpr(n.toInt) }
 
-  lazy val NUMBER: Parser[NumberExpr] = elem(':') ~> """[0-9]+""".r ^^ { n => NumberExpr(n.toInt) }
+  private lazy val SIMPLE: Parser[SimpleExpr] = elem('+') ~> """[a-zA-Z0-9. ]+""".r ^^ { msg => SimpleExpr(msg) }
 
-  lazy val STRING: Parser[String] = """.*[^\r\n]""".r
-  lazy val VALUE: Parser[StringExpr] = STRING ^^ { s => StringExpr(s)}
+  private lazy val NUMBER: Parser[NumberExpr] = elem(':') ~> """[0-9]+""".r ^^ { n => NumberExpr(n.toInt) }
 
-  lazy val NUMBER_OR_VALUE: Parser[Expr with HasSize] = NUMBER | VALUE
+  private lazy val STRING: Parser[String] = """.*[^\r\n]""".r
 
-  lazy val ARRAY_PREFIX: Parser[Int] = elem('*') ~> """[0-9]+""".r ^^ { n =>
-    n.toInt
-  }
+  private lazy val VALUE: Parser[StringExpr] = STRING ^^ { s => StringExpr(s)}
 
-  lazy val CRLF = """\r\n""".r
+  private lazy val ARRAY_PREFIX: Parser[Int] = elem('*') ~> """[0-9]+""".r ^^ { _.toInt }
 
-  lazy val STRING_ARRAY_VALUE: Parser[StringExpr] = LENGTH ~ CRLF ~ VALUE ^^ { case size ~ _ ~ value =>
-    require(size.value == value.size)
-    value
-  }
+  private lazy val errorWithCrLf: Parser[Expr] = ERROR <~ CRLF
 
-  lazy val NUMBER_ARRAY_VALUE: Parser[NumberExpr] = LENGTH ~ CRLF ~ NUMBER ^^ { case size ~ _ ~ value =>
-    require(size.value == value.size)
-    value
-  }
+  private lazy val simpleWithCrLf: Parser[Expr] = SIMPLE <~ CRLF
 
-  lazy val errorWithCrLf: Parser[Expr] = ERROR <~ CRLF
-
-  lazy val simpleWithCrLf: Parser[Expr] = SIMPLE <~ CRLF
-
-  lazy val numberWithCrLf = NUMBER <~ CRLF
+  private lazy val numberWithCrLf = NUMBER <~ CRLF
 
   lazy val simpleWithCrLfOrErrorWithCrLf: Parser[Expr] = simpleWithCrLf | errorWithCrLf
 
   lazy val numberWithCrLfOrErrorWithCrLf: Parser[Expr] = numberWithCrLf | errorWithCrLf
 
-  lazy val arrayPrefixWithCrLf = ARRAY_PREFIX <~ CRLF
+  private lazy val arrayPrefixWithCrLf: Parser[Int] = ARRAY_PREFIX <~ CRLF
 
-  lazy val stringArrayWithCrLf: Parser[ArrayExpr[StringExpr]] = arrayPrefixWithCrLf ~ repsep(STRING_ARRAY_VALUE, CRLF) ^^ { case size ~ values =>
+  private lazy val stringArrayElement: Parser[StringExpr] = LENGTH ~ CRLF ~ VALUE ^^ { case size ~ _ ~ value =>
+    require(size.value == value.size)
+    value
+  }
+
+  private lazy val stringArrayWithCrLf: Parser[ArrayExpr[StringExpr]] = arrayPrefixWithCrLf ~ repsep(stringArrayElement, CRLF) ^^ { case size ~ values =>
     require(size == values.size)
     ArrayExpr(values)
   }
 
-  lazy val numberArrayWithCrLf: Parser[ArrayExpr[NumberExpr]] = arrayPrefixWithCrLf ~ repsep(NUMBER_ARRAY_VALUE, CRLF) ^^ { case size ~ values =>
-    println(">>>===" + values)
+  private lazy val numberArrayElement: Parser[NumberExpr] = LENGTH ~ CRLF ~ NUMBER ^^ { case size ~ _ ~ value =>
+    require(size.value == value.size)
+    value
+  }
+
+  private lazy val numberArrayWithCrLf: Parser[ArrayExpr[NumberExpr]] = arrayPrefixWithCrLf ~ repsep(numberArrayElement, CRLF) ^^ { case size ~ values =>
     require(size == values.size)
     ArrayExpr(values)
   }
 
   lazy val stringArrayWithCrLfOrErrorWithCrLf: Parser[Expr] = stringArrayWithCrLf | errorWithCrLf
 
-  lazy val bulkString = LENGTH ~ CRLF ~ opt(STRING) ^^ {
-    case l ~ _ ~ s =>
+  private lazy val bulkStringWithCrLf: Parser[StringOptExpr] = LENGTH ~ CRLF ~ opt(STRING <~ CRLF) ^^ { case l ~ _ ~ s =>
       StringOptExpr(s)
   }
 
-  lazy val bulkStringWithCrLf = bulkString <~ CRLF
+  lazy val bulkStringWithCrLfOrErrorWithCrLf: Parser[Expr] = bulkStringWithCrLf | errorWithCrLf
+
+  private lazy val integerReplyWithCrLf = NUMBER <~ CRLF
+
+  lazy val integerReplyWithCrLfOrErrorWithCrLf = integerReplyWithCrLf | errorWithCrLf
 
   protected val responseParser: Parser[RT]
 

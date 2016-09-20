@@ -11,7 +11,18 @@ import akka.util.ByteString
 import scala.concurrent.Future
 import scala.util.parsing.input.CharSequenceReader
 
+object DSLSupport {
+
+  implicit def toAnd[A <: CommandRequest](src: Source[A, NotUsed]) = new {
+    def and[B <: CommandRequest](dest: Source[B, NotUsed]): Source[CommandRequest, NotUsed] = {
+      src concat dest
+    }
+  }
+
+}
+
 trait BaseStreamAPI {
+
 
   protected def parseException(msg: Option[String] = None) = new ParseException(msg.orNull, 0)
 
@@ -23,12 +34,11 @@ trait BaseStreamAPI {
     //.via(Framing.delimiter(ByteString("\r\n"), maximumFrameLength = Int.MaxValue, allowTruncation = true))
     .map(_.utf8String)
     .log("response")
-
     //.fold(Seq.empty[String])((acc, in) => acc :+ in)
 
-  protected def requestFlow = Flow[String].via(toByteStringFlow).fold(ByteString.empty)((acc, in) => acc ++ in).log("cmd").via(connection).via(parseFlow)
+  protected def requestFlow = Flow[String].via(toByteStringFlow).fold(ByteString.empty)((acc, in) => acc ++ in).via(connection).via(parseFlow)
 
-  def graph[A <: CommandResponse] = GraphDSL.create() { implicit builder =>
+  def mainFlow: Flow[CommandRequest, (String, Seq[CommandRequest]), NotUsed] = Flow.fromGraph(GraphDSL.create() { implicit builder =>
     import GraphDSL.Implicits._
     // String, Seq[CR]
     val flowShape = builder.add(Flow[CommandRequest].fold(("", Seq.empty[CommandRequest])) { (acc, in) =>
@@ -40,17 +50,13 @@ trait BaseStreamAPI {
     unzip.out0 ~> requestFlow ~> zip.in0
     unzip.out1 ~> zip.in1
     FlowShape(flowShape.in, zip.out)
-  }
+  })
 
-  def mainFlow[A <: CommandResponse]: Flow[CommandRequest, (String, Seq[CommandRequest]), NotUsed] = Flow.fromGraph(graph[A])
-
-  def resultFlow[A <: CommandResponse] =  Flow[(String, Seq[CommandRequest])].map { case (result, requests) =>
-    val reader = new CharSequenceReader(result)
-
-    requests.foldLeft((Seq.empty[CommandResponse], reader)){ (acc, request) =>
+  def resultFlow[A <: CommandRequest] = Flow[(String, Seq[CommandRequest])].map { case (result, requests) =>
+    requests.foldLeft((Seq.empty[A#ResponseType], new CharSequenceReader(result))){ (acc, request) =>
       val p = request.parser
       val (parseResult, next) = p.parseResponse(acc._2)
-      (acc._1 :+ parseResult, next.asInstanceOf[CharSequenceReader])
+      (acc._1 :+ parseResult.asInstanceOf[A#ResponseType], next.asInstanceOf[CharSequenceReader])
     }._1
   }
 
@@ -58,7 +64,7 @@ trait BaseStreamAPI {
     source
       .log("request", (cmd) => cmd.encodeAsString)
       .via(mainFlow)
-      .via(resultFlow)
+      .via(resultFlow[A])
       .toMat(Sink.head)(Keep.right)
       .run()
   }

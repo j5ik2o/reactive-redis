@@ -13,3 +13,4 @@ trait StreamAPI
     with TransactionsStreamAPI {
 
 }
+

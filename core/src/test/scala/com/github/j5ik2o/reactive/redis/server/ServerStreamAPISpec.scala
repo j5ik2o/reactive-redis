@@ -9,12 +9,14 @@ import akka.stream.scaladsl.{ Flow, Tcp }
 import akka.util.ByteString
 import com.github.j5ik2o.reactive.redis.server.ServerProtocol.{ DBSizeSucceeded, TimeSucceeded }
 import com.github.j5ik2o.reactive.redis.{ ActorSpec, ServerBootable, StreamAPI }
+import org.scalatest.time.{ Millis, Seconds, Span }
 
 import scala.concurrent.Future
 
 class ServerStreamAPISpec
   extends ActorSpec(ActorSystem("ServerStreamAPISpec"))
     with ServerBootable {
+
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()

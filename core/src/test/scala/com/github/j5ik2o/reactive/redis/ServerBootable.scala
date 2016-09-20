@@ -25,7 +25,7 @@ trait ServerBootable extends BeforeAndAfter {
 
   after {
     if (Option(api).isDefined)
-      api.flushDB
+      api.run(api.flushDB).futureValue
     if (Option(client).isDefined){
       Await.result(client ? FlushDBRequest, Duration.Inf)
     }

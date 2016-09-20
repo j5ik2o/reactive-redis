@@ -40,22 +40,22 @@ object ServerProtocol {
 
   case class BgSaveFailed(ex: Exception) extends BgSaveResponse
 
-  // --- CLIENT GETNAME
-  // --- CLIENT KILL
-  // --- CLIENT LIST
-  // --- CLIENT PAUSE
-  // --- CLIENT REPLY
-  // --- CLIENT SETNAME
-  // --- COMMAND
-  // --- COMMAND COUNT
-  // --- COMMAND GETKEYS
-  // --- COMMAND INFO
-  // --- CONFIG GET
-  // --- CONFIG RESETSTAT
-  // --- CONFIG REWRITE
-  // --- CONFIG SET
+  // --- CLIENT GETNAME -----------------------------------------------------------------------------------------------
+  // --- CLIENT KILL --------------------------------------------------------------------------------------------------
+  // --- CLIENT LIST --------------------------------------------------------------------------------------------------
+  // --- CLIENT PAUSE -------------------------------------------------------------------------------------------------
+  // --- CLIENT REPLY -------------------------------------------------------------------------------------------------
+  // --- CLIENT SETNAME -----------------------------------------------------------------------------------------------
+  // --- COMMAND ------------------------------------------------------------------------------------------------------
+  // --- COMMAND COUNT ------------------------------------------------------------------------------------------------
+  // --- COMMAND GETKEYS ----------------------------------------------------------------------------------------------
+  // --- COMMAND INFO -------------------------------------------------------------------------------------------------
+  // --- CONFIG GET ---------------------------------------------------------------------------------------------------
+  // --- CONFIG RESETSTAT ---------------------------------------------------------------------------------------------
+  // --- CONFIG REWRITE -----------------------------------------------------------------------------------------------
+  // --- CONFIG SET ---------------------------------------------------------------------------------------------------
 
-  // --- DBSIZE
+  // --- DBSIZE -------------------------------------------------------------------------------------------------------
   case object DBSizeRequest extends CommandRequest {
 
     class Parser extends CommandResponseParser[ResponseType] {
@@ -90,10 +90,10 @@ object ServerProtocol {
 
   case class DBSizeFailed(ex: Exception) extends DBSizeResponse
 
-  // --- DEBUG OBJECT
-  // --- DEBUG SEGFAULT
+  // --- DEBUG OBJECT -------------------------------------------------------------------------------------------------
+  // --- DEBUG SEGFAULT -----------------------------------------------------------------------------------------------
 
-  // --- FLUSHALL
+  // --- FLUSHALL -----------------------------------------------------------------------------------------------------
   case object FlushAllRequest extends CommandRequest {
 
     class Parser extends CommandResponseParser[ResponseType] {
@@ -129,7 +129,7 @@ object ServerProtocol {
 
   case class FlushAllFailed(ex: Exception) extends FlushAllResponse
 
-  // --- FLUSHDB
+  // --- FLUSHDB ------------------------------------------------------------------------------------------------------
   case object FlushDBRequest extends CommandRequest {
 
     class Parser extends CommandResponseParser[ResponseType] {
@@ -166,14 +166,16 @@ object ServerProtocol {
   case class FlushDBFailed(ex: Exception) extends FlushDBResponse
 
 
-  // --- INFO
+  // --- INFO ---------------------------------------------------------------------------------------------------------
   case object InfoRequest extends CommandRequest {
 
     class Parser extends CommandResponseParser[ResponseType] {
       override protected val responseParser: Parser[InfoResponse] = {
-        bulkStringWithCrLf ^^ {
+        bulkStringWithCrLfOrErrorWithCrLf ^^ {
           case StringOptExpr(value) =>
             responseAsSucceeded(value.get)
+          case ErrorExpr(msg) =>
+            responseAsFailed(RedisIOException(Some(msg)))
           case _ =>
             sys.error("it's unexpected.")
         }
@@ -200,11 +202,11 @@ object ServerProtocol {
 
   case class InfoFailed(ex: Exception) extends InfoResponse
 
-  // --- LASTSAVE
-  // --- MONITOR
-  // --- ROLE
-  // --- SAVE
-  // --- SHUTDOWN
+  // --- LASTSAVE -----------------------------------------------------------------------------------------------------
+  // --- MONITOR ------------------------------------------------------------------------------------------------------
+  // --- ROLE ---------------------------------------------------------------------------------------------------------
+  // --- SAVE ---------------------------------------------------------------------------------------------------------
+  // --- SHUTDOWN -----------------------------------------------------------------------------------------------------
   case class ShutdownRequest(save: Boolean) extends CommandRequest {
 
     class Parser extends CommandResponseParser[ResponseType] {
@@ -242,18 +244,22 @@ object ServerProtocol {
 
   case class ShutdownFailed(ex: Exception) extends ShutdownResponse
 
-  // --- SLAVEOF
-  // --- SLOWLOG
-  // --- SYNC
+  // --- SLAVEOF ------------------------------------------------------------------------------------------------------
+  // --- SLOWLOG ------------------------------------------------------------------------------------------------------
+  // --- SYNC ---------------------------------------------------------------------------------------------------------
 
-  // --- TIME
+  // --- TIME ---------------------------------------------------------------------------------------------------------
   case object TimeRequest extends CommandRequest {
 
     class Parser extends CommandResponseParser[ResponseType] {
       override protected val responseParser: Parser[TimeResponse] = {
-        stringArrayWithCrLf ^^ {
-          case ArrayExpr(values) =>
+        stringArrayWithCrLfOrErrorWithCrLf ^^ {
+          case ArrayExpr(values: Seq[StringExpr]) =>
             responseAsSucceeded((values(0).value.toInt, values(1).value.toInt))
+          case ErrorExpr(msg) =>
+            responseAsFailed(RedisIOException(Some(msg)))
+          case _ =>
+            sys.error("it's unexpected.")
         }
       }
     }

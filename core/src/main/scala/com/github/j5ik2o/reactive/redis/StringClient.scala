@@ -63,10 +63,14 @@ object StringClient {
 
       case class GetRequest(key: String) extends CommandRequest {
         class Parser extends CommandResponseParser[ResponseType] {
-          override protected val responseParser: Parser[GetResponse] =  {
-            bulkStringWithCrLf ^^ {
+          override protected val responseParser: Parser[ResponseType] =  {
+            bulkStringWithCrLfOrErrorWithCrLf ^^ {
               case StringOptExpr(s) =>
                 responseAsSucceeded(s)
+              case ErrorExpr(msg) =>
+                responseAsFailed(RedisIOException(Some(msg)))
+              case _ =>
+                sys.error("it's unexpected.")
             }
           }
         }
@@ -95,9 +99,13 @@ object StringClient {
       case class GetSetRequest(key: String, value: String) extends CommandRequest {
         class Parser extends CommandResponseParser[ResponseType] {
           override protected val responseParser: Parser[GetSetResponse] = {
-            bulkStringWithCrLf ^^ {
+            bulkStringWithCrLfOrErrorWithCrLf ^^ {
               case StringOptExpr(s) =>
                 responseAsSucceeded(s)
+              case ErrorExpr(msg) =>
+                responseAsFailed(RedisIOException(Some(msg)))
+              case _ =>
+                sys.error("it's unexpected.")
             }
           }
         }
