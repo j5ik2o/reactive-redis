@@ -1,18 +1,7 @@
 package com.github.j5ik2o.reactive.redis
 
-import java.net.InetSocketAddress
-import java.util.UUID
-
 import akka.actor.ActorSystem
-import akka.pattern.ask
-import com.github.j5ik2o.reactive.redis.StringClient.Protocol.String._
-import com.github.j5ik2o.reactive.redis.connection.ConnectionProtocol._
-import com.github.j5ik2o.reactive.redis.keys.KeysProtocol._
-import com.github.j5ik2o.reactive.redis.keys.ValueType
 import org.scalatest.BeforeAndAfter
-
-import scala.concurrent.Await
-import scala.concurrent.duration._
 
 class StringClientSpec
     extends ActorSpec(ActorSystem("StringClientSpec")) with ServerBootable

@@ -3,13 +3,11 @@ package com.github.j5ik2o.reactive.redis.server
 import java.net.InetSocketAddress
 
 import akka.actor.ActorSystem
-import akka.stream.scaladsl.Source
-import com.github.j5ik2o.reactive.redis.StringClient.Protocol.String.SetRequest
-import com.github.j5ik2o.reactive.redis.server.ServerProtocol.{ BgSaveSucceeded, DBSizeRequest, DBSizeSucceeded, TimeSucceeded }
+import com.github.j5ik2o.reactive.redis.server.ServerProtocol._
 import com.github.j5ik2o.reactive.redis.{ ActorSpec, RedisAPIExecutor, ServerBootable }
 
-class ServerStreamAPISpec
-    extends ActorSpec(ActorSystem("ServerStreamAPISpec"))
+class ServerStreamSpec
+    extends ActorSpec(ActorSystem("ServerStreamSpec"))
     with ServerBootable {
 
   import com.github.j5ik2o.reactive.redis.RedisCommandRequests._
@@ -80,8 +78,15 @@ class ServerStreamAPISpec
     describe("INFO") {
       it("should be able to get the information") {
         val result = executor.map(_.execute(infoRequest).futureValue).get
-        result.foreach(println)
         assert(result.nonEmpty)
+        //        executor.foreach{ e =>
+        //          println("-----------")
+        //          val actorRef = Source.actorRef[CommandRequest](2, OverflowStrategy.fail).via(e.executeFlow).toMat(Sink.foreach(println))(Keep.left).run()
+        //          actorRef ! SetRequest("1", "a")
+        //          actorRef ! GetRequest("1")
+        //          actorRef ! PoisonPill
+        //          println("-----------")
+        //        }
       }
     }
     // --- LASTSAVE

@@ -16,7 +16,7 @@ trait ConnectionCommandRequests {
   // --- PING
 
   // --- QUIT
-  val quitRequest: Source[QuitRequest.type, NotUsed] = Source.single(QuitRequest)
+  val quitRequest: Source[QuitRequest, NotUsed] = Source.single(QuitRequest())
 
   // --- SELECT
   def selectRequest(index: Int): Source[SelectRequest, NotUsed] = Source.single(SelectRequest(index))

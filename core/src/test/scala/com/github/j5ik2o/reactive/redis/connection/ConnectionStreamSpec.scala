@@ -6,8 +6,8 @@ import akka.actor.ActorSystem
 import com.github.j5ik2o.reactive.redis.connection.ConnectionProtocol._
 import com.github.j5ik2o.reactive.redis.{ ActorSpec, RedisAPIExecutor, ServerBootable }
 
-class ConnectionStreamAPISpec
-    extends ActorSpec(ActorSystem("ConnectionStreamAPISpec"))
+class ConnectionStreamSpec
+    extends ActorSpec(ActorSystem("ConnectionStreamSpec"))
     with ServerBootable {
 
   import com.github.j5ik2o.reactive.redis.RedisCommandRequests._
@@ -26,7 +26,7 @@ class ConnectionStreamAPISpec
 
   describe("ConnectionStreamAPI") {
     it("select") {
-      assert(executor.map(_.execute(selectRequest(1).concat(selectRequest(2))).futureValue).contains(Seq(SelectSucceeded, SelectSucceeded)))
+      assert(executor.map(_.execute(selectRequest(1) ++ selectRequest(2)).futureValue).contains(Seq(SelectSucceeded, SelectSucceeded)))
 
     }
   }

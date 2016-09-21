@@ -4,45 +4,36 @@ import com.github.j5ik2o.reactive.redis.CommandResponseParser._
 import com.github.j5ik2o.reactive.redis._
 
 object ServerProtocol {
+  import BaseProtocol._
 
   // --- BGREWRITEAOF
   // --- BGSAVE
+  trait BgSaveRequest extends CommandRequest
+
   object BgSaveRequest {
 
     def apply(): BgSaveRequest = BgSaveRequestImpl
 
     def unapply(self: BgSaveRequest): Option[Unit] = Some(())
 
-  }
+    private object BgSaveRequestImpl extends BgSaveRequest {
 
-  trait BgSaveRequest extends CommandRequest
+      override def encodeAsString: String = "BGSAVE"
 
-  private object BgSaveRequestImpl extends BgSaveRequest {
+      override type ResultType = Unit
 
-    class Parser extends CommandResponseParser[ResponseType] {
-      override protected val responseParser: Parser[BgSaveResponse] = {
-        simpleWithCrLfOrErrorWithCrLf ^^ {
-          case SimpleExpr(msg) =>
-            responseAsSucceeded(())
-          case ErrorExpr(msg) =>
-            responseAsFailed(RedisIOException(Some(msg)))
-          case _ =>
-            sys.error("it's unexpected.")
-        }
-      }
+      override type ResponseType = BgSaveResponse
+
+      override def responseAsSucceeded(arguments: Unit): BgSaveResponse = BgSaveSucceeded
+
+      override def responseAsFailed(ex: Exception): BgSaveResponse = BgSaveFailed(ex)
+
+      override val parser: CommandResponseParser[BgSaveResponse] = new UnitReplyParser(
+        responseAsSucceeded,
+        msg => responseAsFailed(RedisIOException(Some(msg)))
+      )
     }
 
-    override def encodeAsString: String = "BGSAVE"
-
-    override type ResultType = Unit
-
-    override type ResponseType = BgSaveResponse
-
-    override def responseAsSucceeded(arguments: Unit): BgSaveResponse = BgSaveSucceeded
-
-    override def responseAsFailed(ex: Exception): BgSaveResponse = BgSaveFailed(ex)
-
-    override val parser: CommandResponseParser[BgSaveResponse] = new Parser()
   }
 
   sealed trait BgSaveResponse extends CommandResponse
@@ -67,42 +58,32 @@ object ServerProtocol {
   // --- CONFIG SET ---------------------------------------------------------------------------------------------------
 
   // --- DBSIZE -------------------------------------------------------------------------------------------------------
+  trait DBSizeRequest extends CommandRequest
+
   object DBSizeRequest {
 
     def apply(): DBSizeRequest = DBSizeRequestImpl
 
     def unapply(self: DBSizeRequest): Option[Unit] = Some(())
 
-  }
+    private object DBSizeRequestImpl extends DBSizeRequest {
 
-  trait DBSizeRequest extends CommandRequest
+      override type ResultType = Int
 
-  object DBSizeRequestImpl extends DBSizeRequest {
+      override type ResponseType = DBSizeResponse
 
-    class Parser extends CommandResponseParser[ResponseType] {
-      override protected val responseParser: Parser[DBSizeResponse] = {
-        numberWithCrLfOrErrorWithCrLf ^^ {
-          case NumberExpr(n) =>
-            responseAsSucceeded(n)
-          case ErrorExpr(msg) =>
-            responseAsFailed(RedisIOException(Some(msg)))
-          case _ =>
-            sys.error("it's unexpected.")
-        }
-      }
+      override val encodeAsString: String = "DBSIZE"
+
+      override def responseAsSucceeded(arguments: Int): DBSizeResponse = DBSizeSucceeded(arguments)
+
+      override def responseAsFailed(ex: Exception): DBSizeResponse = DBSizeFailed(ex)
+
+      override lazy val parser: CommandResponseParser[DBSizeResponse] = new IntegerReplyParser(
+        responseAsSucceeded,
+        msg => responseAsFailed(RedisIOException(Some(msg)))
+      )
     }
 
-    override type ResultType = Int
-
-    override type ResponseType = DBSizeResponse
-
-    override val encodeAsString: String = "DBSIZE"
-
-    override def responseAsSucceeded(arguments: Int): DBSizeResponse = DBSizeSucceeded(arguments)
-
-    override def responseAsFailed(ex: Exception): DBSizeResponse = DBSizeFailed(ex)
-
-    override lazy val parser: CommandResponseParser[DBSizeResponse] = new Parser()
   }
 
   sealed trait DBSizeResponse extends CommandResponse
@@ -115,41 +96,32 @@ object ServerProtocol {
   // --- DEBUG SEGFAULT -----------------------------------------------------------------------------------------------
 
   // --- FLUSHALL -----------------------------------------------------------------------------------------------------
+  trait FlushAllRequest extends CommandRequest
+
   object FlushAllRequest {
     def apply(): FlushAllRequest = FlushAllRequestImpl
 
     def unapply(self: FlushAllRequest): Option[Unit] = Some(())
-  }
 
-  trait FlushAllRequest extends CommandRequest
+    private object FlushAllRequestImpl extends FlushAllRequest {
 
-  object FlushAllRequestImpl extends FlushAllRequest {
+      override def encodeAsString: String = "FLUSHALL"
 
-    class Parser extends CommandResponseParser[ResponseType] {
-      override protected val responseParser: Parser[FlushAllResponse] = {
-        simpleWithCrLfOrErrorWithCrLf ^^ {
-          case SimpleExpr(msg) =>
-            responseAsSucceeded(())
-          case ErrorExpr(msg) =>
-            responseAsFailed(RedisIOException(Some(msg)))
-          case _ =>
-            sys.error("it's unexpected.")
-        }
-      }
+      override type ResultType = Unit
+      override type ResponseType = FlushAllResponse
+
+      override def responseAsSucceeded(arguments: Unit): FlushAllResponse =
+        FlushAllSucceeded
+
+      override def responseAsFailed(ex: Exception): FlushAllResponse =
+        FlushAllFailed(ex)
+
+      override val parser: CommandResponseParser[FlushAllResponse] = new UnitReplyParser(
+        responseAsSucceeded,
+        msg => responseAsFailed(RedisIOException(Some(msg)))
+      )
     }
 
-    override def encodeAsString: String = "FLUSHALL"
-
-    override type ResultType = Unit
-    override type ResponseType = FlushAllResponse
-
-    override def responseAsSucceeded(arguments: Unit): FlushAllResponse =
-      FlushAllSucceeded
-
-    override def responseAsFailed(ex: Exception): FlushAllResponse =
-      FlushAllFailed(ex)
-
-    override val parser: CommandResponseParser[FlushAllResponse] = new Parser()
   }
 
   sealed trait FlushAllResponse extends CommandResponse
@@ -159,43 +131,33 @@ object ServerProtocol {
   case class FlushAllFailed(ex: Exception) extends FlushAllResponse
 
   // --- FLUSHDB ------------------------------------------------------------------------------------------------------
+  trait FlushDBRequest extends CommandRequest
+
   object FlushDBRequest {
 
     def apply(): FlushDBRequest = FlushDBRequestImpl
 
     def unapply(self: FlushDBRequest): Option[Unit] = Some(())
 
-  }
+    private object FlushDBRequestImpl extends FlushDBRequest {
 
-  trait FlushDBRequest extends CommandRequest
+      override def encodeAsString: String = "FLUSHDB"
 
-  object FlushDBRequestImpl extends FlushDBRequest {
+      override type ResultType = Unit
+      override type ResponseType = FlushDBResponse
 
-    class Parser extends CommandResponseParser[ResponseType] {
-      override protected val responseParser: Parser[FlushDBResponse] = {
-        simpleWithCrLfOrErrorWithCrLf ^^ {
-          case ErrorExpr(msg) =>
-            responseAsFailed(RedisIOException(Some(msg)))
-          case SimpleExpr(msg) =>
-            responseAsSucceeded(())
-          case _ =>
-            sys.error("it's unexpected.")
-        }
-      }
+      override def responseAsSucceeded(arguments: Unit): FlushDBResponse =
+        FlushDBSucceeded
+
+      override def responseAsFailed(ex: Exception): FlushDBResponse =
+        FlushDBFailed(ex)
+
+      override val parser: CommandResponseParser[FlushDBResponse] = new UnitReplyParser(
+        responseAsSucceeded,
+        msg => responseAsFailed(RedisIOException(Some(msg)))
+      )
     }
 
-    override def encodeAsString: String = "FLUSHDB"
-
-    override type ResultType = Unit
-    override type ResponseType = FlushDBResponse
-
-    override def responseAsSucceeded(arguments: Unit): FlushDBResponse =
-      FlushDBSucceeded
-
-    override def responseAsFailed(ex: Exception): FlushDBResponse =
-      FlushDBFailed(ex)
-
-    override val parser: CommandResponseParser[FlushDBResponse] = new Parser()
   }
 
   sealed trait FlushDBResponse extends CommandResponse
@@ -205,44 +167,34 @@ object ServerProtocol {
   case class FlushDBFailed(ex: Exception) extends FlushDBResponse
 
   // --- INFO ---------------------------------------------------------------------------------------------------------
+  trait InfoRequest extends CommandRequest
+
   object InfoRequest {
 
     def apply(): InfoRequest = InfoRequestImpl
 
     def unapply(self: InfoRequest): Option[Unit] = Some(())
 
-  }
+    private object InfoRequestImpl extends InfoRequest {
 
-  trait InfoRequest extends CommandRequest
+      override def encodeAsString: String = "INFO"
 
-  private object InfoRequestImpl extends InfoRequest {
+      override type ResultType = String
 
-    class Parser extends CommandResponseParser[ResponseType] {
-      override protected val responseParser: Parser[InfoResponse] = {
-        bulkStringWithCrLfOrErrorWithCrLf ^^ {
-          case StringOptExpr(value) =>
-            responseAsSucceeded(value.get)
-          case ErrorExpr(msg) =>
-            responseAsFailed(RedisIOException(Some(msg)))
-          case _ =>
-            sys.error("it's unexpected.")
-        }
-      }
+      override type ResponseType = InfoResponse
+
+      override def responseAsSucceeded(arguments: String): InfoResponse =
+        InfoSucceeded(arguments)
+
+      override def responseAsFailed(ex: Exception): InfoResponse =
+        InfoFailed(ex)
+
+      override val parser: CommandResponseParser[InfoResponse] = new BulkStringParser(
+        msg => responseAsSucceeded(msg.get),
+        msg => responseAsFailed(RedisIOException(Some(msg)))
+      )
     }
 
-    override def encodeAsString: String = "INFO"
-
-    override type ResultType = String
-
-    override type ResponseType = InfoResponse
-
-    override def responseAsSucceeded(arguments: String): InfoResponse =
-      InfoSucceeded(arguments)
-
-    override def responseAsFailed(ex: Exception): InfoResponse =
-      InfoFailed(ex)
-
-    override val parser: CommandResponseParser[InfoResponse] = new Parser()
   }
 
   sealed trait InfoResponse extends CommandResponse
@@ -256,45 +208,37 @@ object ServerProtocol {
   // --- ROLE ---------------------------------------------------------------------------------------------------------
   // --- SAVE ---------------------------------------------------------------------------------------------------------
   // --- SHUTDOWN -----------------------------------------------------------------------------------------------------
-  object ShutdownRequest {
-    def apply(save: Boolean): ShutdownRequest = new ShutdownRequestImpl(save)
-
-    def unapply(self: ShutdownRequest): Option[Boolean] = Some(self.save)
-  }
-
   trait ShutdownRequest extends CommandRequest {
     val save: Boolean
   }
 
-  private class ShutdownRequestImpl(val save: Boolean) extends ShutdownRequest {
+  object ShutdownRequest {
 
-    class Parser extends CommandResponseParser[ResponseType] {
-      override protected val responseParser: Parser[ShutdownResponse] = {
-        simpleWithCrLfOrErrorWithCrLf ^^ {
-          case SimpleExpr(msg) =>
-            responseAsSucceeded(())
-          case ErrorExpr(msg) =>
-            responseAsFailed(RedisIOException(Some(msg)))
-          case _ =>
-            sys.error("it's unexpected.")
-        }
-      }
+    def apply(save: Boolean): ShutdownRequest = new ShutdownRequestImpl(save)
+
+    def unapply(self: ShutdownRequest): Option[Boolean] = Some(self.save)
+
+    private class ShutdownRequestImpl(val save: Boolean) extends ShutdownRequest {
+
+      val saveOption = if (save) "SAVE" else "NOSAVE"
+
+      override def encodeAsString: String = s"SHUTDOWN $saveOption"
+
+      override type ResultType = Unit
+      override type ResponseType = ShutdownResponse
+
+      override def responseAsSucceeded(arguments: Unit): ShutdownResponse =
+        ShutdownSucceeded
+
+      override def responseAsFailed(ex: Exception): ShutdownResponse =
+        ShutdownFailed(ex)
+
+      override val parser: CommandResponseParser[ShutdownResponse] = new UnitReplyParser(
+        responseAsSucceeded,
+        msg => responseAsFailed(RedisIOException(Some(msg)))
+      )
     }
 
-    val saveOption = if (save) "SAVE" else "NOSAVE"
-
-    override def encodeAsString: String = s"SHUTDOWN $saveOption"
-
-    override type ResultType = Unit
-    override type ResponseType = ShutdownResponse
-
-    override def responseAsSucceeded(arguments: Unit): ShutdownResponse =
-      ShutdownSucceeded
-
-    override def responseAsFailed(ex: Exception): ShutdownResponse =
-      ShutdownFailed(ex)
-
-    override val parser: CommandResponseParser[ShutdownResponse] = new Parser()
   }
 
   sealed trait ShutdownResponse extends CommandResponse
@@ -308,43 +252,38 @@ object ServerProtocol {
   // --- SYNC ---------------------------------------------------------------------------------------------------------
 
   // --- TIME ---------------------------------------------------------------------------------------------------------
-  object TimeRequest {
-    def apply(): TimeRequest = TimeRequestImpl
-
-    def unapply(self: TimeRequest): Option[Unit] = Some(())
-  }
 
   trait TimeRequest extends CommandRequest
 
-  object TimeRequestImpl extends TimeRequest {
+  object TimeRequest {
 
-    class Parser extends CommandResponseParser[ResponseType] {
-      override protected val responseParser: Parser[TimeResponse] = {
-        stringArrayWithCrLfOrErrorWithCrLf ^^ {
-          case ArrayExpr(values) =>
-            val valuesTyped = values.asInstanceOf[Seq[StringExpr]]
-            responseAsSucceeded((valuesTyped(0).value.toInt, valuesTyped(1).value.toInt))
-          case ErrorExpr(msg) =>
-            responseAsFailed(RedisIOException(Some(msg)))
-          case _ =>
-            sys.error("it's unexpected.")
-        }
-      }
+    def apply(): TimeRequest = TimeRequestImpl
+
+    def unapply(self: TimeRequest): Option[Unit] = Some(())
+
+    private object TimeRequestImpl extends TimeRequest {
+
+      override def encodeAsString: String = "TIME"
+
+      override type ResultType = (Int, Int)
+
+      override type ResponseType = TimeResponse
+
+      override def responseAsSucceeded(arguments: (Int, Int)): TimeResponse =
+        TimeSucceeded(arguments._1, arguments._2)
+
+      override def responseAsFailed(ex: Exception): TimeResponse =
+        TimeFailed(ex)
+
+      override val parser: CommandResponseParser[TimeResponse] = new StringArrayParser(
+        { values =>
+          val unixTime = values.head.toInt
+          val millis = values(1).toInt
+          responseAsSucceeded((unixTime, millis))
+        },
+        msg => responseAsFailed(RedisIOException(Some(msg)))
+      )
     }
-
-    override def encodeAsString: String = "TIME"
-
-    override type ResultType = (Int, Int)
-
-    override type ResponseType = TimeResponse
-
-    override def responseAsSucceeded(arguments: (Int, Int)): TimeResponse =
-      TimeSucceeded(arguments._1, arguments._2)
-
-    override def responseAsFailed(ex: Exception): TimeResponse =
-      TimeFailed(ex)
-
-    override val parser: CommandResponseParser[TimeResponse] = new Parser()
   }
 
   sealed trait TimeResponse extends CommandResponse

@@ -2,7 +2,7 @@ package com.github.j5ik2o.reactive.redis.strings
 
 import akka.NotUsed
 import akka.stream.scaladsl.Source
-import com.github.j5ik2o.reactive.redis.StringClient.Protocol.String.{ GetRequest, GetSetRequest, SetRequest }
+import com.github.j5ik2o.reactive.redis.strings.StringsProtocol.{ GetRequest, GetSetRequest, SetRequest }
 
 trait StringCommandRequests {
 

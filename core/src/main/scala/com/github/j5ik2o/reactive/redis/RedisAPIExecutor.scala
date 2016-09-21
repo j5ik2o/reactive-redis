@@ -1,35 +1,29 @@
 package com.github.j5ik2o.reactive.redis
 
 import java.net.InetSocketAddress
-import java.text.ParseException
 
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.Tcp.OutgoingConnection
-import akka.stream.scaladsl.{ Flow, Framing, GraphDSL, Keep, Sink, Source, Tcp, Unzip, Zip }
+import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, Sink, Source, Tcp, Unzip, Zip }
 import akka.stream.{ FlowShape, Materializer }
 import akka.util.ByteString
 
 import scala.concurrent.Future
 import scala.util.parsing.input.CharSequenceReader
 
-object DSLSupport {
-
-  implicit def toAnd[A <: CommandRequest](src: Source[A, NotUsed]) = new {
-    def and[B <: CommandRequest](dest: Source[B, NotUsed]): Source[CommandRequest, NotUsed] = {
-      src concat dest
-    }
-  }
-
-}
 object RedisAPIExecutor {
   type CON = Flow[ByteString, ByteString, Future[OutgoingConnection]]
 
   def apply(connection: RedisAPIExecutor.CON) = new RedisAPIExecutor(connection)
+
   def apply(address: InetSocketAddress)(implicit system: ActorSystem) = new RedisAPIExecutor(Tcp().outgoingConnection(address))
 }
 
 class RedisAPIExecutor(connection: RedisAPIExecutor.CON) {
+
+  import BaseProtocol._
+
   private lazy val toByteStringFlow: Flow[String, ByteString, NotUsed] = Flow[String].map { s => ByteString(s) }
 
   private lazy val parseFlow: Flow[ByteString, String, NotUsed] = Flow[ByteString]
@@ -66,11 +60,16 @@ class RedisAPIExecutor(connection: RedisAPIExecutor.CON) {
       }._1
   }
 
-  def execute[A <: CommandRequest](source: Source[A, NotUsed])(implicit mat: Materializer) = {
-    source
+  def executeFlow[A <: CommandRequest](implicit mat: Materializer): Flow[A, Seq[A#ResponseType], NotUsed] = {
+    Flow[A]
       .log("request", (cmd) => cmd.encodeAsString)
       .via(requestFlow)
       .via(resultFlow[A])
+  }
+
+  def execute[A <: CommandRequest](source: Source[A, NotUsed])(implicit mat: Materializer): Future[Seq[A#ResponseType]] = {
+    source
+      .via(executeFlow[A])
       .toMat(Sink.head)(Keep.right)
       .run()
   }

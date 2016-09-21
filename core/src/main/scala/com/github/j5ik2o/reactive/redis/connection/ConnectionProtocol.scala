@@ -4,40 +4,42 @@ import com.github.j5ik2o.reactive.redis.CommandResponseParser.{ ErrorExpr, Simpl
 import com.github.j5ik2o.reactive.redis._
 
 object ConnectionProtocol {
+  import BaseProtocol._
 
-  // --- AUTH
+  // --- AUTH ---------------------------------------------------------------------------------------------------------
 
-  // --- ECHO
+  // --- ECHO ---------------------------------------------------------------------------------------------------------
 
-  // --- PING
+  // --- PING ---------------------------------------------------------------------------------------------------------
 
-  // --- QUIT
-  case object QuitRequest extends CommandRequest {
-    import CommandResponseParser._
-    class Parser extends CommandResponseParser[ResponseType] {
-      override protected val responseParser: Parser[QuitResponse] = {
-        simpleWithCrLfOrErrorWithCrLf ^^ {
-          case ErrorExpr(msg) =>
-            responseAsFailed(RedisIOException(Some(msg)))
-          case SimpleExpr(msg) =>
-            responseAsSucceeded(())
-          case _ =>
-            sys.error("It's unexpected.")
-        }
-      }
+  // --- QUIT ---------------------------------------------------------------------------------------------------------
+
+  trait QuitRequest extends CommandRequest
+
+  object QuitRequest {
+
+    def apply(): QuitRequest = QuitRequestImpl
+
+    def unapply(self: QuitRequest): Option[Unit] = Some(())
+
+    private object QuitRequestImpl extends QuitRequest {
+
+      override type ResultType = Unit
+
+      override type ResponseType = QuitResponse
+
+      override def encodeAsString: String = "QUIT"
+
+      override def responseAsSucceeded(arguments: Unit): QuitResponse = QuitSucceeded
+
+      override def responseAsFailed(ex: Exception): QuitResponse = QuitFailed(ex)
+
+      override val parser: CommandResponseParser[QuitResponse] = new UnitReplyParser(
+        responseAsSucceeded,
+        msg => responseAsFailed(RedisIOException(Some(msg)))
+      )
     }
 
-    override type ResultType = Unit
-
-    override type ResponseType = QuitResponse
-
-    override def encodeAsString: String = "QUIT"
-
-    override def responseAsSucceeded(arguments: Unit): QuitResponse = QuitSucceeded
-
-    override def responseAsFailed(ex: Exception): QuitResponse = QuitFailed(ex)
-
-    override val parser: CommandResponseParser[QuitResponse] = new Parser()
   }
 
   sealed trait QuitResponse extends CommandResponse
@@ -46,33 +48,36 @@ object ConnectionProtocol {
 
   case class QuitFailed(ex: Exception) extends QuitResponse
 
-  // --- SELECT
-  case class SelectRequest(index: Int) extends CommandRequest {
+  // --- SELECT -------------------------------------------------------------------------------------------------------
 
-    class Parser extends CommandResponseParser[ResponseType] {
-      override protected val responseParser: Parser[SelectResponse] = {
-        simpleWithCrLfOrErrorWithCrLf ^^ {
-          case ErrorExpr(msg) =>
-            responseAsFailed(RedisIOException(Some(msg)))
-          case SimpleExpr(msg) =>
-            responseAsSucceeded(())
-          case _ =>
-            sys.error("It's unexpected.")
-        }
-      }
+  trait SelectRequest extends CommandRequest {
+    val index: Int
+  }
+
+  object SelectRequest {
+
+    def apply(index: Int): SelectRequest = new SelectRequestImpl(index)
+
+    def unapply(self: SelectRequest): Option[Int] = Some(self.index)
+
+    private class SelectRequestImpl(val index: Int) extends SelectRequest {
+
+      override type ResultType = Unit
+
+      override type ResponseType = SelectResponse
+
+      override def encodeAsString: String = s"SELECT $index"
+
+      override def responseAsSucceeded(arguments: Unit): SelectResponse = SelectSucceeded
+
+      override def responseAsFailed(ex: Exception): SelectResponse = SelectFailure(ex)
+
+      override lazy val parser: CommandResponseParser[SelectResponse] = new UnitReplyParser(
+        responseAsSucceeded,
+        msg => responseAsFailed(RedisIOException(Some(msg)))
+      )
     }
 
-    override type ResultType = Unit
-
-    override type ResponseType = SelectResponse
-
-    override def encodeAsString: String = s"SELECT $index"
-
-    override def responseAsSucceeded(arguments: Unit): SelectResponse = SelectSucceeded
-
-    override def responseAsFailed(ex: Exception): SelectResponse = SelectFailure(ex)
-
-    override lazy val parser: CommandResponseParser[SelectResponse] = new Parser
   }
 
   sealed trait SelectResponse extends CommandResponse
