@@ -6,6 +6,7 @@ import java.text.ParseException
 import java.time.ZonedDateTime
 import java.util.UUID
 
+import akka.actor.Actor.Receive
 import akka.{ Done, NotUsed }
 import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
 import akka.io.Inet.SocketOption
@@ -14,7 +15,7 @@ import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, Sink, Source, Tcp, Unzip, Zi
 import akka.stream.{ ActorMaterializer, FlowShape, OverflowStrategy }
 import akka.util.ByteString
 import com.github.j5ik2o.reactive.redis.CommandResponseParser._
-import com.github.j5ik2o.reactive.redis.TransactionOperations.{ ExecRequest, MultiRequest }
+import com.github.j5ik2o.reactive.redis.TransactionOperations.{ DiscardRequest, ExecRequest, MultiRequest }
 import org.slf4j.LoggerFactory
 
 import scala.collection.immutable
@@ -30,7 +31,11 @@ trait Request {
 }
 
 trait SimpleRequest extends Request {
-  val responseFactory: ResponseFactory
+  val responseFactory: SimpleResponseFactory
+}
+
+trait TransactionRequest extends Request {
+  val responseFactory: TransactionResponseFactory
 }
 
 trait Response {
@@ -38,26 +43,23 @@ trait Response {
   val requestId: UUID
 }
 
-trait ResponseFactory extends CommandResponseParserSupport {
-  val logger = LoggerFactory.getLogger(classOf[ResponseFactory])
+trait SimpleResponseFactory extends CommandResponseParserSupport {
+  val logger = LoggerFactory.getLogger(classOf[SimpleResponseFactory])
 
-  def create(requestId: UUID, message: String): (Response, Reader[Char]) =
-    create(requestId, new CharSequenceReader(message))
+  def createResponseFromString(requestId: UUID, message: String): (Response, Reader[Char]) =
+    createResponseFromReader(requestId, new CharSequenceReader(message))
 
-  def create(requestId: UUID, message: Reader[Char]): (Response, Reader[Char])
+  def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char])
 
-}
-
-trait TransactionRequest extends Request {
-  val responseFactory: TransactionResponseFactory
 }
 
 trait TransactionResponseFactory extends CommandResponseParserSupport {
+  val logger = LoggerFactory.getLogger(classOf[TransactionResponseFactory])
 
-  def createFromString(requestId: UUID, message: String, responseFactories: Vector[ResponseFactory]): (Response, Reader[Char]) =
-    create(requestId, new CharSequenceReader(message), responseFactories)
+  def createResponseFromString(requestId: UUID, message: String, responseFactories: Vector[SimpleResponseFactory]): (Response, Reader[Char]) =
+    createResponseFromReader(requestId, new CharSequenceReader(message), responseFactories)
 
-  def create(requestId: UUID, message: Reader[Char], responseFactories: Vector[ResponseFactory]): (Response, Reader[Char])
+  def createResponseFromReader(requestId: UUID, message: Reader[Char], responseFactories: Vector[SimpleResponseFactory]): (Response, Reader[Char])
 
 }
 
@@ -67,18 +69,20 @@ private case class ActorRefDesc(actorRef: ActorRef, createAt: ZonedDateTime)
 
 private case object CleanClients
 
-class RedisActor(remoteAddress: InetSocketAddress,
-                 localAddress: Option[InetSocketAddress],
-                 options: immutable.Traversable[SocketOption],
-                 halfClose: Boolean,
-                 connectTimeout: Duration,
-                 idleTimeout: Duration) extends Actor with ActorLogging {
+class RedisActor(
+  remoteAddress:  InetSocketAddress,
+  localAddress:   Option[InetSocketAddress],
+  options:        immutable.Traversable[SocketOption],
+  halfClose:      Boolean,
+  connectTimeout: Duration,
+  idleTimeout:    Duration
+) extends Actor with ActorLogging {
   implicit val as = context.system
   implicit val mat = ActorMaterializer()
 
-  //context.system.scheduler.schedule(0 seconds, 1 seconds, self, CleanClients)
-
   private val clients: collection.mutable.Map[UUID, ActorRefDesc] = collection.mutable.Map.empty[UUID, ActorRefDesc]
+
+  private val requestsInTransaction: collection.mutable.ArrayBuffer[SimpleRequest] = collection.mutable.ArrayBuffer.empty
 
   private val tcpFlow: Flow[ByteString, ByteString, Future[OutgoingConnection]] =
     Tcp().outgoingConnection(remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout)
@@ -96,42 +100,56 @@ class RedisActor(remoteAddress: InetSocketAddress,
     FlowShape(requestFlow.in, zip.out)
   })
 
-  val requestsOfTransaction: collection.mutable.ArrayBuffer[SimpleRequest] = collection.mutable.ArrayBuffer.empty
-
-  private val sink: Sink[(ByteString, Request), Future[Done]] = Sink.foreach { case (res, req) =>
-    val response = req match {
-      case msg: ExecRequest =>
-        val result = msg.responseFactory.createFromString(req.id, res.utf8String, requestsOfTransaction.map(_.responseFactory).toVector)._1
-        requestsOfTransaction.clear()
-        result
-      case msg: SimpleRequest =>
-        msg.responseFactory.create(req.id, res.utf8String)._1
-    }
-    log.debug("send command response = {}", response)
-    clients(req.id).actorRef ! response
-    clients.remove(req.id)
+  private val sink: Sink[(ByteString, Request), Future[Done]] = Sink.foreach {
+    case (res, req) =>
+      val response = req match {
+        case msg: ExecRequest =>
+          val requestFactories = requestsInTransaction.map(_.responseFactory).toVector
+          requestsInTransaction.clear()
+          context.become(default)
+          msg.responseFactory.createResponseFromString(req.id, res.utf8String, requestFactories)._1
+        case msg: DiscardRequest =>
+          requestsInTransaction.clear()
+          context.become(default)
+          msg.responseFactory.createResponseFromString(req.id, res.utf8String)._1
+        case msg: SimpleRequest =>
+          msg.responseFactory.createResponseFromString(req.id, res.utf8String)._1
+      }
+      log.debug("send command response = {}", response)
+      clients(req.id).actorRef ! response
+      clients.remove(req.id)
   }
 
-  private val actorRef = sourceActorRef.via(connectionFlow).toMat(sink)(Keep.left).run()
+  private val redisClientRef = sourceActorRef.via(connectionFlow).toMat(sink)(Keep.left).run()
 
-  private var transcation = false
+  private def sendCommand(msg: Request) = {
+    clients.put(msg.id, ActorRefDesc(sender(), ZonedDateTime.now()))
+    redisClientRef ! msg
+  }
 
-  override def receive: Receive = {
+  override def receive: Receive = default
+
+  private def default: Receive = {
+    case msg: MultiRequest =>
+      log.debug("receive command request = {}", msg)
+      context.become(inTransaction)
+      sendCommand(msg)
     case msg: Request =>
       log.debug("receive command request = {}", msg)
-      clients.put(msg.id, ActorRefDesc(sender(), ZonedDateTime.now()))
-      msg match {
-        case cmd: MultiRequest =>
-          transcation = true
-        case cmd: ExecRequest =>
-          transcation = false
-        case cmd: SimpleRequest if transcation =>
-          requestsOfTransaction.append(cmd)
-        case _  =>
-      }
-      actorRef ! msg
-    case CleanClients =>
+      sendCommand(msg)
+  }
 
+  private def inTransaction: Receive = {
+    case msg: ExecRequest =>
+      log.debug("receive command request = {}", msg)
+      sendCommand(msg)
+    case msg: DiscardRequest =>
+      log.debug("receive command request = {}", msg)
+      sendCommand(msg)
+    case msg: SimpleRequest =>
+      log.debug("receive command request = {}", msg)
+      requestsInTransaction.append(msg)
+      sendCommand(msg)
   }
 
 }

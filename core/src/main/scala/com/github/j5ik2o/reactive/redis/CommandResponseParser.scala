@@ -114,8 +114,8 @@ trait CommandResponseParserSupport extends RegexParsers {
 
   def parseResponse(in: Reader[Char]): (Expr, Input) = parse(responseParser, in) match {
     case Success(result, next) => (result, next)
-    case Failure(msg, _) => throw new Exception(msg)
-    case Error(msg, _) => throw new Exception(msg)
+    case Failure(msg, _)       => throw new Exception(msg)
+    case Error(msg, _)         => throw new Exception(msg)
   }
 
 }

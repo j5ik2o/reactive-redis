@@ -14,9 +14,8 @@ import scala.util.parsing.input.Reader
 
 object StringOperations {
 
-
-  object SetRequest extends ResponseFactory {
-    override def create(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) =
+  object SetRequest extends SimpleResponseFactory {
+    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) =
       parseResponse(message) match {
         case (SimpleExpr("OK"), next) =>
           (SetSucceeded(UUID.randomUUID(), requestId), next)
@@ -34,7 +33,7 @@ object StringOperations {
 
   case class SetRequest(id: UUID, key: String, value: String) extends SimpleRequest {
     override val message: String = s"SET $key $value"
-    override val responseFactory: ResponseFactory = SetRequest
+    override val responseFactory: SimpleResponseFactory = SetRequest
   }
 
   sealed trait SetResponse extends Response
@@ -47,8 +46,8 @@ object StringOperations {
 
   // ---
 
-  object GetRequest extends ResponseFactory {
-    override def create(requestId: UUID, message: Reader[Char]): (Response, Reader[Char])= {
+  object GetRequest extends SimpleResponseFactory {
+    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) = {
       parseResponse(message) match {
         case (StringOptExpr(s), next) =>
           (GetSucceeded(UUID.randomUUID(), requestId, s), next)
@@ -67,7 +66,7 @@ object StringOperations {
 
   case class GetRequest(id: UUID, key: String) extends SimpleRequest {
     override val message: String = s"GET $key"
-    override val responseFactory: ResponseFactory = GetRequest
+    override val responseFactory: SimpleResponseFactory = GetRequest
   }
 
   sealed trait GetResponse extends Response
@@ -83,21 +82,23 @@ object StringOperations {
     def props(host: String, port: Int): Props =
       props(new InetSocketAddress(host, port))
 
-    def props(remoteAddress: InetSocketAddress,
-              localAddress: Option[InetSocketAddress] = None,
-              options: immutable.Traversable[SocketOption] = Nil,
-              halfClose: Boolean = true,
-              connectTimeout: Duration = Duration.Inf,
-              idleTimeout: Duration = Duration.Inf): Props =
+    def props(
+      remoteAddress:  InetSocketAddress,
+      localAddress:   Option[InetSocketAddress]           = None,
+      options:        immutable.Traversable[SocketOption] = Nil,
+      halfClose:      Boolean                             = true,
+      connectTimeout: Duration                            = Duration.Inf,
+      idleTimeout:    Duration                            = Duration.Inf
+    ): Props =
       Props(new RedisActor(remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout))
 
   }
 
   // ---
 
-  object GetSetResponse extends ResponseFactory {
+  object GetSetSimpleResponse$ extends SimpleResponseFactory {
 
-    override def create(requestId: UUID, message: Reader[Char]): (GetSetResponse, Reader[Char]) =
+    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (GetSetSimpleResponse$, Reader[Char]) =
       parseResponse(message) match {
         case (StringOptExpr(s), next) =>
           (GetSetSucceeded(UUID.randomUUID(), requestId, s), next)
@@ -117,15 +118,15 @@ object StringOperations {
 
   case class GetSetRequest(id: UUID, key: String, value: String) extends SimpleRequest {
     override val message: String = s"GETSET $key $value"
-    override val responseFactory: ResponseFactory = GetSetResponse
+    override val responseFactory: SimpleResponseFactory = GetSetSimpleResponse$
   }
 
-  sealed trait GetSetResponse extends Response
+  sealed trait GetSetSimpleResponse$ extends Response
 
-  case class GetSetSuspended(id: UUID, requestId: UUID) extends GetSetResponse
+  case class GetSetSuspended(id: UUID, requestId: UUID) extends GetSetSimpleResponse$
 
-  case class GetSetSucceeded(id: UUID, requestId: UUID, value: Option[String]) extends GetSetResponse
+  case class GetSetSucceeded(id: UUID, requestId: UUID, value: Option[String]) extends GetSetSimpleResponse$
 
-  case class GetSetFailed(id: UUID, requestId: UUID, ex: Exception) extends GetSetResponse
+  case class GetSetFailed(id: UUID, requestId: UUID, ex: Exception) extends GetSetSimpleResponse$
 
 }
