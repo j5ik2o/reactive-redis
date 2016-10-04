@@ -70,12 +70,12 @@ private case class ActorRefDesc(actorRef: ActorRef, createAt: ZonedDateTime)
 private case object CleanClients
 
 class RedisActor(
-  remoteAddress:  InetSocketAddress,
-  localAddress:   Option[InetSocketAddress],
-  options:        immutable.Traversable[SocketOption],
-  halfClose:      Boolean,
-  connectTimeout: Duration,
-  idleTimeout:    Duration
+    remoteAddress:  InetSocketAddress,
+    localAddress:   Option[InetSocketAddress],
+    options:        immutable.Traversable[SocketOption],
+    halfClose:      Boolean,
+    connectTimeout: Duration,
+    idleTimeout:    Duration
 ) extends Actor with ActorLogging {
   implicit val as = context.system
   implicit val mat = ActorMaterializer()

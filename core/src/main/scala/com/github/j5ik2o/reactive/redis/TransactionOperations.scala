@@ -40,12 +40,16 @@ object TransactionOperations {
     override def createResponseFromReader(requestId: UUID, message: Reader[Char], responseFactories: Vector[SimpleResponseFactory]): (Response, Reader[Char]) = {
       val result = parseResponse(message)
       result match {
-        case (ArraySizeExpr(_), next) =>
-          val result = responseFactories.foldLeft((next, Seq.empty[Response])) {
-            case ((n, seq), e) =>
-              val (res, _n) = e.createResponseFromReader(requestId, n)
-              (_n, seq :+ res)
-          }
+        case (ArraySizeExpr(size), next) =>
+          val result: (Reader[Char], Seq[Response]) =
+            if (size == -1)
+              (next, Seq.empty)
+            else
+              responseFactories.foldLeft((next, Seq.empty[Response])) {
+                case ((n, seq), e) =>
+                  val (res, _n) = e.createResponseFromReader(requestId, n)
+                  (_n, seq :+ res)
+              }
           (ExecSucceeded(UUID.randomUUID(), requestId, result._2), result._1)
         case (ErrorExpr(msg), next) =>
           (ExecFailed(UUID.randomUUID(), requestId, new Exception(msg)), next)
