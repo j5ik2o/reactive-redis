@@ -33,17 +33,19 @@ class RedisActorSpec
   val idGenerator = new AtomicLong()
 
   describe("StringOperations") {
-    val actorRef = system.actorOf(RedisActor.props("127.0.0.1", testServer.address.get.getPort))
     it("should be set value") {
+      val actorRef = system.actorOf(RedisActor.props("127.0.0.1", testServer.address.get.getPort))
       val id = idGenerator.incrementAndGet().toString
       assert((actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue.isInstanceOf[SetSucceeded])
     }
     it("should be got value") {
+      val actorRef = system.actorOf(RedisActor.props("127.0.0.1", testServer.address.get.getPort))
       val id = idGenerator.incrementAndGet().toString
       assert((actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue.isInstanceOf[SetSucceeded])
       assert((actorRef ? GetRequest(UUID.randomUUID, id)).futureValue.asInstanceOf[GetSucceeded].value.contains("a"))
     }
     it("should be got and set value") {
+      val actorRef = system.actorOf(RedisActor.props("127.0.0.1", testServer.address.get.getPort))
       val id = idGenerator.incrementAndGet().toString
       assert((actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue.isInstanceOf[SetSucceeded])
       assert((actorRef ? GetSetRequest(UUID.randomUUID, id, "b")).futureValue.asInstanceOf[GetSetSucceeded].value.contains("a"))
@@ -53,26 +55,28 @@ class RedisActorSpec
   describe("TransactionOperations") {
     it("should be able to execute transactional commands") {
       val actorRef = system.actorOf(RedisActor.props("127.0.0.1", testServer.address.get.getPort))
-      assert((actorRef ? SetRequest(UUID.randomUUID, "2", "c")).futureValue.isInstanceOf[SetSucceeded])
+      val id = idGenerator.incrementAndGet().toString
+      assert((actorRef ? SetRequest(UUID.randomUUID, id, "c")).futureValue.isInstanceOf[SetSucceeded])
       assert((actorRef ? MultiRequest(UUID.randomUUID())).futureValue.isInstanceOf[MultiSucceeded])
-      assert((actorRef ? SetRequest(UUID.randomUUID, "2", "a")).futureValue.isInstanceOf[SetSuspended])
-      assert((actorRef ? SetRequest(UUID.randomUUID, "2", "b")).futureValue.isInstanceOf[SetSuspended])
-      assert((actorRef ? GetRequest(UUID.randomUUID, "2")).futureValue.isInstanceOf[GetSuspended])
+      assert((actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue.isInstanceOf[SetSuspended])
+      assert((actorRef ? SetRequest(UUID.randomUUID, id, "b")).futureValue.isInstanceOf[SetSuspended])
+      assert((actorRef ? GetRequest(UUID.randomUUID, id)).futureValue.isInstanceOf[GetSuspended])
       val execResult = (actorRef ? ExecRequest(UUID.randomUUID())).futureValue.asInstanceOf[ExecSucceeded]
       assert(execResult.responses(0).isInstanceOf[SetSucceeded])
       assert(execResult.responses(1).isInstanceOf[SetSucceeded])
       assert(execResult.responses(2).asInstanceOf[GetSucceeded].value.contains("b"))
-      assert((actorRef ? GetRequest(UUID.randomUUID, "2")).futureValue.asInstanceOf[GetSucceeded].value.contains("b"))
+      assert((actorRef ? GetRequest(UUID.randomUUID, id)).futureValue.asInstanceOf[GetSucceeded].value.contains("b"))
     }
     it("should be able to discard transactional commands") {
       val actorRef = system.actorOf(RedisActor.props("127.0.0.1", testServer.address.get.getPort))
-      assert((actorRef ? SetRequest(UUID.randomUUID, "2", "c")).futureValue.isInstanceOf[SetSucceeded])
+      val id = idGenerator.incrementAndGet().toString
+      assert((actorRef ? SetRequest(UUID.randomUUID, id, "c")).futureValue.isInstanceOf[SetSucceeded])
       assert((actorRef ? MultiRequest(UUID.randomUUID())).futureValue.isInstanceOf[MultiSucceeded])
-      assert((actorRef ? SetRequest(UUID.randomUUID, "2", "a")).futureValue.isInstanceOf[SetSuspended])
-      assert((actorRef ? SetRequest(UUID.randomUUID, "2", "b")).futureValue.isInstanceOf[SetSuspended])
-      assert((actorRef ? GetRequest(UUID.randomUUID, "2")).futureValue.isInstanceOf[GetSuspended])
+      assert((actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue.isInstanceOf[SetSuspended])
+      assert((actorRef ? SetRequest(UUID.randomUUID, id, "b")).futureValue.isInstanceOf[SetSuspended])
+      assert((actorRef ? GetRequest(UUID.randomUUID, id)).futureValue.isInstanceOf[GetSuspended])
       assert((actorRef ? DiscardRequest(UUID.randomUUID())).futureValue.isInstanceOf[DiscardSucceeded])
-      assert((actorRef ? GetRequest(UUID.randomUUID, "2")).futureValue.asInstanceOf[GetSucceeded].value.contains("c"))
+      assert((actorRef ? GetRequest(UUID.randomUUID, id)).futureValue.asInstanceOf[GetSucceeded].value.contains("c"))
     }
   }
 }

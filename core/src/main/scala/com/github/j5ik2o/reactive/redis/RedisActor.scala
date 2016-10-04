@@ -67,6 +67,10 @@ trait TransactionResponseFactory extends CommandResponseParserSupport {
 
 private case class ActorRefDesc(actorRef: ActorRef, createAt: ZonedDateTime)
 
+private case class SimpleRequestComplete(request: SimpleRequest, responseAsByteString: ByteString)
+
+private case class TransactionRequestComplete(request: TransactionRequest, responseAsByteString: ByteString)
+
 private case object CleanClients
 
 class RedisActor(
@@ -102,54 +106,80 @@ class RedisActor(
 
   private val sink: Sink[(ByteString, Request), Future[Done]] = Sink.foreach {
     case (res, req) =>
-      val response = req match {
+      req match {
         case msg: ExecRequest =>
-          val requestFactories = requestsInTransaction.map(_.responseFactory).toVector
-          requestsInTransaction.clear()
-          context.become(default)
-          msg.responseFactory.createResponseFromString(req.id, res.utf8String, requestFactories)._1
+          self ! TransactionRequestComplete(msg, res)
         case msg: DiscardRequest =>
-          requestsInTransaction.clear()
-          context.become(default)
-          msg.responseFactory.createResponseFromString(req.id, res.utf8String)._1
+          self ! SimpleRequestComplete(msg, res)
         case msg: SimpleRequest =>
-          msg.responseFactory.createResponseFromString(req.id, res.utf8String)._1
+          self ! SimpleRequestComplete(msg, res)
       }
-      log.debug("send command response = {}", response)
-      clients(req.id).actorRef ! response
-      clients.remove(req.id)
   }
 
   private val redisClientRef = sourceActorRef.via(connectionFlow).toMat(sink)(Keep.left).run()
 
-  private def sendCommand(msg: Request) = {
-    clients.put(msg.id, ActorRefDesc(sender(), ZonedDateTime.now()))
-    redisClientRef ! msg
+  private def sendCommandRequest(request: Request): Unit = {
+    log.debug("receive command request = {}", request)
+    clients.put(request.id, ActorRefDesc(sender(), ZonedDateTime.now()))
+    redisClientRef ! request
+  }
+
+  private def replyCommandResponse(request: Request, response: Response): Option[ActorRefDesc] = {
+    log.debug("send command response = {}", response)
+    clients(request.id).actorRef ! response
+    clients.remove(request.id)
+  }
+
+  private def createSimpleResponseFromByteString(
+    request:              SimpleRequest,
+    responseAsByteString: ByteString
+  ): Response = {
+    request.responseFactory.createResponseFromString(request.id, responseAsByteString.utf8String)._1
+  }
+
+  private def createTransactionResponseFromByteString(
+    request:              TransactionRequest,
+    responseAsByteString: ByteString,
+    responseFactories:    Vector[SimpleResponseFactory]
+  ): Response = {
+    request.responseFactory.createResponseFromString(request.id, responseAsByteString.utf8String, responseFactories)._1
   }
 
   override def receive: Receive = default
 
   private def default: Receive = {
-    case msg: MultiRequest =>
-      log.debug("receive command request = {}", msg)
+    case request: MultiRequest =>
       context.become(inTransaction)
-      sendCommand(msg)
-    case msg: Request =>
-      log.debug("receive command request = {}", msg)
-      sendCommand(msg)
+      sendCommandRequest(request)
+    case request: Request =>
+      sendCommandRequest(request)
+    case SimpleRequestComplete(request, responseAsByteString) =>
+      val response = createSimpleResponseFromByteString(request, responseAsByteString)
+      replyCommandResponse(request, response)
   }
 
   private def inTransaction: Receive = {
-    case msg: ExecRequest =>
-      log.debug("receive command request = {}", msg)
-      sendCommand(msg)
-    case msg: DiscardRequest =>
-      log.debug("receive command request = {}", msg)
-      sendCommand(msg)
-    case msg: SimpleRequest =>
-      log.debug("receive command request = {}", msg)
-      requestsInTransaction.append(msg)
-      sendCommand(msg)
+    case SimpleRequestComplete(request: DiscardRequest, responseAsByteString) =>
+      requestsInTransaction.clear()
+      context.become(default)
+      val response = createSimpleResponseFromByteString(request, responseAsByteString)
+      replyCommandResponse(request, response)
+    case TransactionRequestComplete(request: ExecRequest, responseAsByteString) =>
+      val requestFactories = requestsInTransaction.map(_.responseFactory).toVector
+      requestsInTransaction.clear()
+      context.become(default)
+      val response = createTransactionResponseFromByteString(request, responseAsByteString, requestFactories)
+      replyCommandResponse(request, response)
+    case SimpleRequestComplete(request, responseAsByteString) =>
+      val response = createSimpleResponseFromByteString(request, responseAsByteString)
+      replyCommandResponse(request, response)
+    case request: ExecRequest =>
+      sendCommandRequest(request)
+    case request: DiscardRequest =>
+      sendCommandRequest(request)
+    case request: SimpleRequest =>
+      requestsInTransaction.append(request)
+      sendCommandRequest(request)
   }
 
 }
