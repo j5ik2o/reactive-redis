@@ -65,15 +65,33 @@ trait TransactionResponseFactory extends CommandResponseParserSupport {
 
 // ---
 
-private case class ActorRefDesc(actorRef: ActorRef, createAt: ZonedDateTime)
+object RedisActor {
 
-private case class SimpleRequestComplete(request: SimpleRequest, responseAsByteString: ByteString)
+  def name(id: UUID): String = s"redis-actor-$id"
 
-private case class TransactionRequestComplete(request: TransactionRequest, responseAsByteString: ByteString)
+  def props(id: UUID, host: String, port: Int): Props =
+    props(id, new InetSocketAddress(host, port))
 
-private case object CleanClients
+  def props(id: UUID,
+             remoteAddress:  InetSocketAddress,
+             localAddress:   Option[InetSocketAddress]           = None,
+             options:        immutable.Traversable[SocketOption] = Nil,
+             halfClose:      Boolean                             = true,
+             connectTimeout: Duration                            = Duration.Inf,
+             idleTimeout:    Duration                            = Duration.Inf
+           ): Props =
+    Props(new RedisActor(id, remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout))
+
+  private case class ActorRefDesc(actorRef: ActorRef, createAt: ZonedDateTime)
+
+  private case class SimpleRequestComplete(request: SimpleRequest, responseAsByteString: ByteString)
+
+  private case class TransactionRequestComplete(request: TransactionRequest, responseAsByteString: ByteString)
+
+}
 
 class RedisActor(
+                id: UUID,
     remoteAddress:  InetSocketAddress,
     localAddress:   Option[InetSocketAddress],
     options:        immutable.Traversable[SocketOption],
@@ -81,6 +99,9 @@ class RedisActor(
     connectTimeout: Duration,
     idleTimeout:    Duration
 ) extends Actor with ActorLogging {
+
+  import RedisActor._
+
   implicit val as = context.system
   implicit val mat = ActorMaterializer()
 

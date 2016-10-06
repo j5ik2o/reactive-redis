@@ -15,7 +15,8 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 class RedisActorSpec
-    extends ActorSpec(ActorSystem("RedisActorSpec")) with ServerBootable
+  extends ActorSpec(ActorSystem("RedisActorSpec"))
+    with ServerBootable
     with BeforeAndAfter {
 
   //  override protected def beforeAll(): Unit = {
@@ -34,18 +35,18 @@ class RedisActorSpec
 
   describe("StringOperations") {
     it("should be set value") {
-      val actorRef = system.actorOf(RedisActor.props("127.0.0.1", testServer.address.get.getPort))
+      val actorRef = system.actorOf(RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort))
       val id = idGenerator.incrementAndGet().toString
       assert((actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue.isInstanceOf[SetSucceeded])
     }
     it("should be got value") {
-      val actorRef = system.actorOf(RedisActor.props("127.0.0.1", testServer.address.get.getPort))
+      val actorRef = system.actorOf(RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort))
       val id = idGenerator.incrementAndGet().toString
       assert((actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue.isInstanceOf[SetSucceeded])
       assert((actorRef ? GetRequest(UUID.randomUUID, id)).futureValue.asInstanceOf[GetSucceeded].value.contains("a"))
     }
     it("should be got and set value") {
-      val actorRef = system.actorOf(RedisActor.props("127.0.0.1", testServer.address.get.getPort))
+      val actorRef = system.actorOf(RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort))
       val id = idGenerator.incrementAndGet().toString
       assert((actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue.isInstanceOf[SetSucceeded])
       assert((actorRef ? GetSetRequest(UUID.randomUUID, id, "b")).futureValue.asInstanceOf[GetSetSucceeded].value.contains("a"))
@@ -54,7 +55,7 @@ class RedisActorSpec
   }
   describe("TransactionOperations") {
     it("should be able to execute transactional commands") {
-      val actorRef = system.actorOf(RedisActor.props("127.0.0.1", testServer.address.get.getPort))
+      val actorRef = system.actorOf(RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort))
       val id = idGenerator.incrementAndGet().toString
       assert((actorRef ? SetRequest(UUID.randomUUID, id, "c")).futureValue.isInstanceOf[SetSucceeded])
       assert((actorRef ? MultiRequest(UUID.randomUUID())).futureValue.isInstanceOf[MultiSucceeded])
@@ -68,7 +69,7 @@ class RedisActorSpec
       assert((actorRef ? GetRequest(UUID.randomUUID, id)).futureValue.asInstanceOf[GetSucceeded].value.contains("b"))
     }
     it("should be able to discard transactional commands") {
-      val actorRef = system.actorOf(RedisActor.props("127.0.0.1", testServer.address.get.getPort))
+      val actorRef = system.actorOf(RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort))
       val id = idGenerator.incrementAndGet().toString
       assert((actorRef ? SetRequest(UUID.randomUUID, id, "c")).futureValue.isInstanceOf[SetSucceeded])
       assert((actorRef ? MultiRequest(UUID.randomUUID())).futureValue.isInstanceOf[MultiSucceeded])

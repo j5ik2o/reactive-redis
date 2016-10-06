@@ -18,10 +18,12 @@ object RedisMode {
 
 }
 
-class TestServer(mode: RedisMode = RedisMode.Standalone) {
+class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = None) {
   private[this] var process: Option[Process] = None
   private[this] val forbiddenPorts = 6300.until(7300)
   private var _address: Option[InetSocketAddress] = None
+
+  def getPort = portOpt.getOrElse(_address.get.getPort)
 
   def address: Option[InetSocketAddress] = _address
 
@@ -30,14 +32,14 @@ class TestServer(mode: RedisMode = RedisMode.Standalone) {
   assertRedisBinaryPresent()
   findAddress()
 
-  private[this] def assertRedisBinaryPresent() {
+  private[this] def assertRedisBinaryPresent(): Unit = {
     val p = new ProcessBuilder(path, "--help").start()
     p.waitFor()
     val exitValue = p.exitValue()
     require(exitValue == 0 || exitValue == 1, "redis-server binary must be present.")
   }
 
-  private[this] def findAddress() {
+  private[this] def findAddress(): InetSocketAddress = {
     var tries = 100
     while (_address.isEmpty && tries >= 0) {
       _address = Some(RandomSocket.nextAddress())
@@ -74,7 +76,7 @@ class TestServer(mode: RedisMode = RedisMode.Standalone) {
   }
 
   def start() {
-    val port = _address.get.getPort
+    val port = getPort
     val conf = createConfigFile(port).getAbsolutePath
     val cmd: Seq[String] = if (mode == RedisMode.Sentinel) {
       Seq(path, conf, "--sentinel")

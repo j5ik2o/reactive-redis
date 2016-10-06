@@ -1,15 +1,10 @@
 package com.github.j5ik2o.reactive.redis
 
-import java.net.InetSocketAddress
 import java.text.ParseException
 import java.util.UUID
 
-import akka.actor.Props
-import akka.io.Inet.SocketOption
 import com.github.j5ik2o.reactive.redis.CommandResponseParser.{ ErrorExpr, Expr, SimpleExpr, StringOptExpr }
 
-import scala.collection.immutable
-import scala.concurrent.duration.Duration
 import scala.util.parsing.input.Reader
 
 object StringOperations {
@@ -77,28 +72,11 @@ object StringOperations {
 
   case class GetFailed(id: UUID, requestId: UUID, ex: Exception) extends GetResponse
 
-  object RedisActor {
-
-    def props(host: String, port: Int): Props =
-      props(new InetSocketAddress(host, port))
-
-    def props(
-      remoteAddress:  InetSocketAddress,
-      localAddress:   Option[InetSocketAddress]           = None,
-      options:        immutable.Traversable[SocketOption] = Nil,
-      halfClose:      Boolean                             = true,
-      connectTimeout: Duration                            = Duration.Inf,
-      idleTimeout:    Duration                            = Duration.Inf
-    ): Props =
-      Props(new RedisActor(remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout))
-
-  }
-
   // ---
 
-  object GetSetSimpleResponse$ extends SimpleResponseFactory {
+  object GetSetSimpleResponse extends SimpleResponseFactory {
 
-    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (GetSetSimpleResponse$, Reader[Char]) =
+    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (GetSetSimpleResponse, Reader[Char]) =
       parseResponse(message) match {
         case (StringOptExpr(s), next) =>
           (GetSetSucceeded(UUID.randomUUID(), requestId, s), next)
@@ -118,15 +96,15 @@ object StringOperations {
 
   case class GetSetRequest(id: UUID, key: String, value: String) extends SimpleRequest {
     override val message: String = s"GETSET $key $value"
-    override val responseFactory: SimpleResponseFactory = GetSetSimpleResponse$
+    override val responseFactory: SimpleResponseFactory = GetSetSimpleResponse
   }
 
-  sealed trait GetSetSimpleResponse$ extends Response
+  sealed trait GetSetSimpleResponse extends Response
 
-  case class GetSetSuspended(id: UUID, requestId: UUID) extends GetSetSimpleResponse$
+  case class GetSetSuspended(id: UUID, requestId: UUID) extends GetSetSimpleResponse
 
-  case class GetSetSucceeded(id: UUID, requestId: UUID, value: Option[String]) extends GetSetSimpleResponse$
+  case class GetSetSucceeded(id: UUID, requestId: UUID, value: Option[String]) extends GetSetSimpleResponse
 
-  case class GetSetFailed(id: UUID, requestId: UUID, ex: Exception) extends GetSetSimpleResponse$
+  case class GetSetFailed(id: UUID, requestId: UUID, ex: Exception) extends GetSetSimpleResponse
 
 }
