@@ -82,7 +82,7 @@ object RedisActor {
            ): Props =
     Props(new RedisActor(id, remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout))
 
-  private case class ActorRefDesc(actorRef: ActorRef, createAt: ZonedDateTime)
+  private case class ActorRefDesc(sender: ActorRef, createAt: ZonedDateTime)
 
   private case class SimpleRequestComplete(request: SimpleRequest, responseAsByteString: ByteString)
 
@@ -147,7 +147,7 @@ class RedisActor(
 
   private def replyCommandResponse(request: Request, response: Response): Option[ActorRefDesc] = {
     log.debug("send command response = {}", response)
-    clients(request.id).actorRef ! response
+    clients(request.id).sender ! response
     clients.remove(request.id)
   }
 
