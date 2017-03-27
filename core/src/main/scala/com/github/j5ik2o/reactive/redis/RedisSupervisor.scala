@@ -12,11 +12,9 @@ object RedisSupervisor {
 
 }
 
-
 class RedisSupervisor(redisActorProps: Props, val id: UUID) extends Actor {
 
-
-  override def supervisorStrategy: SupervisorStrategy = OneForOneStrategy(){
+  override def supervisorStrategy: SupervisorStrategy = OneForOneStrategy() {
     case ex: Exception =>
       ex.printStackTrace()
       Restart

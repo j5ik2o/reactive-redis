@@ -1,27 +1,26 @@
 package com.github.j5ik2o.reactive.redis
 
-import java.io.StringReader
 import java.net.InetSocketAddress
-import java.text.ParseException
 import java.time.ZonedDateTime
 import java.util.UUID
 
-import akka.actor.Actor.Receive
-import akka.{ Done, NotUsed }
+import akka.NotUsed
 import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
 import akka.io.Inet.SocketOption
+import akka.stream.actor.ActorSubscriberMessage.OnNext
+import akka.stream.actor._
 import akka.stream.scaladsl.Tcp.OutgoingConnection
 import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, Sink, Source, Tcp, Unzip, Zip }
-import akka.stream.{ ActorMaterializer, FlowShape, OverflowStrategy }
+import akka.stream.{ ActorMaterializer, FlowShape }
 import akka.util.ByteString
-import com.github.j5ik2o.reactive.redis.CommandResponseParser._
-import com.github.j5ik2o.reactive.redis.TransactionOperations.{ DiscardRequest, ExecRequest, MultiRequest }
+import com.github.j5ik2o.reactive.redis.Protocol._
+import com.github.j5ik2o.reactive.redis.TransactionOperations._
 import org.slf4j.LoggerFactory
 
+import scala.annotation.tailrec
 import scala.collection.immutable
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
-import scala.concurrent.duration._
 import scala.util.parsing.input.{ CharSequenceReader, Reader }
 
 trait Request {
@@ -44,6 +43,7 @@ trait Response {
 }
 
 trait SimpleResponseFactory extends CommandResponseParserSupport {
+
   val logger = LoggerFactory.getLogger(classOf[SimpleResponseFactory])
 
   def createResponseFromString(requestId: UUID, message: String): (Response, Reader[Char]) =
@@ -54,6 +54,7 @@ trait SimpleResponseFactory extends CommandResponseParserSupport {
 }
 
 trait TransactionResponseFactory extends CommandResponseParserSupport {
+
   val logger = LoggerFactory.getLogger(classOf[TransactionResponseFactory])
 
   def createResponseFromString(requestId: UUID, message: String, responseFactories: Vector[SimpleResponseFactory]): (Response, Reader[Char]) =
@@ -72,135 +73,239 @@ object RedisActor {
   def props(id: UUID, host: String, port: Int): Props =
     props(id, new InetSocketAddress(host, port))
 
-  def props(id: UUID,
-             remoteAddress:  InetSocketAddress,
-             localAddress:   Option[InetSocketAddress]           = None,
-             options:        immutable.Traversable[SocketOption] = Nil,
-             halfClose:      Boolean                             = true,
-             connectTimeout: Duration                            = Duration.Inf,
-             idleTimeout:    Duration                            = Duration.Inf
-           ): Props =
-    Props(new RedisActor(id, remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout))
-
-  private case class ActorRefDesc(sender: ActorRef, createAt: ZonedDateTime)
-
-  private case class SimpleRequestComplete(request: SimpleRequest, responseAsByteString: ByteString)
-
-  private case class TransactionRequestComplete(request: TransactionRequest, responseAsByteString: ByteString)
+  def props(
+    id:              UUID,
+    remoteAddress:   InetSocketAddress,
+    localAddress:    Option[InetSocketAddress]           = None,
+    options:         immutable.Traversable[SocketOption] = Nil,
+    halfClose:       Boolean                             = true,
+    connectTimeout:  Duration                            = Duration.Inf,
+    idleTimeout:     Duration                            = Duration.Inf,
+    maxRequestCount: Int                                 = 50
+  ): Props =
+    Props(new RedisActor(id, remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout, maxRequestCount))
 
 }
 
-class RedisActor(
-                id: UUID,
-    remoteAddress:  InetSocketAddress,
-    localAddress:   Option[InetSocketAddress],
-    options:        immutable.Traversable[SocketOption],
-    halfClose:      Boolean,
-    connectTimeout: Duration,
-    idleTimeout:    Duration
-) extends Actor with ActorLogging {
+object ConnectionActor {
 
-  import RedisActor._
+  def props(
+    responder:       ActorRef,
+    remoteAddress:   InetSocketAddress,
+    localAddress:    Option[InetSocketAddress],
+    options:         immutable.Traversable[SocketOption],
+    halfClose:       Boolean,
+    connectTimeout:  Duration,
+    idleTimeout:     Duration,
+    maxRequestCount: Int                                 = 50
+  ): Props =
+    Props(new ConnectionActor(
+      responder,
+      remoteAddress,
+      localAddress,
+      options,
+      halfClose,
+      connectTimeout,
+      idleTimeout,
+      maxRequestCount
+    ))
+
+}
+
+private[redis] object Protocol {
+
+  case class SimpleRequestComplete(replyTo: ActorRef, request: SimpleRequest, response: Response)
+
+  case class InTransactionRequest(request: SimpleRequest) extends Request {
+    override val id: UUID = request.id
+    override val message: String = request.message
+  }
+
+  case class TransactionExecCompleted(replyTo: ActorRef, request: ExecRequest, response: ExecResponse)
+
+  case class TransactionDiscardCompleted(replyTo: ActorRef, request: DiscardRequest, response: DiscardResponse)
+
+  case class RequestContext(sender: ActorRef, request: Request, requestAt: ZonedDateTime) {
+    val id: UUID = request.id
+  }
+
+  case class ResponseContext(byteString: ByteString, requestContext: RequestContext)
+
+}
+
+class ConnectionActor(
+  responder:       ActorRef,
+  remoteAddress:   InetSocketAddress,
+  localAddress:    Option[InetSocketAddress],
+  options:         immutable.Traversable[SocketOption],
+  halfClose:       Boolean,
+  connectTimeout:  Duration,
+  idleTimeout:     Duration,
+  maxRequestCount: Int                                 = 50
+)
+    extends ActorPublisher[RequestContext] with ActorSubscriber {
+
+  private var requestContexts = Map.empty[UUID, RequestContext]
 
   implicit val as = context.system
   implicit val mat = ActorMaterializer()
-
-  private val clients: collection.mutable.Map[UUID, ActorRefDesc] = collection.mutable.Map.empty[UUID, ActorRefDesc]
 
   private val requestsInTransaction: collection.mutable.ArrayBuffer[SimpleRequest] = collection.mutable.ArrayBuffer.empty
 
   private val tcpFlow: Flow[ByteString, ByteString, Future[OutgoingConnection]] =
     Tcp().outgoingConnection(remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout)
 
-  private val sourceActorRef: Source[Request, ActorRef] = Source.actorRef[Request](Int.MaxValue, OverflowStrategy.fail)
-
-  private val connectionFlow: Flow[Request, (ByteString, Request), NotUsed] = Flow.fromGraph(GraphDSL.create() { implicit b =>
+  private val connectionFlow: Flow[RequestContext, ResponseContext, NotUsed] = Flow.fromGraph(GraphDSL.create() { implicit b =>
     import GraphDSL.Implicits._
-    val requestFlow = b.add(Flow[Request].map { e => (ByteString.fromString(e.message + "\r\n"), e) })
-    val unzip = b.add(Unzip[ByteString, Request]())
-    val zip = b.add(Zip[ByteString, Request]())
+    val requestFlow = b.add(Flow[RequestContext].map { rc =>
+      rc.request match {
+        case InTransactionRequest(req) =>
+          requestsInTransaction.append(req)
+        case _ =>
+      }
+      (ByteString.fromString(rc.request.message + "\r\n"), rc)
+    })
+    val responseFlow = b.add(Flow[(ByteString, RequestContext)].map {
+      case (byteString, requestContext) =>
+        ResponseContext(byteString, requestContext)
+    })
+    val unzip = b.add(Unzip[ByteString, RequestContext]())
+    val zip = b.add(Zip[ByteString, RequestContext]())
     requestFlow.out ~> unzip.in
     unzip.out0 ~> tcpFlow ~> zip.in0
     unzip.out1 ~> zip.in1
-    FlowShape(requestFlow.in, zip.out)
+    zip.out ~> responseFlow.in
+    FlowShape(requestFlow.in, responseFlow.out)
   })
 
-  private val sink: Sink[(ByteString, Request), Future[Done]] = Sink.foreach {
-    case (res, req) =>
-      req match {
-        case msg: ExecRequest =>
-          self ! TransactionRequestComplete(msg, res)
-        case msg: DiscardRequest =>
-          self ! SimpleRequestComplete(msg, res)
-        case msg: SimpleRequest =>
-          self ! SimpleRequestComplete(msg, res)
-      }
-  }
-
-  private val redisClientRef = sourceActorRef.via(connectionFlow).toMat(sink)(Keep.left).run()
-
-  private def sendCommandRequest(request: Request): Unit = {
-    log.debug("receive command request = {}", request)
-    clients.put(request.id, ActorRefDesc(sender(), ZonedDateTime.now()))
-    redisClientRef ! request
-  }
-
-  private def replyCommandResponse(request: Request, response: Response): Option[ActorRefDesc] = {
-    log.debug("send command response = {}", response)
-    clients(request.id).sender ! response
-    clients.remove(request.id)
-  }
-
-  private def createSimpleResponseFromByteString(
+  private def parseSimpleResponse(
     request:              SimpleRequest,
     responseAsByteString: ByteString
   ): Response = {
     request.responseFactory.createResponseFromString(request.id, responseAsByteString.utf8String)._1
   }
 
-  private def createTransactionResponseFromByteString(
+  private def parseDiscardResponse(
+    request:              DiscardRequest,
+    responseAsByteString: ByteString
+  ): DiscardResponse = {
+    request.responseFactory.createResponseFromString(request.id, responseAsByteString.utf8String)._1.asInstanceOf[DiscardResponse]
+  }
+
+  private def parseExecResponse(
     request:              TransactionRequest,
     responseAsByteString: ByteString,
     responseFactories:    Vector[SimpleResponseFactory]
-  ): Response = {
-    request.responseFactory.createResponseFromString(request.id, responseAsByteString.utf8String, responseFactories)._1
+  ): ExecResponse = {
+    request.responseFactory.createResponseFromString(request.id, responseAsByteString.utf8String, responseFactories)._1.asInstanceOf[ExecResponse]
   }
+
+  Source.fromPublisher(ActorPublisher(self)).via(connectionFlow).toMat(Sink.fromSubscriber(ActorSubscriber[ResponseContext](self)))(Keep.left).run()
+
+  override val requestStrategy = new MaxInFlightRequestStrategy(max = maxRequestCount) {
+    override def inFlightInternally: Int = requestContexts.size
+  }
+
+  override def receive: Receive = {
+    case OnNext(ResponseContext(res, rc @ RequestContext(replyTo, req, _))) =>
+      val response = req match {
+        case msg: ExecRequest =>
+          val requestFactories = requestsInTransaction.map(_.responseFactory).toVector
+          requestsInTransaction.clear()
+          TransactionExecCompleted(replyTo, msg, parseExecResponse(msg, res, requestFactories))
+        case msg: DiscardRequest =>
+          requestsInTransaction.clear()
+          TransactionDiscardCompleted(replyTo, msg, parseDiscardResponse(msg, res))
+        case InTransactionRequest(msg: SimpleRequest) =>
+          SimpleRequestComplete(replyTo, msg, parseSimpleResponse(msg, res))
+        case msg: SimpleRequest =>
+          SimpleRequestComplete(replyTo, msg, parseSimpleResponse(msg, res))
+      }
+      responder ! response
+      requestContexts -= rc.id
+    case request: Request =>
+      if (requestContexts.isEmpty && totalDemand > 0) {
+        onNext(RequestContext(sender(), request, ZonedDateTime.now()))
+      } else {
+        val rc = RequestContext(sender(), request, ZonedDateTime.now())
+        requestContexts += (rc.id -> rc)
+        deliverBuf()
+      }
+    case ActorPublisherMessage.Request(_) =>
+      deliverBuf()
+    case ActorPublisherMessage.Cancel =>
+      context.stop(self)
+
+  }
+
+  @tailrec final def deliverBuf(): Unit =
+    if (totalDemand > 0) {
+      if (totalDemand <= Int.MaxValue) {
+        val (use, keep) = requestContexts.splitAt(totalDemand.toInt)
+        requestContexts = keep
+        use.foreach {
+          case (_, e) =>
+            onNext(e)
+        }
+      } else {
+        val (use, keep) = requestContexts.splitAt(Int.MaxValue)
+        requestContexts = keep
+        use.foreach {
+          case (_, e) =>
+            onNext(e)
+        }
+        deliverBuf()
+      }
+    }
+
+}
+
+class RedisActor(
+  id:              UUID,
+  remoteAddress:   InetSocketAddress,
+  localAddress:    Option[InetSocketAddress],
+  options:         immutable.Traversable[SocketOption],
+  halfClose:       Boolean,
+  connectTimeout:  Duration,
+  idleTimeout:     Duration,
+  maxRequestCount: Int                                 = 50
+)
+    extends Actor with ActorLogging {
+
+  private val connectionActorRef = context.actorOf(
+    ConnectionActor.props(
+      self, remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout, maxRequestCount
+    ),
+    "connection"
+  )
 
   override def receive: Receive = default
 
   private def default: Receive = {
     case request: MultiRequest =>
       context.become(inTransaction)
-      sendCommandRequest(request)
+      connectionActorRef forward request
     case request: Request =>
-      sendCommandRequest(request)
-    case SimpleRequestComplete(request, responseAsByteString) =>
-      val response = createSimpleResponseFromByteString(request, responseAsByteString)
-      replyCommandResponse(request, response)
+      connectionActorRef forward request
+    case SimpleRequestComplete(replyTo, _, response) =>
+      replyTo ! response
   }
 
   private def inTransaction: Receive = {
-    case SimpleRequestComplete(request: DiscardRequest, responseAsByteString) =>
-      requestsInTransaction.clear()
+    case TransactionDiscardCompleted(replyTo, _, response) =>
       context.become(default)
-      val response = createSimpleResponseFromByteString(request, responseAsByteString)
-      replyCommandResponse(request, response)
-    case TransactionRequestComplete(request: ExecRequest, responseAsByteString) =>
-      val requestFactories = requestsInTransaction.map(_.responseFactory).toVector
-      requestsInTransaction.clear()
+      replyTo ! response
+    case TransactionExecCompleted(replyTo, _, response) =>
       context.become(default)
-      val response = createTransactionResponseFromByteString(request, responseAsByteString, requestFactories)
-      replyCommandResponse(request, response)
-    case SimpleRequestComplete(request, responseAsByteString) =>
-      val response = createSimpleResponseFromByteString(request, responseAsByteString)
-      replyCommandResponse(request, response)
+      replyTo ! response
+    case SimpleRequestComplete(replyTo, _, response) =>
+      replyTo ! response
     case request: ExecRequest =>
-      sendCommandRequest(request)
+      connectionActorRef forward request
     case request: DiscardRequest =>
-      sendCommandRequest(request)
+      connectionActorRef forward request
     case request: SimpleRequest =>
-      requestsInTransaction.append(request)
-      sendCommandRequest(request)
+      connectionActorRef forward InTransactionRequest(request)
   }
 
 }

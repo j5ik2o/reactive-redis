@@ -15,7 +15,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 class RedisActorSpec
-  extends ActorSpec(ActorSystem("RedisActorSpec"))
+    extends ActorSpec(ActorSystem("RedisActorSpec"))
     with ServerBootable
     with BeforeAndAfter {
 

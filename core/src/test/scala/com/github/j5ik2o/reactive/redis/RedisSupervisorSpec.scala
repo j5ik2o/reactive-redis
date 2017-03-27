@@ -9,7 +9,7 @@ import org.scalatest.BeforeAndAfter
 import akka.pattern.ask
 
 class RedisSupervisorSpec
-  extends ActorSpec(ActorSystem("RedisSupervisorSpec"))
+    extends ActorSpec(ActorSystem("RedisSupervisorSpec"))
     with BeforeAndAfter {
 
   val idGenerator = new AtomicLong()
@@ -46,7 +46,6 @@ class RedisSupervisorSpec
 
       val id2 = idGenerator.incrementAndGet().toString
       assert((actorRef ? SetRequest(UUID.randomUUID, id2, "a")).futureValue.isInstanceOf[SetSucceeded])
-
 
     }
   }
