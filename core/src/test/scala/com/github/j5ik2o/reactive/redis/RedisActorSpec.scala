@@ -34,6 +34,20 @@ class RedisActorSpec
   val idGenerator = new AtomicLong()
 
   describe("StringOperations") {
+    it("should be appended value") {
+      val actorRef = system.actorOf(RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort))
+      val id = idGenerator.incrementAndGet().toString
+      assert((actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue.isInstanceOf[SetSucceeded])
+      assert((actorRef ? BitCountRequest(UUID.randomUUID, id)).futureValue.asInstanceOf[BitCountSucceeded].value == 3)
+    }
+    it("should be got bit count") {
+      val actorRef = system.actorOf(RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort))
+      val id = idGenerator.incrementAndGet().toString
+      assert((actorRef ? AppendRequest(UUID.randomUUID, id, "1")).futureValue.asInstanceOf[AppendSucceeded].value == 1)
+      assert((actorRef ? AppendRequest(UUID.randomUUID, id, "2")).futureValue.asInstanceOf[AppendSucceeded].value == 2)
+      assert((actorRef ? AppendRequest(UUID.randomUUID, id, "3")).futureValue.asInstanceOf[AppendSucceeded].value == 3)
+      assert((actorRef ? GetRequest(UUID.randomUUID, id)).futureValue.asInstanceOf[GetSucceeded].value.contains("123"))
+    }
     it("should be set value") {
       val actorRef = system.actorOf(RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort))
       val id = idGenerator.incrementAndGet().toString
@@ -51,6 +65,13 @@ class RedisActorSpec
       assert((actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue.isInstanceOf[SetSucceeded])
       assert((actorRef ? GetSetRequest(UUID.randomUUID, id, "b")).futureValue.asInstanceOf[GetSetSucceeded].value.contains("a"))
       assert((actorRef ? GetRequest(UUID.randomUUID, id)).futureValue.asInstanceOf[GetSucceeded].value.contains("b"))
+    }
+    it("should be incremented value") {
+      val actorRef = system.actorOf(RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort))
+      val id = idGenerator.incrementAndGet().toString
+      assert((actorRef ? SetRequest(UUID.randomUUID, id, "1")).futureValue.isInstanceOf[SetSucceeded])
+      assert((actorRef ? IncrRequest(UUID.randomUUID, id)).futureValue.asInstanceOf[IncrSucceeded].value == 2)
+      assert((actorRef ? GetRequest(UUID.randomUUID, id)).futureValue.asInstanceOf[GetSucceeded].value.contains("2"))
     }
   }
   describe("TransactionOperations") {

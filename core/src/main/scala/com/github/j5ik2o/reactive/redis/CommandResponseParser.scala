@@ -77,7 +77,7 @@ trait CommandResponseParserSupport extends RegexParsers {
       value
   }
 
-  lazy val arrayPrefixWithCrLfOrErrorWithCrLf = arrayPrefixWithCrLf | errorWithCrLf
+  lazy val arrayPrefixWithCrLfOrErrorWithCrLf: Parser[Expr] = arrayPrefixWithCrLf | errorWithCrLf
 
   private lazy val stringArrayWithCrLf: Parser[ArrayExpr[StringExpr]] = arrayPrefixWithCrLf ~ opt(simpleWithCrLf) ~ repsep(stringArrayElement, CRLF) ^^ {
     case size ~ opt ~ values =>
