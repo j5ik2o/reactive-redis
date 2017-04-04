@@ -3,8 +3,8 @@ package com.github.j5ik2o.reactive.redis
 import java.text.ParseException
 import java.util.UUID
 
+import com.github.j5ik2o.reactive.redis
 import com.github.j5ik2o.reactive.redis.CommandResponseParser._
-import com.github.j5ik2o.reactive.redis.StringOperations.IncrRequest
 
 import scala.util.parsing.input.Reader
 
@@ -15,7 +15,8 @@ object StringOperations {
   // --- APPEND
 
   object AppendRequest extends SimpleResponseFactory {
-    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) =
+    override def createResponseFromReader(requestId: UUID,
+                                          message: Reader[Char]): (Response, Reader[Char]) =
       parseResponse(message) match {
         case (NumberExpr(n), next) =>
           (AppendSucceeded(UUID.randomUUID(), requestId, n), next)
@@ -33,7 +34,7 @@ object StringOperations {
 
   case class AppendRequest(id: UUID, key: String, value: String) extends SimpleRequest {
     override val responseFactory: SimpleResponseFactory = AppendRequest
-    override val message: String = s"APPEND $key $value"
+    override val message: String                        = s"APPEND $key $value"
   }
 
   sealed trait AppendResponse extends Response
@@ -47,7 +48,8 @@ object StringOperations {
   // --- BITCOUNT
 
   object BitCountRequest extends SimpleResponseFactory {
-    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) =
+    override def createResponseFromReader(requestId: UUID,
+                                          message: Reader[Char]): (Response, Reader[Char]) =
       parseResponse(message) match {
         case (NumberExpr(n), next) =>
           (BitCountSucceeded(UUID.randomUUID(), requestId, n), next)
@@ -63,9 +65,11 @@ object StringOperations {
     override protected val responseParser: Parser[Expr] = numberWithCrLfOrErrorWithCrLf
   }
 
-  case class BitCountRequest(id: UUID, key: String, startAndEnd: Option[StartAndEnd] = None) extends SimpleRequest {
+  case class BitCountRequest(id: UUID, key: String, startAndEnd: Option[StartAndEnd] = None)
+      extends SimpleRequest {
     override val responseFactory: SimpleResponseFactory = BitCountRequest
-    override val message: String = s"BITCOUNT $key" + startAndEnd.fold("")(e => " " + e.start + " " + e.end)
+    override val message: String = s"BITCOUNT $key" + startAndEnd.fold("")(e =>
+      " " + e.start + " " + e.end)
   }
 
   sealed trait BitCountResponse extends Response
@@ -76,10 +80,101 @@ object StringOperations {
 
   case class BitCountFailed(id: UUID, requestId: UUID, ex: Exception) extends BitCountResponse
 
+  // --- BITFIELD
+  object BitField extends SimpleResponseFactory {
+
+    sealed trait BitType {
+      def asString: String
+    }
+    case class SingedBitType(bit: Int) extends BitType {
+      override def asString: String = s"i$bit"
+    }
+    case class UnsignedBitType(bit: Int) extends BitType {
+      override def asString: String = s"u$bit"
+    }
+    sealed trait SubOption {
+      def asString: String
+    }
+    case class Get(bitType: BitType, offset: Int) extends SubOption {
+      override def asString: String = s"${bitType.asString} $offset"
+    }
+    case class Set(bitType: BitType, offset: Int, value: String) extends SubOption {
+      override def asString: String = s"${bitType.asString} $offset $value"
+    }
+
+    override def createResponseFromReader(requestId: UUID,
+                                          message: Reader[Char]): (Response, Reader[Char]) =
+      parseResponse(message) match {
+        case (NumberExpr(n), next) =>
+          (BitFieldSucceeded(UUID.randomUUID(), requestId, n), next)
+        case (SimpleExpr("QUEUED"), next) =>
+          (BitFieldSuspended(UUID.randomUUID(), requestId), next)
+        case (ErrorExpr(msg), next) =>
+          (BitFieldFailed(UUID.randomUUID(), requestId, new Exception(msg)), next)
+        case (expr, o) =>
+          logger.error("bitfield request = {}", expr)
+          throw new ParseException("bitfield request", o.offset)
+      }
+
+    override protected val responseParser: redis.StringOperations.BitField.Parser[Expr] =
+      numberWithCrLfOrErrorWithCrLf
+  }
+
+  case class BitField(id: UUID, key: String, option: BitField.SubOption) extends SimpleRequest {
+    override val responseFactory: SimpleResponseFactory = BitField
+    override val message: String = {
+      s"$key ${option.asString}"
+    }
+  }
+
+  sealed trait BitFieldResponse extends Response
+
+  case class BitFieldSuspended(id: UUID, requestId: UUID) extends BitFieldResponse
+
+  case class BitFieldSucceeded(id: UUID, requestId: UUID, value: Int) extends BitFieldResponse
+
+  case class BitFieldFailed(id: UUID, requestId: UUID, ex: Exception) extends BitFieldResponse
+  // --- BITOP
+
+  // --- BITPOS
+
+  // --- DECR
+  object DecrRequest extends SimpleResponseFactory {
+    override def createResponseFromReader(requestId: UUID,
+                                          message: Reader[Char]): (Response, Reader[Char]) =
+      parseResponse(message) match {
+        case (NumberExpr(n), next) =>
+          (DecrSucceeded(UUID.randomUUID(), requestId, n), next)
+        case (SimpleExpr("QUEUED"), next) =>
+          (DecrSuspended(UUID.randomUUID(), requestId), next)
+        case (ErrorExpr(msg), next) =>
+          (DecrFailed(UUID.randomUUID(), requestId, new Exception(msg)), next)
+        case (expr, o) =>
+          logger.error("decr request = {}", expr)
+          throw new ParseException("decr request", o.offset)
+      }
+
+    override protected val responseParser: DecrRequest.Parser[Expr] = numberWithCrLfOrErrorWithCrLf
+  }
+
+  case class DecrRequest(id: UUID, key: String) extends SimpleRequest {
+    override val responseFactory: SimpleResponseFactory = DecrRequest
+    override val message: String                        = s"DECR $key"
+  }
+
+  sealed trait DecrResponse extends Response
+
+  case class DecrSuspended(id: UUID, requestId: UUID) extends DecrResponse
+
+  case class DecrSucceeded(id: UUID, requestId: UUID, value: Int) extends DecrResponse
+
+  case class DecrFailed(id: UUID, requestId: UUID, ex: Exception) extends DecrResponse
+
   // --- SET
 
   object SetRequest extends SimpleResponseFactory {
-    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) =
+    override def createResponseFromReader(requestId: UUID,
+                                          message: Reader[Char]): (Response, Reader[Char]) =
       parseResponse(message) match {
         case (SimpleExpr("OK"), next) =>
           (SetSucceeded(UUID.randomUUID(), requestId), next)
@@ -96,7 +191,7 @@ object StringOperations {
   }
 
   case class SetRequest(id: UUID, key: String, value: String) extends SimpleRequest {
-    override val message: String = s"SET $key $value"
+    override val message: String                        = s"SET $key $value"
     override val responseFactory: SimpleResponseFactory = SetRequest
   }
 
@@ -108,10 +203,11 @@ object StringOperations {
 
   case class SetFailed(id: UUID, requestId: UUID, ex: Exception) extends SetResponse
 
-  // ---
+  // --- GET
 
   object GetRequest extends SimpleResponseFactory {
-    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) = {
+    override def createResponseFromReader(requestId: UUID,
+                                          message: Reader[Char]): (Response, Reader[Char]) = {
       parseResponse(message) match {
         case (StringOptExpr(s), next) =>
           (GetSucceeded(UUID.randomUUID(), requestId, s), next)
@@ -130,7 +226,7 @@ object StringOperations {
   }
 
   case class GetRequest(id: UUID, key: String) extends SimpleRequest {
-    override val message: String = s"GET $key"
+    override val message: String                        = s"GET $key"
     override val responseFactory: SimpleResponseFactory = GetRequest
   }
 
@@ -142,11 +238,12 @@ object StringOperations {
 
   case class GetFailed(id: UUID, requestId: UUID, ex: Exception) extends GetResponse
 
-  // ---
+  // --- GETSET
 
-  object GetSetSimpleResponse extends SimpleResponseFactory {
+  object GetSetResponse extends SimpleResponseFactory {
 
-    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (GetSetSimpleResponse, Reader[Char]) =
+    override def createResponseFromReader(requestId: UUID,
+                                          message: Reader[Char]): (GetSetResponse, Reader[Char]) =
       parseResponse(message) match {
         case (StringOptExpr(s), next) =>
           (GetSetSucceeded(UUID.randomUUID(), requestId, s), next)
@@ -165,22 +262,24 @@ object StringOperations {
   }
 
   case class GetSetRequest(id: UUID, key: String, value: String) extends SimpleRequest {
-    override val message: String = s"GETSET $key $value"
-    override val responseFactory: SimpleResponseFactory = GetSetSimpleResponse
+    override val message: String                        = s"GETSET $key $value"
+    override val responseFactory: SimpleResponseFactory = GetSetResponse
   }
 
-  sealed trait GetSetSimpleResponse extends Response
+  sealed trait GetSetResponse extends Response
 
-  case class GetSetSuspended(id: UUID, requestId: UUID) extends GetSetSimpleResponse
+  case class GetSetSuspended(id: UUID, requestId: UUID) extends GetSetResponse
 
-  case class GetSetSucceeded(id: UUID, requestId: UUID, value: Option[String]) extends GetSetSimpleResponse
+  case class GetSetSucceeded(id: UUID, requestId: UUID, value: Option[String])
+      extends GetSetResponse
 
-  case class GetSetFailed(id: UUID, requestId: UUID, ex: Exception) extends GetSetSimpleResponse
+  case class GetSetFailed(id: UUID, requestId: UUID, ex: Exception) extends GetSetResponse
 
   // --- INCR
 
   object IncrRequest extends SimpleResponseFactory {
-    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) =
+    override def createResponseFromReader(requestId: UUID,
+                                          message: Reader[Char]): (Response, Reader[Char]) =
       parseResponse(message) match {
         case (NumberExpr(n), next) =>
           (IncrSucceeded(UUID.randomUUID(), requestId, n), next)
@@ -198,12 +297,12 @@ object StringOperations {
 
   case class IncrRequest(id: UUID, key: String) extends SimpleRequest {
     override val responseFactory: SimpleResponseFactory = IncrRequest
-    override val message: String = s"INCR $key"
+    override val message: String                        = s"INCR $key"
   }
 
   sealed trait IncrResponse extends Response
 
-  case class IncrSuspended(id: UUID, requestId: UUID) extends IncrResponse
+  case class IncrSuspended(id: UUID, requestId: UUID)             extends IncrResponse
   case class IncrSucceeded(id: UUID, requestId: UUID, value: Int) extends IncrResponse
   case class IncrFailed(id: UUID, requestId: UUID, ex: Exception) extends IncrResponse
 

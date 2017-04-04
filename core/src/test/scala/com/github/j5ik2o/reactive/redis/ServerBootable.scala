@@ -5,8 +5,7 @@ import org.scalatest.BeforeAndAfter
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-trait ServerBootable extends BeforeAndAfter {
-  this: ActorSpec =>
+trait ServerBootable extends BeforeAndAfter { this: ActorSpec =>
 
   val testServer: TestServer = new TestServer()
 
@@ -18,7 +17,6 @@ trait ServerBootable extends BeforeAndAfter {
     testServer.stop()
   }
 
-  after {
-  }
+  after {}
 
 }

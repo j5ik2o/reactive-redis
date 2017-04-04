@@ -3,14 +3,20 @@ package com.github.j5ik2o.reactive.redis
 import java.text.ParseException
 import java.util.UUID
 
-import com.github.j5ik2o.reactive.redis.CommandResponseParser.{ ArraySizeExpr, ErrorExpr, Expr, SimpleExpr }
+import com.github.j5ik2o.reactive.redis.CommandResponseParser.{
+  ArraySizeExpr,
+  ErrorExpr,
+  Expr,
+  SimpleExpr
+}
 
 import scala.util.parsing.input.Reader
 
 object TransactionOperations {
 
   object MultiRequest extends SimpleResponseFactory {
-    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) =
+    override def createResponseFromReader(requestId: UUID,
+                                          message: Reader[Char]): (Response, Reader[Char]) =
       parseResponse(message) match {
         case (SimpleExpr(_), next) =>
           (MultiSucceeded(UUID.randomUUID(), requestId), next)
@@ -24,7 +30,7 @@ object TransactionOperations {
   }
 
   case class MultiRequest(id: UUID) extends SimpleRequest {
-    override val message: String = "MULTI"
+    override val message: String                        = "MULTI"
     override val responseFactory: SimpleResponseFactory = MultiRequest
   }
 
@@ -37,7 +43,10 @@ object TransactionOperations {
   // ---
 
   object ExecRequest extends TransactionResponseFactory {
-    override def createResponseFromReader(requestId: UUID, message: Reader[Char], responseFactories: Vector[SimpleResponseFactory]): (Response, Reader[Char]) = {
+    override def createResponseFromReader(
+        requestId: UUID,
+        message: Reader[Char],
+        responseFactories: Vector[SimpleResponseFactory]): (Response, Reader[Char]) = {
       val result = parseResponse(message)
       result match {
         case (ArraySizeExpr(size), next) =>
@@ -64,20 +73,22 @@ object TransactionOperations {
   }
 
   case class ExecRequest(id: UUID) extends TransactionRequest {
-    override val message: String = "EXEC"
+    override val message: String                             = "EXEC"
     override val responseFactory: TransactionResponseFactory = ExecRequest
   }
 
   sealed trait ExecResponse extends Response
 
-  case class ExecSucceeded(id: UUID, requestId: UUID, responses: Seq[Response]) extends ExecResponse
+  case class ExecSucceeded(id: UUID, requestId: UUID, responses: Seq[Response])
+      extends ExecResponse
 
   case class ExecFailed(id: UUID, requestId: UUID, ex: Exception) extends ExecResponse
 
   // ---
 
   object DiscardRequest extends SimpleResponseFactory {
-    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) =
+    override def createResponseFromReader(requestId: UUID,
+                                          message: Reader[Char]): (Response, Reader[Char]) =
       parseResponse(message) match {
         case (SimpleExpr(_), next) =>
           (DiscardSucceeded(UUID.randomUUID(), requestId), next)
@@ -91,7 +102,7 @@ object TransactionOperations {
   }
 
   case class DiscardRequest(id: UUID) extends SimpleRequest {
-    override val message: String = "DISCARD"
+    override val message: String                        = "DISCARD"
     override val responseFactory: SimpleResponseFactory = DiscardRequest
   }
 
@@ -104,7 +115,8 @@ object TransactionOperations {
   // ---
 
   object WatchRequest extends SimpleResponseFactory {
-    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) =
+    override def createResponseFromReader(requestId: UUID,
+                                          message: Reader[Char]): (Response, Reader[Char]) =
       parseResponse(message) match {
         case (SimpleExpr(_), next) =>
           (DiscardSucceeded(UUID.randomUUID(), requestId), next)
@@ -118,7 +130,7 @@ object TransactionOperations {
   }
 
   case class WatchRequest(id: UUID, key: String) extends SimpleRequest {
-    override val message: String = s"WATCH $key"
+    override val message: String                        = s"WATCH $key"
     override val responseFactory: SimpleResponseFactory = WatchRequest
   }
 

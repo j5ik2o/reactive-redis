@@ -4,7 +4,7 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicLong
 
 import akka.actor.ActorSystem
-import com.github.j5ik2o.reactive.redis.StringOperations.{ SetRequest, SetSucceeded }
+import com.github.j5ik2o.reactive.redis.StringOperations.{SetRequest, SetSucceeded}
 import org.scalatest.BeforeAndAfter
 import akka.pattern.ask
 
@@ -38,14 +38,16 @@ class RedisSupervisorSpec
       testServer.stop()
 
       val id1 = idGenerator.incrementAndGet().toString
-      assert((actorRef ? SetRequest(UUID.randomUUID, id1, "a")).futureValue.isInstanceOf[SetSucceeded])
+      assert(
+        (actorRef ? SetRequest(UUID.randomUUID, id1, "a")).futureValue.isInstanceOf[SetSucceeded])
 
       testServer.start()
 
       println("port = " + testServer.getPort)
 
       val id2 = idGenerator.incrementAndGet().toString
-      assert((actorRef ? SetRequest(UUID.randomUUID, id2, "a")).futureValue.isInstanceOf[SetSucceeded])
+      assert(
+        (actorRef ? SetRequest(UUID.randomUUID, id2, "a")).futureValue.isInstanceOf[SetSucceeded])
 
     }
   }

@@ -45,17 +45,27 @@ trait CommandResponseParserSupport extends RegexParsers {
 
   private lazy val CRLF = """\r\n""".r
 
-  private lazy val ERROR: Parser[ErrorExpr] = elem('-') ~> """[a-zA-Z0-9. ]+""".r ^^ { msg => ErrorExpr(msg) }
+  private lazy val ERROR: Parser[ErrorExpr] = elem('-') ~> """[a-zA-Z0-9. ]+""".r ^^ { msg =>
+    ErrorExpr(msg)
+  }
 
-  private lazy val LENGTH: Parser[LengthExpr] = elem('$') ~> """[0-9-]+""".r ^^ { n => LengthExpr(n.toInt) }
+  private lazy val LENGTH: Parser[LengthExpr] = elem('$') ~> """[0-9-]+""".r ^^ { n =>
+    LengthExpr(n.toInt)
+  }
 
-  private lazy val SIMPLE: Parser[SimpleExpr] = elem('+') ~> """[a-zA-Z0-9. ]+""".r ^^ { msg => SimpleExpr(msg) }
+  private lazy val SIMPLE: Parser[SimpleExpr] = elem('+') ~> """[a-zA-Z0-9. ]+""".r ^^ { msg =>
+    SimpleExpr(msg)
+  }
 
-  private lazy val NUMBER: Parser[NumberExpr] = elem(':') ~> """[0-9]+""".r ^^ { n => NumberExpr(n.toInt) }
+  private lazy val NUMBER: Parser[NumberExpr] = elem(':') ~> """[0-9]+""".r ^^ { n =>
+    NumberExpr(n.toInt)
+  }
 
   private lazy val STRING: Parser[String] = """.*[^\r\n]""".r
 
-  private lazy val VALUE: Parser[StringExpr] = STRING ^^ { s => StringExpr(s) }
+  private lazy val VALUE: Parser[StringExpr] = STRING ^^ { s =>
+    StringExpr(s)
+  }
 
   private lazy val ARRAY_PREFIX: Parser[Int] = elem('*') ~> """[0-9]+""".r ^^ (_.toInt)
 
@@ -69,7 +79,9 @@ trait CommandResponseParserSupport extends RegexParsers {
 
   lazy val numberWithCrLfOrErrorWithCrLf: Parser[Expr] = numberWithCrLf | errorWithCrLf
 
-  private lazy val arrayPrefixWithCrLf: Parser[ArraySizeExpr] = ARRAY_PREFIX <~ CRLF ^^ { n => ArraySizeExpr(n) }
+  private lazy val arrayPrefixWithCrLf: Parser[ArraySizeExpr] = ARRAY_PREFIX <~ CRLF ^^ { n =>
+    ArraySizeExpr(n)
+  }
 
   private lazy val stringArrayElement: Parser[StringExpr] = LENGTH ~ CRLF ~ VALUE ^^ {
     case size ~ _ ~ value =>
@@ -79,7 +91,8 @@ trait CommandResponseParserSupport extends RegexParsers {
 
   lazy val arrayPrefixWithCrLfOrErrorWithCrLf: Parser[Expr] = arrayPrefixWithCrLf | errorWithCrLf
 
-  private lazy val stringArrayWithCrLf: Parser[ArrayExpr[StringExpr]] = arrayPrefixWithCrLf ~ opt(simpleWithCrLf) ~ repsep(stringArrayElement, CRLF) ^^ {
+  private lazy val stringArrayWithCrLf: Parser[ArrayExpr[StringExpr]] = arrayPrefixWithCrLf ~ opt(
+    simpleWithCrLf) ~ repsep(stringArrayElement, CRLF) ^^ {
     case size ~ opt ~ values =>
       require(size.value == values.size)
       ArrayExpr(values)
@@ -91,7 +104,8 @@ trait CommandResponseParserSupport extends RegexParsers {
       value
   }
 
-  private lazy val numberArrayWithCrLf: Parser[ArrayExpr[NumberExpr]] = arrayPrefixWithCrLf ~ repsep(numberArrayElement, CRLF) ^^ {
+  private lazy val numberArrayWithCrLf
+    : Parser[ArrayExpr[NumberExpr]] = arrayPrefixWithCrLf ~ repsep(numberArrayElement, CRLF) ^^ {
     case size ~ values =>
       require(size.value == values.size)
       ArrayExpr(values)
@@ -99,7 +113,8 @@ trait CommandResponseParserSupport extends RegexParsers {
 
   lazy val stringArrayWithCrLfOrErrorWithCrLf: Parser[Expr] = stringArrayWithCrLf | errorWithCrLf
 
-  private lazy val bulkStringWithCrLf: Parser[StringOptExpr] = LENGTH ~ CRLF ~ opt(STRING <~ CRLF) ^^ {
+  private lazy val bulkStringWithCrLf
+    : Parser[StringOptExpr] = LENGTH ~ CRLF ~ opt(STRING <~ CRLF) ^^ {
     case l ~ _ ~ s =>
       StringOptExpr(s)
   }

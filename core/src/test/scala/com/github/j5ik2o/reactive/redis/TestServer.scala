@@ -19,8 +19,8 @@ object RedisMode {
 }
 
 class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = None) {
-  private[this] var process: Option[Process] = None
-  private[this] val forbiddenPorts = 6300.until(7300)
+  private[this] var process: Option[Process]      = None
+  private[this] val forbiddenPorts                = 6300.until(7300)
   private var _address: Option[InetSocketAddress] = None
 
   def getPort = portOpt.getOrElse(_address.get.getPort)
@@ -102,7 +102,7 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
 
 }
 
-import java.net.{ InetSocketAddress, Socket }
+import java.net.{InetSocketAddress, Socket}
 
 object RandomSocket {
 

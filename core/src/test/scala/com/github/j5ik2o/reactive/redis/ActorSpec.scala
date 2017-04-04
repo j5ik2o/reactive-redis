@@ -1,18 +1,15 @@
 package com.github.j5ik2o.reactive.redis
 
-import java.util.concurrent.atomic.AtomicReference
-
-import akka.actor.{ ActorRef, ActorSystem }
+import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import akka.testkit.{ ImplicitSender, TestKit }
+import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{ Seconds, Span }
-import org.scalatest.{ BeforeAndAfterAll, FunSpecLike }
+import org.scalatest.time.{Seconds, Span}
+import org.scalatest.{BeforeAndAfterAll, FunSpecLike}
 
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-import scala.concurrent.duration._
+import scala.concurrent.duration.{Duration, _}
 
 abstract class ActorSpec(_system: ActorSystem)
     extends TestKit(_system)
