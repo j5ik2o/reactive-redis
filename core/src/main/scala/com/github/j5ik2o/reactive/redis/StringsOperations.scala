@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.CommandResponseParser._
 
 import scala.util.parsing.input.Reader
 
-object StringOperations {
+object StringsOperations {
 
   import Options._
 

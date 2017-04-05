@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicLong
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.stream.actor.ActorPublisher
-import com.github.j5ik2o.reactive.redis.StringOperations._
+import com.github.j5ik2o.reactive.redis.StringsOperations._
 import com.github.j5ik2o.reactive.redis.TransactionOperations._
 import org.scalatest.BeforeAndAfter
 
