@@ -8,7 +8,7 @@ import akka.util.Timeout
 import com.github.j5ik2o.reactive.redis.Options.StartAndEnd
 import com.github.j5ik2o.reactive.redis.StringOperations._
 
-import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 
 trait RedisStringClient { this: RedisClient =>
@@ -41,6 +41,14 @@ trait RedisStringClient { this: RedisClient =>
     }
   }
 
+  def descBy(key: String, value: Int)(implicit ec: ExecutionContext): Future[Option[Int]] = {
+    (redisActor ? DecrByRequest(UUID.randomUUID(), key, value)).mapTo[DecrByResponse].flatMap {
+      case DecrByFailed(_, _, ex)        => Future.failed(ex)
+      case DecrBySuspended(_, _)         => Future.successful(None)
+      case DecrBySucceeded(_, _, result) => Future.successful(Some(result))
+    }
+  }
+
   def get(key: String)(implicit ec: ExecutionContext): Future[Option[String]] = {
     (redisActor ? GetRequest(UUID.randomUUID(), key)).mapTo[GetResponse].flatMap {
       case GetFailed(_, _, ex)       => Future.failed(ex)
@@ -69,6 +77,14 @@ trait RedisStringClient { this: RedisClient =>
       case IncrFailed(_, _, ex)        => Future.failed(ex)
       case IncrSuspended(_, _)         => Future.successful(None)
       case IncrSucceeded(_, _, result) => Future.successful(Some(result))
+    }
+  }
+
+  def incrBy(key: String, value: Int)(implicit ec: ExecutionContext): Future[Option[Int]] = {
+    (redisActor ? IncrByRequest(UUID.randomUUID(), key, value)).mapTo[IncrByResponse].flatMap {
+      case IncrByFailed(_, _, ex)        => Future.failed(ex)
+      case IncrBySuspended(_, _)         => Future.successful(None)
+      case IncrBySucceeded(_, _, result) => Future.successful(Some(result))
     }
   }
 

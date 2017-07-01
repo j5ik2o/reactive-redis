@@ -31,6 +31,17 @@ class RedisClientSpec
       } yield result).futureValue
       assert(result.contains(value))
     }
+    it("should be able to get increment value") {
+      val key   = UUID.randomUUID().toString
+      val value = "1"
+
+      val result = (for {
+        _      <- redisClient.set(key, value)
+        result <- redisClient.incr(key)
+      } yield result).futureValue
+      assert(result.contains(value.toInt + 1))
+
+    }
   }
 
 }

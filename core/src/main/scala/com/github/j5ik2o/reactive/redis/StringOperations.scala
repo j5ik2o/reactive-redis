@@ -170,6 +170,38 @@ object StringOperations {
 
   case class DecrFailed(id: UUID, requestId: UUID, ex: Exception) extends DecrResponse
 
+  object DecrByRequest extends SimpleResponseFactory {
+    override def createResponseFromReader(requestId: UUID,
+                                          message: Reader[Char]): (Response, Reader[Char]) =
+      parseResponse(message) match {
+        case (NumberExpr(n), next) =>
+          (DecrBySucceeded(UUID.randomUUID(), requestId, n), next)
+        case (SimpleExpr("QUEUED"), next) =>
+          (DecrBySuspended(UUID.randomUUID(), requestId), next)
+        case (ErrorExpr(msg), next) =>
+          (DecrByFailed(UUID.randomUUID(), requestId, new Exception(msg)), next)
+        case (expr, o) =>
+          logger.error("decrby request = {}", expr)
+          throw new ParseException("decrby request", o.offset)
+      }
+
+    override protected val responseParser: DecrByRequest.Parser[Expr] =
+      numberWithCrLfOrErrorWithCrLf
+  }
+
+  case class DecrByRequest(id: UUID, key: String, value: Int) extends SimpleRequest {
+    override val responseFactory: SimpleResponseFactory = DecrByRequest
+    override val message: String                        = s"DECRBY $key $value"
+  }
+
+  sealed trait DecrByResponse extends Response
+
+  case class DecrBySuspended(id: UUID, requestId: UUID) extends DecrByResponse
+
+  case class DecrBySucceeded(id: UUID, requestId: UUID, value: Int) extends DecrByResponse
+
+  case class DecrByFailed(id: UUID, requestId: UUID, ex: Exception) extends DecrByResponse
+
   // --- SET
 
   object SetRequest extends SimpleResponseFactory {
@@ -305,5 +337,36 @@ object StringOperations {
   case class IncrSuspended(id: UUID, requestId: UUID)             extends IncrResponse
   case class IncrSucceeded(id: UUID, requestId: UUID, value: Int) extends IncrResponse
   case class IncrFailed(id: UUID, requestId: UUID, ex: Exception) extends IncrResponse
+
+  // --- INCRBY
+
+  object IncrByRequest extends SimpleResponseFactory {
+    override def createResponseFromReader(requestId: UUID,
+                                          message: Reader[Char]): (Response, Reader[Char]) =
+      parseResponse(message) match {
+        case (NumberExpr(n), next) =>
+          (IncrBySucceeded(UUID.randomUUID(), requestId, n), next)
+        case (SimpleExpr("QUEUED"), next) =>
+          (IncrBySuspended(UUID.randomUUID(), requestId), next)
+        case (ErrorExpr(msg), next) =>
+          (IncrByFailed(UUID.randomUUID(), requestId, new Exception(msg)), next)
+        case (expr, o) =>
+          logger.error("incrby request = {}", expr)
+          throw new ParseException("incrby request", o.offset)
+      }
+
+    override protected val responseParser: Parser[Expr] = numberWithCrLfOrErrorWithCrLf
+  }
+
+  case class IncrByRequest(id: UUID, key: String, value: Int) extends SimpleRequest {
+    override val responseFactory: SimpleResponseFactory = IncrByRequest
+    override val message: String                        = s"INCRBY $key $value"
+  }
+
+  sealed trait IncrByResponse extends Response
+
+  case class IncrBySuspended(id: UUID, requestId: UUID)             extends IncrByResponse
+  case class IncrBySucceeded(id: UUID, requestId: UUID, value: Int) extends IncrByResponse
+  case class IncrByFailed(id: UUID, requestId: UUID, ex: Exception) extends IncrByResponse
 
 }
