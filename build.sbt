@@ -1,4 +1,4 @@
-val akkaVersion = "2.4.10"
+val akkaVersion = "2.5.3"
 
 lazy val commonSettings = Seq(
   sonatypeProfileName := "com.github.j5ik2o",
@@ -7,11 +7,9 @@ lazy val commonSettings = Seq(
   crossScalaVersions := Seq("2.11.8", "2.12.1"),
   scalacOptions ++= Seq(
     "-feature",
-    "-deprecation",
     "-unchecked",
     "-encoding",
     "UTF-8",
-    "-Xfatal-warnings",
     "-language:existentials",
     "-language:implicitConversions",
     "-language:postfixOps",

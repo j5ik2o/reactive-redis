@@ -17,10 +17,9 @@ class RedisClientSpec
 
   import system.dispatcher
 
-  val redisClient =
-    RedisClient(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort, 10 seconds)
-
   describe("RedisClient") {
+    val redisClient =
+      RedisClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
     it("should be able to get a set value") {
       val key   = UUID.randomUUID().toString
       val value = "aaaa"

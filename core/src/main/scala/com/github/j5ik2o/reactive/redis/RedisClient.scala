@@ -67,8 +67,10 @@ trait RedisStringClient { this: RedisClient =>
 
   def set(key: String, value: String)(implicit ec: ExecutionContext): Future[Unit] = {
     (redisActor ? SetRequest(UUID.randomUUID(), key, value)).mapTo[SetResponse].flatMap {
-      case SetFailed(_, _, ex) => Future.failed(ex)
-      case _                   => Future.successful(())
+      case SetFailed(_, _, ex) =>
+        Future.failed(ex)
+      case _ =>
+        Future.successful(())
     }
   }
 

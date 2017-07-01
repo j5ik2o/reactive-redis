@@ -18,7 +18,8 @@ object RedisMode {
 
 }
 
-class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = None) {
+class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = None)
+    extends RandomPortSupport {
   private[this] var process: Option[Process]      = None
   private[this] val forbiddenPorts                = 6300.until(7300)
   private var _address: Option[InetSocketAddress] = None
@@ -42,10 +43,11 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
   private[this] def findAddress(): InetSocketAddress = {
     var tries = 100
     while (_address.isEmpty && tries >= 0) {
-      _address = Some(RandomSocket.nextAddress())
+      _address = Some(temporaryServerAddress())
       if (forbiddenPorts.contains(_address.get.getPort)) {
         _address = None
         tries -= 1
+        println("try to get port...")
         Thread.sleep(5)
       }
     }
@@ -102,31 +104,29 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
 
 }
 
-import java.net.{InetSocketAddress, Socket}
+import java.net.InetSocketAddress
+import java.nio.channels.ServerSocketChannel
 
-object RandomSocket {
+/**
+  * This code is originated from Spray.
+  * https://github.com/spray/spray/blob/b473d9e8ce503bafc72825914f46ae6be1588ce7/spray-util/src/main/scala/spray/util/Utils.scala#L35-L47
+  */
+trait RandomPortSupport {
 
-  private[this] def localSocketOnPort(port: Int) =
-    new InetSocketAddress(port)
-
-  private[this] val ephemeralSocketAddress = localSocketOnPort(0)
-
-  def apply() = nextAddress()
-
-  def nextAddress(): InetSocketAddress =
-    localSocketOnPort(nextPort())
-
-  def nextPort(): Int = {
-    val s = new Socket
-    s.setReuseAddress(true)
+  def temporaryServerAddress(interface: String = "127.0.0.1"): InetSocketAddress = {
+    val serverSocket = ServerSocketChannel.open()
     try {
-      s.bind(ephemeralSocketAddress)
-      s.getLocalPort
-    } catch {
-      case e: Throwable =>
-        throw new Exception("Couldn't find an open port: %s".format(e.getMessage))
-    } finally {
-      s.close()
-    }
+      serverSocket.socket.bind(new InetSocketAddress(interface, 0))
+      val port = serverSocket.socket.getLocalPort
+      new InetSocketAddress(interface, port)
+    } finally serverSocket.close()
   }
+
+  def temporaryServerHostnameAndPort(interface: String = "127.0.0.1"): (String, Int) = {
+    val socketAddress = temporaryServerAddress(interface)
+    socketAddress.getHostName -> socketAddress.getPort
+  }
+
+  def temporaryServerPort(interface: String = "127.0.0.1"): Int =
+    temporaryServerHostnameAndPort(interface)._2
 }
