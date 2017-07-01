@@ -8,6 +8,7 @@ import akka.util.Timeout
 import com.github.j5ik2o.reactive.redis.Options.StartAndEnd
 import com.github.j5ik2o.reactive.redis.StringOperations._
 
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 
 trait RedisStringClient { this: RedisClient =>
@@ -89,10 +90,10 @@ trait RedisClient extends RedisStringClient {
 
 object RedisClient {
 
-  def apply(id: UUID, host: String, port: Int, timeout: Timeout)(
+  def apply(id: UUID = UUID.randomUUID(), host: String, port: Int = 6379, timeout: FiniteDuration)(
       implicit actorSystem: ActorSystem): RedisClient = {
     val redisActorRef = actorSystem.actorOf(RedisActor.props(id, host, port))
-    apply(redisActorRef, timeout)
+    apply(redisActorRef, Timeout(timeout))
   }
 
   def apply(redisActorRef: ActorRef, timeout: Timeout): RedisClient =

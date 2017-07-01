@@ -6,25 +6,28 @@ val sonatypeURL = "https://oss.sonatype.org/service/local/repositories/"
 def updateReadmeFile(version: String, readme: String): Unit = {
   println(s"version = $version")
   val readmeFile = file(readme)
-  val newReadme = Predef.augmentString(IO.read(readmeFile)).lines.map { line =>
-    val matchReleaseOrSnapshot = line.contains("SNAPSHOT") == version.contains("SNAPSHOT")
-    if (line.startsWith("libraryDependencies") && matchReleaseOrSnapshot) {
-      println(s"matchReleaseOrSnapshot = $matchReleaseOrSnapshot")
-      val regex = """\d{1,2}\.\d{1,2}\.\d{1,2}""".r
-      regex.replaceFirstIn(line, version)
-    } else line
-  }.mkString("", "\n", "\n")
+  val newReadme = Predef
+    .augmentString(IO.read(readmeFile))
+    .lines
+    .map { line =>
+      val matchReleaseOrSnapshot = line.contains("SNAPSHOT") == version.contains("SNAPSHOT")
+      if (line.startsWith("libraryDependencies") && matchReleaseOrSnapshot) {
+        println(s"matchReleaseOrSnapshot = $matchReleaseOrSnapshot")
+        val regex = """\d{1,2}\.\d{1,2}\.\d{1,2}""".r
+        regex.replaceFirstIn(line, version)
+      } else line
+    }
+    .mkString("", "\n", "\n")
   IO.write(readmeFile, newReadme)
 }
 
-
 val updateReadme = { state: State =>
   val extracted = Project.extract(state)
-  val git = new Git(extracted get baseDirectory)
-  val scalaV = extracted get scalaBinaryVersion
-  val v = extracted get version
-  val org = extracted get organization
-  val n = extracted get name
+  val git       = new Git(extracted get baseDirectory)
+  val scalaV    = extracted get scalaBinaryVersion
+  val v         = extracted get version
+  val org       = extracted get organization
+  val n         = extracted get name
   val readmeFiles = Seq(
     "README.md"
   )
@@ -55,7 +58,8 @@ releaseProcess := Seq[ReleaseStep](
   ReleaseStep(
     action = { state =>
       val extracted = Project extract state
-      extracted.runAggregated(PgpKeys.publishSigned in Global in extracted.get(thisProjectRef), state)
+      extracted.runAggregated(PgpKeys.publishSigned in Global in extracted.get(thisProjectRef),
+                              state)
     },
     enableCrossBuild = true
   ),

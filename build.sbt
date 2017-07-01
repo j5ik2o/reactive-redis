@@ -48,6 +48,7 @@ lazy val commonSettings = Seq(
         </developer>
       </developers>
   },
+  updateOptions := updateOptions.value.withCachedResolution(true),
   credentials := Def.task {
     val ivyCredentials = (baseDirectory in LocalRootProject).value / ".credentials"
     val result         = Credentials(ivyCredentials) :: Nil

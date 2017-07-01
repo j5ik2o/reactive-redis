@@ -4,7 +4,6 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicLong
 
 import akka.actor.ActorSystem
-import akka.util.Timeout
 import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.duration._
@@ -19,7 +18,7 @@ class RedisClientSpec
   import system.dispatcher
 
   val redisClient =
-    RedisClient(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort, Timeout(10 seconds))
+    RedisClient(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort, 10 seconds)
 
   describe("RedisClient") {
     it("should be able to get a set value") {
