@@ -10,19 +10,9 @@ import akka.pattern.ask
 
 class RedisSupervisorSpec
     extends ActorSpec(ActorSystem("RedisSupervisorSpec"))
-    with BeforeAndAfter {
+    with ServerBootable {
 
   val idGenerator = new AtomicLong()
-
-  val testServer: TestServer = new TestServer(portOpt = Some(6200))
-
-  override protected def beforeAll(): Unit = {
-    testServer.start()
-  }
-
-  override protected def afterAll(): Unit = {
-    testServer.stop()
-  }
 
   describe("RedisSupervisor") {
     it("should be able to restart the redis-actor") {
@@ -33,17 +23,9 @@ class RedisSupervisorSpec
         )
       )
 
-      println("port = " + testServer.getPort)
-
-      testServer.stop()
-
       val id1 = idGenerator.incrementAndGet().toString
       assert(
         (actorRef ? SetRequest(UUID.randomUUID, id1, "a")).futureValue.isInstanceOf[SetSucceeded])
-
-      testServer.start()
-
-      println("port = " + testServer.getPort)
 
       val id2 = idGenerator.incrementAndGet().toString
       assert(
