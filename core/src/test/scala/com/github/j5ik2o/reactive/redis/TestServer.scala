@@ -27,7 +27,7 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
 
   def address: Option[InetSocketAddress] = _address
 
-  val path = "/usr/local/bin/redis-server"
+  val path = sys.env.getOrElse("REDIS_SERVER_PATH", "/usr/local/bin/redis-server")
 
   assertRedisBinaryPresent()
   findAddress()

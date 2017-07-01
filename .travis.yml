@@ -22,6 +22,9 @@ language: scala
 scala: 2.12.2
 jdk: oraclejdk8
 
+env:
+  - REDIS_SERVER_PATH=/usr/bin/redis-server
+
 sbt_args: -no-colors -J-Xss2m -J-Xms1g -J-Xmx3g -J-XX:ReservedCodeCacheSize=256M -Dfile.encoding=UTF8
 
 script:
