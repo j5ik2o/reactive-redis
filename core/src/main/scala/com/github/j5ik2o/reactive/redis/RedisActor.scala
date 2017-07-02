@@ -5,13 +5,13 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 import akka.NotUsed
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
 import akka.io.Inet.SocketOption
 import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.stream.actor._
 import akka.stream.scaladsl.Tcp.OutgoingConnection
-import akka.stream.scaladsl.{Flow, GraphDSL, Keep, Sink, Source, Tcp, Unzip, Zip}
-import akka.stream.{ActorMaterializer, FlowShape}
+import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, Sink, Source, Tcp, Unzip, Zip }
+import akka.stream.{ ActorMaterializer, FlowShape }
 import akka.util.ByteString
 import com.github.j5ik2o.reactive.redis.Protocol._
 import com.github.j5ik2o.reactive.redis.TransactionOperations._
@@ -21,7 +21,7 @@ import scala.annotation.tailrec
 import scala.collection.immutable
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
-import scala.util.parsing.input.{CharSequenceReader, Reader}
+import scala.util.parsing.input.{ CharSequenceReader, Reader }
 
 trait Request {
   val id: UUID
@@ -57,16 +57,14 @@ trait TransactionResponseFactory extends CommandResponseParserSupport {
 
   val logger = LoggerFactory.getLogger(classOf[TransactionResponseFactory])
 
-  def createResponseFromString(
-      requestId: UUID,
-      message: String,
-      responseFactories: Vector[SimpleResponseFactory]): (Response, Reader[Char]) =
+  def createResponseFromString(requestId: UUID,
+                               message: String,
+                               responseFactories: Vector[SimpleResponseFactory]): (Response, Reader[Char]) =
     createResponseFromReader(requestId, new CharSequenceReader(message), responseFactories)
 
-  def createResponseFromReader(
-      requestId: UUID,
-      message: Reader[Char],
-      responseFactories: Vector[SimpleResponseFactory]): (Response, Reader[Char])
+  def createResponseFromReader(requestId: UUID,
+                               message: Reader[Char],
+                               responseFactories: Vector[SimpleResponseFactory]): (Response, Reader[Char])
 
 }
 
@@ -90,14 +88,8 @@ object RedisActor {
       maxRequestCount: Int = 50
   ): Props =
     Props(
-      new RedisActor(id,
-                     remoteAddress,
-                     localAddress,
-                     options,
-                     halfClose,
-                     connectTimeout,
-                     idleTimeout,
-                     maxRequestCount))
+      new RedisActor(id, remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout, maxRequestCount)
+    )
 
 }
 
@@ -123,7 +115,8 @@ object ConnectionActor {
         connectTimeout,
         idleTimeout,
         maxRequestCount
-      ))
+      )
+    )
 
 }
 
@@ -138,13 +131,9 @@ private[redis] object Protocol {
 
   case class TransactionStart(request: SimpleRequest)
 
-  case class TransactionExecCompleted(replyTo: ActorRef,
-                                      request: ExecRequest,
-                                      response: ExecResponse)
+  case class TransactionExecCompleted(replyTo: ActorRef, request: ExecRequest, response: ExecResponse)
 
-  case class TransactionDiscardCompleted(replyTo: ActorRef,
-                                         request: DiscardRequest,
-                                         response: DiscardResponse)
+  case class TransactionDiscardCompleted(replyTo: ActorRef, request: DiscardRequest, response: DiscardResponse)
 
   case class RequestContext(sender: ActorRef, request: Request, requestAt: ZonedDateTime) {
     val id: UUID = request.id
@@ -175,12 +164,7 @@ class ConnectionActor(
     collection.mutable.ArrayBuffer.empty
 
   private val tcpFlow: Flow[ByteString, ByteString, Future[OutgoingConnection]] =
-    Tcp().outgoingConnection(remoteAddress,
-                             localAddress,
-                             options,
-                             halfClose,
-                             connectTimeout,
-                             idleTimeout)
+    Tcp().outgoingConnection(remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout)
 
   private val connectionFlow: Flow[RequestContext, ResponseContext, NotUsed] =
     Flow.fromGraph(GraphDSL.create() { implicit b =>

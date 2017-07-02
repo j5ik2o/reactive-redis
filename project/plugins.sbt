@@ -3,8 +3,8 @@ logLevel := Level.Warn
 resolvers ++= Seq(
   Classpaths.typesafeReleases,
   Classpaths.typesafeSnapshots,
-  "Sonatype OSS Snapshot Repository" at "https://oss.sonatype.org/content/repositories/snapshots",
-  "Sonatype OSS Release Repository" at "https://oss.sonatype.org/content/repositories/releases/"
+  Resolver.sonatypeRepo("snapshots"),
+  Resolver.sonatypeRepo("releases")
 )
 
 addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.8.0")
@@ -15,4 +15,4 @@ addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.0.0")
 
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.0")
 
-addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "0.6.8")
+addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "0.6.6")

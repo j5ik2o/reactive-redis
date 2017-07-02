@@ -4,25 +4,13 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicLong
 
 import akka.actor.ActorSystem
-import com.github.j5ik2o.reactive.redis.StringOperations.{SetRequest, SetSucceeded}
+import com.github.j5ik2o.reactive.redis.StringOperations.{ SetRequest, SetSucceeded }
 import org.scalatest.BeforeAndAfter
 import akka.pattern.ask
 
-class RedisSupervisorSpec
-    extends ActorSpec(ActorSystem("RedisSupervisorSpec"))
-    with BeforeAndAfter {
+class RedisSupervisorSpec extends ActorSpec(ActorSystem("RedisSupervisorSpec")) with RedisServerSupport {
 
   val idGenerator = new AtomicLong()
-
-  val testServer: TestServer = new TestServer(portOpt = Some(6200))
-
-  override protected def beforeAll(): Unit = {
-    testServer.start()
-  }
-
-  override protected def afterAll(): Unit = {
-    testServer.stop()
-  }
 
   describe("RedisSupervisor") {
     it("should be able to restart the redis-actor") {
@@ -33,21 +21,11 @@ class RedisSupervisorSpec
         )
       )
 
-      println("port = " + testServer.getPort)
-
-      testServer.stop()
-
       val id1 = idGenerator.incrementAndGet().toString
-      assert(
-        (actorRef ? SetRequest(UUID.randomUUID, id1, "a")).futureValue.isInstanceOf[SetSucceeded])
-
-      testServer.start()
-
-      println("port = " + testServer.getPort)
+      assert((actorRef ? SetRequest(UUID.randomUUID, id1, "a")).futureValue.isInstanceOf[SetSucceeded])
 
       val id2 = idGenerator.incrementAndGet().toString
-      assert(
-        (actorRef ? SetRequest(UUID.randomUUID, id2, "a")).futureValue.isInstanceOf[SetSucceeded])
+      assert((actorRef ? SetRequest(UUID.randomUUID, id2, "a")).futureValue.isInstanceOf[SetSucceeded])
 
     }
   }

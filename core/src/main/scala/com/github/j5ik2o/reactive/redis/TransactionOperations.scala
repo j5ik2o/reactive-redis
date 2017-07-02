@@ -3,20 +3,14 @@ package com.github.j5ik2o.reactive.redis
 import java.text.ParseException
 import java.util.UUID
 
-import com.github.j5ik2o.reactive.redis.CommandResponseParser.{
-  ArraySizeExpr,
-  ErrorExpr,
-  Expr,
-  SimpleExpr
-}
+import com.github.j5ik2o.reactive.redis.CommandResponseParser.{ ArraySizeExpr, ErrorExpr, Expr, SimpleExpr }
 
 import scala.util.parsing.input.Reader
 
 object TransactionOperations {
 
   object MultiRequest extends SimpleResponseFactory {
-    override def createResponseFromReader(requestId: UUID,
-                                          message: Reader[Char]): (Response, Reader[Char]) =
+    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) =
       parseResponse(message) match {
         case (SimpleExpr(_), next) =>
           (MultiSucceeded(UUID.randomUUID(), requestId), next)
@@ -46,7 +40,8 @@ object TransactionOperations {
     override def createResponseFromReader(
         requestId: UUID,
         message: Reader[Char],
-        responseFactories: Vector[SimpleResponseFactory]): (Response, Reader[Char]) = {
+        responseFactories: Vector[SimpleResponseFactory]
+    ): (Response, Reader[Char]) = {
       val result = parseResponse(message)
       result match {
         case (ArraySizeExpr(size), next) =>
@@ -79,16 +74,14 @@ object TransactionOperations {
 
   sealed trait ExecResponse extends Response
 
-  case class ExecSucceeded(id: UUID, requestId: UUID, responses: Seq[Response])
-      extends ExecResponse
+  case class ExecSucceeded(id: UUID, requestId: UUID, responses: Seq[Response]) extends ExecResponse
 
   case class ExecFailed(id: UUID, requestId: UUID, ex: Exception) extends ExecResponse
 
   // ---
 
   object DiscardRequest extends SimpleResponseFactory {
-    override def createResponseFromReader(requestId: UUID,
-                                          message: Reader[Char]): (Response, Reader[Char]) =
+    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) =
       parseResponse(message) match {
         case (SimpleExpr(_), next) =>
           (DiscardSucceeded(UUID.randomUUID(), requestId), next)
@@ -115,8 +108,7 @@ object TransactionOperations {
   // ---
 
   object WatchRequest extends SimpleResponseFactory {
-    override def createResponseFromReader(requestId: UUID,
-                                          message: Reader[Char]): (Response, Reader[Char]) =
+    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) =
       parseResponse(message) match {
         case (SimpleExpr(_), next) =>
           (DiscardSucceeded(UUID.randomUUID(), requestId), next)

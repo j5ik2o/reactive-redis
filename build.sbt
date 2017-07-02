@@ -1,17 +1,15 @@
-val akkaVersion = "2.4.10"
+val akkaVersion = "2.4.18"
 
 lazy val commonSettings = Seq(
   sonatypeProfileName := "com.github.j5ik2o",
   organization := "com.github.j5ik2o",
-  scalaVersion := "2.11.8",
-  crossScalaVersions := Seq("2.11.8", "2.12.1"),
+  scalaVersion := "2.12.2",
+  crossScalaVersions := Seq("2.11.8", "2.12.2"),
   scalacOptions ++= Seq(
     "-feature",
-    "-deprecation",
     "-unchecked",
     "-encoding",
     "UTF-8",
-    "-Xfatal-warnings",
     "-language:existentials",
     "-language:implicitConversions",
     "-language:postfixOps",
@@ -76,7 +74,6 @@ lazy val core = (project in file("core"))
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % "test",
       "org.slf4j"         % "slf4j-api"            % "1.7.21",
       "ch.qos.logback"    % "logback-classic"      % "1.1.7" % "provided",
-      //"org.scalatest"          %% "scalatest"                % "3.0.1" % "test",
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4"
     )
   )

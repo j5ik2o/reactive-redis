@@ -2,14 +2,14 @@ package com.github.j5ik2o.reactive.redis
 
 import java.util.UUID
 
-import akka.actor.{ActorRef, ActorSystem, PoisonPill}
+import akka.actor.{ ActorRef, ActorSystem, PoisonPill }
 import akka.pattern._
 import akka.util.Timeout
 import com.github.j5ik2o.reactive.redis.Options.StartAndEnd
 import com.github.j5ik2o.reactive.redis.StringOperations._
 
 import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 trait RedisStringClient { this: RedisClient =>
 
@@ -22,8 +22,8 @@ trait RedisStringClient { this: RedisClient =>
     }
   }
 
-  def bitCount(key: String, startAndEnd: Option[StartAndEnd] = None)(
-      implicit ec: ExecutionContext): Future[Option[Int]] = {
+  def bitCount(key: String,
+               startAndEnd: Option[StartAndEnd] = None)(implicit ec: ExecutionContext): Future[Option[Int]] = {
     (redisActor ? BitCountRequest(UUID.randomUUID(), key, startAndEnd))
       .mapTo[BitCountResponse]
       .flatMap {
@@ -67,8 +67,10 @@ trait RedisStringClient { this: RedisClient =>
 
   def set(key: String, value: String)(implicit ec: ExecutionContext): Future[Unit] = {
     (redisActor ? SetRequest(UUID.randomUUID(), key, value)).mapTo[SetResponse].flatMap {
-      case SetFailed(_, _, ex) => Future.failed(ex)
-      case _                   => Future.successful(())
+      case SetFailed(_, _, ex) =>
+        Future.failed(ex)
+      case _ =>
+        Future.successful(())
     }
   }
 
@@ -107,7 +109,8 @@ trait RedisClient extends RedisStringClient {
 object RedisClient {
 
   def apply(id: UUID = UUID.randomUUID(), host: String, port: Int = 6379, timeout: FiniteDuration)(
-      implicit actorSystem: ActorSystem): RedisClient = {
+      implicit actorSystem: ActorSystem
+  ): RedisClient = {
     val redisActorRef = actorSystem.actorOf(RedisActor.props(id, host, port))
     apply(redisActorRef, Timeout(timeout))
   }
