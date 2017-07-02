@@ -14,10 +14,7 @@ import scala.annotation.tailrec
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-class RedisActorSpec
-    extends ActorSpec(ActorSystem("RedisActorSpec"))
-    with ServerBootable
-    with BeforeAndAfter {
+class RedisActorSpec extends ActorSpec(ActorSystem("RedisActorSpec")) with RedisServerSupport {
 
   //  override protected def beforeAll(): Unit = {
   //    super.beforeAll()

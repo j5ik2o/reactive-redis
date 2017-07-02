@@ -10,18 +10,17 @@ import scala.concurrent.duration._
 
 class RedisClientSpec
     extends ActorSpec(ActorSystem("RedisClientSpec"))
-    with ServerBootable
+    with RedisServerSupport
     with ScalaFutures {
 
   val idGenerator = new AtomicLong()
 
   import system.dispatcher
 
-  val redisClient =
-    RedisClient(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort, 10 seconds)
-
   describe("RedisClient") {
     it("should be able to get a set value") {
+      val redisClient =
+        RedisClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = "aaaa"
 
@@ -32,6 +31,8 @@ class RedisClientSpec
       assert(result.contains(value))
     }
     it("should be able to get increment value") {
+      val redisClient =
+        RedisClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = "1"
 
