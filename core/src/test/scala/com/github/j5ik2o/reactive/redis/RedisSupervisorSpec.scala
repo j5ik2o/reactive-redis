@@ -10,7 +10,7 @@ import akka.pattern.ask
 
 class RedisSupervisorSpec
     extends ActorSpec(ActorSystem("RedisSupervisorSpec"))
-    with ServerBootable {
+    with RedisServerSupport {
 
   val idGenerator = new AtomicLong()
 

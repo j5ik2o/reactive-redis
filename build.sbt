@@ -1,4 +1,4 @@
-val akkaVersion = "2.5.3"
+val akkaVersion = "2.4.18"
 
 lazy val commonSettings = Seq(
   sonatypeProfileName := "com.github.j5ik2o",
