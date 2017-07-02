@@ -3,8 +3,8 @@ val akkaVersion = "2.4.18"
 lazy val commonSettings = Seq(
   sonatypeProfileName := "com.github.j5ik2o",
   organization := "com.github.j5ik2o",
-  scalaVersion := "2.11.8",
-  crossScalaVersions := Seq("2.11.8", "2.12.1"),
+  scalaVersion := "2.12.2",
+  crossScalaVersions := Seq("2.11.8", "2.12.2"),
   scalacOptions ++= Seq(
     "-feature",
     "-unchecked",

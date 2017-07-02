@@ -6,7 +6,6 @@ import java.util.UUID
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
 sealed trait RedisMode
@@ -33,10 +32,7 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
 
   val path = sys.env.getOrElse("REDIS_SERVER_PATH", "/usr/local/bin/redis-server")
 
-  assertRedisBinaryPresent()
-  findAddress()
-
-  private[this] def assertRedisBinaryPresent(): Unit = {
+  private[this] def assertRedisBinaryPresent()(implicit ec: ExecutionContext): Unit = {
     val p = new ProcessBuilder(path, "--help").start()
     printlnStreamFuture(new BufferedReader(new InputStreamReader(p.getInputStream)))
     printlnStreamFuture(new BufferedReader(new InputStreamReader(p.getErrorStream)))
@@ -106,6 +102,8 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
   }
 
   def start()(implicit ec: ExecutionContext) {
+    assertRedisBinaryPresent()
+    findAddress()
     val port = getPort
     val conf = createConfigFile(port).getAbsolutePath
     val cmd: Seq[String] = if (mode == RedisMode.Sentinel) {
@@ -121,14 +119,14 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
     Thread.sleep(200)
   }
 
-  def stop() {
+  def stop(): Unit = {
     process.foreach { p =>
       p.destroy()
       p.waitFor()
     }
   }
 
-  def restart() {
+  def restart()(implicit ec: ExecutionContext): Unit = {
     stop()
     start()
   }
