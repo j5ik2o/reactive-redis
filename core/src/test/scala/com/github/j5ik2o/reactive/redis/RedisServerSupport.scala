@@ -1,6 +1,6 @@
 package com.github.j5ik2o.reactive.redis
 
-import org.scalatest.{BeforeAndAfterAll, Suite}
+import org.scalatest.{ BeforeAndAfterAll, Suite }
 import scala.concurrent.ExecutionContext.Implicits.global
 
 trait RedisServerSupport extends BeforeAndAfterAll { this: Suite =>

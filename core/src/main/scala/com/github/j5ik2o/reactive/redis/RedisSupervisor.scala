@@ -3,7 +3,7 @@ package com.github.j5ik2o.reactive.redis
 import java.util.UUID
 
 import akka.actor.SupervisorStrategy.Restart
-import akka.actor.{Actor, OneForOneStrategy, Props, SupervisorStrategy}
+import akka.actor.{ Actor, OneForOneStrategy, Props, SupervisorStrategy }
 
 object RedisSupervisor {
 

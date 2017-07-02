@@ -8,10 +8,7 @@ import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.duration._
 
-class RedisClientSpec
-    extends ActorSpec(ActorSystem("RedisClientSpec"))
-    with RedisServerSupport
-    with ScalaFutures {
+class RedisClientSpec extends ActorSpec(ActorSystem("RedisClientSpec")) with RedisServerSupport with ScalaFutures {
 
   val idGenerator = new AtomicLong()
 
