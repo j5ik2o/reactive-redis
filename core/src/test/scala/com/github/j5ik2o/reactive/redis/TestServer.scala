@@ -5,6 +5,9 @@ import java.net.InetSocketAddress
 import java.util.UUID
 
 import scala.collection.JavaConverters._
+import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Failure, Success}
 
 sealed trait RedisMode
 
@@ -35,6 +38,8 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
 
   private[this] def assertRedisBinaryPresent(): Unit = {
     val p = new ProcessBuilder(path, "--help").start()
+    printlnStreamFuture(new BufferedReader(new InputStreamReader(p.getInputStream)))
+    printlnStreamFuture(new BufferedReader(new InputStreamReader(p.getErrorStream)))
     p.waitFor()
     val exitValue = p.exitValue()
     require(exitValue == 0 || exitValue == 1, "redis-server binary must be present.")
@@ -77,7 +82,30 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
     f
   }
 
-  def start() {
+  def printlnStreamFuture(br: BufferedReader)(implicit ec: ExecutionContext): Future[Unit] = {
+    val result = Future {
+      br.readLine()
+    }.flatMap { result =>
+      if (result != null) {
+        println(result)
+        printlnStreamFuture(br)
+      } else
+        Future.successful(())
+    }.recoverWith {
+      case ex =>
+        Future.successful(())
+    }
+    result.onComplete {
+      case Success(_) =>
+        br.close()
+      case Failure(ex) =>
+        ex.printStackTrace()
+        br.close()
+    }
+    result
+  }
+
+  def start()(implicit ec: ExecutionContext) {
     val port = getPort
     val conf = createConfigFile(port).getAbsolutePath
     val cmd: Seq[String] = if (mode == RedisMode.Sentinel) {
@@ -85,8 +113,11 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
     } else {
       Seq(path, conf)
     }
-    val builder = new ProcessBuilder(cmd.asJava)
-    process = Some(builder.start())
+    val builder  = new ProcessBuilder(cmd.asJava)
+    val _process = builder.start()
+    printlnStreamFuture(new BufferedReader(new InputStreamReader(_process.getInputStream)))
+    printlnStreamFuture(new BufferedReader(new InputStreamReader(_process.getErrorStream)))
+    process = Some(_process)
     Thread.sleep(200)
   }
 
