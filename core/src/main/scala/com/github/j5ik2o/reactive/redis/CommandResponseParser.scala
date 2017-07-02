@@ -91,8 +91,8 @@ trait CommandResponseParserSupport extends RegexParsers {
 
   lazy val arrayPrefixWithCrLfOrErrorWithCrLf: Parser[Expr] = arrayPrefixWithCrLf | errorWithCrLf
 
-  private lazy val stringArrayWithCrLf: Parser[ArrayExpr[StringExpr]] = arrayPrefixWithCrLf ~ opt(
-    simpleWithCrLf) ~ repsep(stringArrayElement, CRLF) ^^ {
+  private lazy val stringArrayWithCrLf
+    : Parser[ArrayExpr[StringExpr]] = arrayPrefixWithCrLf ~ opt(simpleWithCrLf) ~ repsep(stringArrayElement, CRLF) ^^ {
     case size ~ opt ~ values =>
       require(size.value == values.size)
       ArrayExpr(values)
@@ -104,8 +104,10 @@ trait CommandResponseParserSupport extends RegexParsers {
       value
   }
 
-  private lazy val numberArrayWithCrLf
-    : Parser[ArrayExpr[NumberExpr]] = arrayPrefixWithCrLf ~ repsep(numberArrayElement, CRLF) ^^ {
+  private lazy val numberArrayWithCrLf: Parser[ArrayExpr[NumberExpr]] = arrayPrefixWithCrLf ~ repsep(
+    numberArrayElement,
+    CRLF
+  ) ^^ {
     case size ~ values =>
       require(size.value == values.size)
       ArrayExpr(values)
@@ -113,8 +115,7 @@ trait CommandResponseParserSupport extends RegexParsers {
 
   lazy val stringArrayWithCrLfOrErrorWithCrLf: Parser[Expr] = stringArrayWithCrLf | errorWithCrLf
 
-  private lazy val bulkStringWithCrLf
-    : Parser[StringOptExpr] = LENGTH ~ CRLF ~ opt(STRING <~ CRLF) ^^ {
+  private lazy val bulkStringWithCrLf: Parser[StringOptExpr] = LENGTH ~ CRLF ~ opt(STRING <~ CRLF) ^^ {
     case l ~ _ ~ s =>
       StringOptExpr(s)
   }

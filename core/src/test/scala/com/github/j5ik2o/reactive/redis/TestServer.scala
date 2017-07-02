@@ -5,8 +5,8 @@ import java.net.InetSocketAddress
 import java.util.UUID
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.{ Failure, Success }
 
 sealed trait RedisMode
 
@@ -20,8 +20,7 @@ object RedisMode {
 
 }
 
-class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = None)
-    extends RandomPortSupport {
+class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = None) extends RandomPortSupport {
   private[this] var process: Option[Process]      = None
   private[this] val forbiddenPorts                = 6300.until(7300)
   private var _address: Option[InetSocketAddress] = None
@@ -82,15 +81,16 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
     val result = Future {
       br.readLine()
     }.flatMap { result =>
-      if (result != null) {
-        println(result)
-        printlnStreamFuture(br)
-      } else
-        Future.successful(())
-    }.recoverWith {
-      case ex =>
-        Future.successful(())
-    }
+        if (result != null) {
+          println(result)
+          printlnStreamFuture(br)
+        } else
+          Future.successful(())
+      }
+      .recoverWith {
+        case ex =>
+          Future.successful(())
+      }
     result.onComplete {
       case Success(_) =>
         br.close()
