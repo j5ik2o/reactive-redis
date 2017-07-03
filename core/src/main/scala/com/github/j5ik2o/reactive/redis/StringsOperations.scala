@@ -3,7 +3,6 @@ package com.github.j5ik2o.reactive.redis
 import java.text.ParseException
 import java.util.UUID
 
-import com.github.j5ik2o.reactive.redis
 import com.github.j5ik2o.reactive.redis.CommandResponseParser._
 
 import scala.util.parsing.input.Reader
@@ -77,7 +76,7 @@ object StringsOperations {
   case class BitCountFailed(id: UUID, requestId: UUID, ex: Exception) extends BitCountResponse
 
   // --- BITFIELD
-  object BitField extends SimpleResponseFactory {
+  object BitFieldRequest extends SimpleResponseFactory {
 
     sealed trait BitType {
       def asString: String
@@ -111,12 +110,12 @@ object StringsOperations {
           throw new ParseException("bitfield request", o.offset)
       }
 
-    override protected val responseParser: redis.StringOperations.BitField.Parser[Expr] =
+    override protected val responseParser: Parser[Expr] =
       numberWithCrLfOrErrorWithCrLf
   }
 
-  case class BitField(id: UUID, key: String, option: BitField.SubOption) extends SimpleRequest {
-    override val responseFactory: SimpleResponseFactory = BitField
+  case class BitFieldRequest(id: UUID, key: String, option: BitFieldRequest.SubOption) extends SimpleRequest {
+    override val responseFactory: SimpleResponseFactory = BitFieldRequest
     override val message: String = {
       s"$key ${option.asString}"
     }
@@ -130,6 +129,49 @@ object StringsOperations {
 
   case class BitFieldFailed(id: UUID, requestId: UUID, ex: Exception) extends BitFieldResponse
   // --- BITOP
+
+  object BitOpRequest extends SimpleResponseFactory {
+
+    sealed trait Operand
+    object Operand {
+      case object AND extends Operand
+      case object OR  extends Operand
+      case object XOR extends Operand
+    }
+
+    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) =
+      parseResponse(message) match {
+        case (NumberExpr(n), next) =>
+          (BitOpSucceeded(UUID.randomUUID(), requestId, n), next)
+        case (SimpleExpr("QUEUED"), next) =>
+          (BitOpSuspended(UUID.randomUUID(), requestId), next)
+        case (ErrorExpr(msg), next) =>
+          (BitOpFailed(UUID.randomUUID(), requestId, new Exception(msg)), next)
+        case (expr, o) =>
+          logger.error("bitfield request = {}", expr)
+          throw new ParseException("bitfield request", o.offset)
+      }
+
+    override protected val responseParser: Parser[Expr] = numberWithCrLfOrErrorWithCrLf
+  }
+
+  case class BitOpRequest(id: UUID,
+                          operand: BitOpRequest.Operand,
+                          outputKey: String,
+                          inputKey1: String,
+                          inputKey2: String)
+      extends SimpleRequest {
+    override val responseFactory: SimpleResponseFactory = BitOpRequest
+    override val message: String                        = s"BITOP ${operand.toString} $outputKey $inputKey1 $inputKey2"
+  }
+
+  sealed trait BitOpResponse extends Response
+
+  case class BitOpSuspended(id: UUID, requestId: UUID) extends BitOpResponse
+
+  case class BitOpSucceeded(id: UUID, requestId: UUID, value: Int) extends BitOpResponse
+
+  case class BitOpFailed(id: UUID, requestId: UUID, ex: Exception) extends BitOpResponse
 
   // --- BITPOS
 
@@ -356,4 +398,16 @@ object StringsOperations {
   case class IncrBySucceeded(id: UUID, requestId: UUID, value: Int) extends IncrByResponse
   case class IncrByFailed(id: UUID, requestId: UUID, ex: Exception) extends IncrByResponse
 
+  // --- INCRBYFLOAT
+
+  // --- MGET
+  // --- MSET
+  // --- MSETNX
+  // --- PSETEX
+  // --- SET
+  // --- SETBIT
+  // --- SETEX
+  // --- SETNX
+  // --- SETRANGE
+  // --- STRLEN
 }
