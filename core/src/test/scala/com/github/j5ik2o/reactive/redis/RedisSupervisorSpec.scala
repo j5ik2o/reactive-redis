@@ -4,9 +4,8 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicLong
 
 import akka.actor.ActorSystem
-import com.github.j5ik2o.reactive.redis.StringOperations.{ SetRequest, SetSucceeded }
-import org.scalatest.BeforeAndAfter
 import akka.pattern.ask
+import com.github.j5ik2o.reactive.redis.StringsOperations.{ SetRequest, SetSucceeded }
 
 class RedisSupervisorSpec extends ActorSpec(ActorSystem("RedisSupervisorSpec")) with RedisServerSupport {
 

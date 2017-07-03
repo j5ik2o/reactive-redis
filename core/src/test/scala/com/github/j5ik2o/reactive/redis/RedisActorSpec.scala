@@ -16,33 +16,14 @@ import scala.concurrent.duration.Duration
 
 class RedisActorSpec extends ActorSpec(ActorSystem("RedisActorSpec")) with RedisServerSupport {
 
-  //  override protected def beforeAll(): Unit = {
-  //    super.beforeAll()
-  //    val client = system.actorOf(StringClient.props(new InetSocketAddress("127.0.0.1", testServer.address.get.getPort)))
-  //    clientRef.set(client)
-  //  }
-  //
-  //  override protected def afterAll(): Unit = {
-  //    //Await.result(client ? QuitRequest, 10 seconds)
-  //    system.terminate()
-  //    super.afterAll()
-  //  }
-
   val idGenerator = new AtomicLong()
 
+  def props = RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort)
+
   describe("StringOperations") {
-    it("should be appended value") {
-      val actorRef = system.actorOf(RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort))
-      val id       = idGenerator.incrementAndGet().toString
-      assert((actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue.isInstanceOf[SetSucceeded])
-      assert(
-        (actorRef ? BitCountRequest(UUID.randomUUID, id)).futureValue
-          .asInstanceOf[BitCountSucceeded]
-          .value == 3
-      )
-    }
-    it("should be got bit count") {
-      val actorRef = system.actorOf(RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort))
+    // APPEND
+    it("should be able to APPEND") {
+      val actorRef = system.actorOf(props)
       val id       = idGenerator.incrementAndGet().toString
       assert(
         (actorRef ? AppendRequest(UUID.randomUUID, id, "1")).futureValue
@@ -66,13 +47,24 @@ class RedisActorSpec extends ActorSpec(ActorSystem("RedisActorSpec")) with Redis
           .contains("123")
       )
     }
-    it("should be set value") {
-      val actorRef = system.actorOf(RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort))
+    it("should be able to BITCOUNT") {
+      val actorRef = system.actorOf(props)
       val id       = idGenerator.incrementAndGet().toString
       assert((actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue.isInstanceOf[SetSucceeded])
+      assert(
+        (actorRef ? BitCountRequest(UUID.randomUUID, id)).futureValue
+          .asInstanceOf[BitCountSucceeded]
+          .value == 3
+      )
     }
-    it("should be got value") {
-      val actorRef = system.actorOf(RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort))
+    // --- BITFIELD
+    // --- BITOP
+    // --- BITPOS
+    // --- DECR
+    // --- DECRBY
+    // --- GET
+    it("should be able to GET") {
+      val actorRef = system.actorOf(props)
       val id       = idGenerator.incrementAndGet().toString
       assert((actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue.isInstanceOf[SetSucceeded])
       assert(
@@ -82,8 +74,11 @@ class RedisActorSpec extends ActorSpec(ActorSystem("RedisActorSpec")) with Redis
           .contains("a")
       )
     }
-    it("should be got and set value") {
-      val actorRef = system.actorOf(RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort))
+    // --- GETBIT
+    // --- GETRANGE
+    // ---  GETSET
+    it("should be able to GETSET") {
+      val actorRef = system.actorOf(props)
       val id       = idGenerator.incrementAndGet().toString
       assert((actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue.isInstanceOf[SetSucceeded])
       assert(
@@ -99,8 +94,9 @@ class RedisActorSpec extends ActorSpec(ActorSystem("RedisActorSpec")) with Redis
           .contains("b")
       )
     }
-    it("should be incremented value") {
-      val actorRef = system.actorOf(RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort))
+    // --- INCR
+    it("should be able to INCR") {
+      val actorRef = system.actorOf(props)
       val id       = idGenerator.incrementAndGet().toString
       assert((actorRef ? SetRequest(UUID.randomUUID, id, "1")).futureValue.isInstanceOf[SetSucceeded])
       assert(
@@ -115,10 +111,26 @@ class RedisActorSpec extends ActorSpec(ActorSystem("RedisActorSpec")) with Redis
           .contains("2")
       )
     }
+    // --- INCRBYFLOAT
+    // --- MGET
+    // --- MSET
+    // --- MSETNX
+    // --- PSETEX
+    // --- SET
+    it("should be able to SET") {
+      val actorRef = system.actorOf(props)
+      val id       = idGenerator.incrementAndGet().toString
+      assert((actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue.isInstanceOf[SetSucceeded])
+    }
+    // --- SETBIT
+    // --- SETEX
+    // --- SETNX
+    // --- SETRANGE
+    // --- STRLEN
   }
   describe("TransactionOperations") {
     it("should be able to execute transactional commands") {
-      val actorRef = system.actorOf(RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort))
+      val actorRef = system.actorOf(props)
       val id       = idGenerator.incrementAndGet().toString
       assert((actorRef ? SetRequest(UUID.randomUUID, id, "c")).futureValue.isInstanceOf[SetSucceeded])
       assert((actorRef ? MultiRequest(UUID.randomUUID())).futureValue.isInstanceOf[MultiSucceeded])
@@ -138,7 +150,7 @@ class RedisActorSpec extends ActorSpec(ActorSystem("RedisActorSpec")) with Redis
       )
     }
     it("should be able to discard transactional commands") {
-      val actorRef = system.actorOf(RedisActor.props(UUID.randomUUID, "127.0.0.1", testServer.address.get.getPort))
+      val actorRef = system.actorOf(props)
       val id       = idGenerator.incrementAndGet().toString
       assert((actorRef ? SetRequest(UUID.randomUUID, id, "c")).futureValue.isInstanceOf[SetSucceeded])
       assert((actorRef ? MultiRequest(UUID.randomUUID())).futureValue.isInstanceOf[MultiSucceeded])

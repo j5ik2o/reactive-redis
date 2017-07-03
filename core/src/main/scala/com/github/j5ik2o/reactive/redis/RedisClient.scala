@@ -6,7 +6,7 @@ import akka.actor.{ ActorRef, ActorSystem, PoisonPill }
 import akka.pattern._
 import akka.util.Timeout
 import com.github.j5ik2o.reactive.redis.Options.StartAndEnd
-import com.github.j5ik2o.reactive.redis.StringOperations._
+import com.github.j5ik2o.reactive.redis.StringsOperations._
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ ExecutionContext, Future }
