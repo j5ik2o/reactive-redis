@@ -3,6 +3,9 @@ package com.github.j5ik2o.reactive.redis
 import java.text.ParseException
 import java.util.UUID
 
+import com.github.j5ik2o
+import com.github.j5ik2o.reactive
+import com.github.j5ik2o.reactive.redis
 import com.github.j5ik2o.reactive.redis.CommandResponseParser.{ ArraySizeExpr, ErrorExpr, Expr, SimpleExpr }
 
 import scala.util.parsing.input.Reader
@@ -10,17 +13,18 @@ import scala.util.parsing.input.Reader
 object TransactionOperations {
 
   object MultiRequest extends SimpleResponseFactory {
-    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) =
-      parseResponse(message) match {
-        case (SimpleExpr(_), next) =>
-          (MultiSucceeded(UUID.randomUUID(), requestId), next)
-        case (ErrorExpr(msg), next) =>
-          (MultiFailed(UUID.randomUUID(), requestId, new Exception(msg)), next)
-        case (_, o) =>
-          throw new ParseException("multi request", o.offset)
-      }
 
     override protected val responseParser: Parser[Expr] = simpleWithCrLfOrErrorWithCrLf
+
+    override def receive(requestId: UUID): Handler = {
+      case (SimpleExpr(_), next) =>
+        (MultiSucceeded(UUID.randomUUID(), requestId), next)
+      case (ErrorExpr(msg), next) =>
+        (MultiFailed(UUID.randomUUID(), requestId, new Exception(msg)), next)
+      case (_, o) =>
+        throw new ParseException("multi request", o.offset)
+    }
+
   }
 
   case class MultiRequest(id: UUID) extends SimpleRequest {
@@ -42,7 +46,7 @@ object TransactionOperations {
         message: Reader[Char],
         responseFactories: Vector[SimpleResponseFactory]
     ): (Response, Reader[Char]) = {
-      val result = parseResponse(message)
+      val result = parseResponseToExprWithInput(message)
       result match {
         case (ArraySizeExpr(size), next) =>
           val result: (Reader[Char], Seq[Response]) =
@@ -81,17 +85,18 @@ object TransactionOperations {
   // ---
 
   object DiscardRequest extends SimpleResponseFactory {
-    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) =
-      parseResponse(message) match {
-        case (SimpleExpr(_), next) =>
-          (DiscardSucceeded(UUID.randomUUID(), requestId), next)
-        case (ErrorExpr(msg), next) =>
-          (DiscardFailed(UUID.randomUUID(), requestId, new Exception(msg)), next)
-        case (_, o) =>
-          throw new ParseException("discard request", o.offset)
-      }
 
     override protected val responseParser: Parser[Expr] = simpleWithCrLfOrErrorWithCrLf
+
+    override def receive(requestId: UUID): Handler = {
+      case (SimpleExpr(_), next) =>
+        (DiscardSucceeded(UUID.randomUUID(), requestId), next)
+      case (ErrorExpr(msg), next) =>
+        (DiscardFailed(UUID.randomUUID(), requestId, new Exception(msg)), next)
+      case (_, o) =>
+        throw new ParseException("discard request", o.offset)
+    }
+
   }
 
   case class DiscardRequest(id: UUID) extends SimpleRequest {
@@ -108,17 +113,18 @@ object TransactionOperations {
   // ---
 
   object WatchRequest extends SimpleResponseFactory {
-    override def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) =
-      parseResponse(message) match {
-        case (SimpleExpr(_), next) =>
-          (DiscardSucceeded(UUID.randomUUID(), requestId), next)
-        case (ErrorExpr(msg), next) =>
-          (DiscardFailed(UUID.randomUUID(), requestId, new Exception(msg)), next)
-        case (_, o) =>
-          throw new ParseException("watch request", o.offset)
-      }
 
     override protected val responseParser: Parser[Expr] = simpleWithCrLfOrErrorWithCrLf
+
+    override def receive(requestId: UUID): Handler = {
+      case (SimpleExpr(_), next) =>
+        (DiscardSucceeded(UUID.randomUUID(), requestId), next)
+      case (ErrorExpr(msg), next) =>
+        (DiscardFailed(UUID.randomUUID(), requestId, new Exception(msg)), next)
+      case (_, o) =>
+        throw new ParseException("watch request", o.offset)
+    }
+
   }
 
   case class WatchRequest(id: UUID, key: String) extends SimpleRequest {
