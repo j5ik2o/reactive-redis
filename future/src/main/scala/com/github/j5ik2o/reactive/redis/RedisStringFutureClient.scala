@@ -9,7 +9,7 @@ import com.github.j5ik2o.reactive.redis.StringsOperations._
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ ExecutionContext, Future }
 
-trait RedisStringFutureClient { this: RedisFutureFutureClient =>
+trait RedisStringFutureClient { this: RedisFutureClient =>
 
   private implicit val to = timeout
 

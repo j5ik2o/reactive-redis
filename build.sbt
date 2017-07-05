@@ -59,7 +59,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "reactive-redis-project"
   )
-  .aggregate(core)
+  .aggregate(core, future, catsFree)
 
 lazy val core = (project in file("core"))
   .settings(commonSettings)
@@ -90,4 +90,17 @@ lazy val future = (project in file("future"))
       "ch.qos.logback"    % "logback-classic"      % "1.2.3"     % "provided"
     )
   )
-  .dependsOn(core)
+  .dependsOn(core % "compile;test->test")
+
+lazy val catsFree = (project in file("cats-free"))
+  .settings(commonSettings)
+  .settings(
+    name := "reactive-redis-cats-free",
+    parallelExecution in Test := false,
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-testkit"   % akkaVersion % "test",
+      "org.typelevel"     %% "cats"           % "0.9.0",
+      "ch.qos.logback"    % "logback-classic" % "1.2.3" % "provided"
+    )
+  )
+  .dependsOn(core % "compile;test->test", future)

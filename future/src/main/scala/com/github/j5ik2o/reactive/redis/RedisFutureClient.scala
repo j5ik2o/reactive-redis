@@ -9,7 +9,7 @@ import akka.util.Timeout
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ ExecutionContext, Future }
 
-trait RedisFutureFutureClient extends RedisStringFutureClient {
+trait RedisFutureClient extends RedisStringFutureClient {
 
   protected val redisActor: ActorRef
 
@@ -23,20 +23,20 @@ trait RedisFutureFutureClient extends RedisStringFutureClient {
 
 }
 
-object RedisFutureFutureClient {
+object RedisFutureClient {
 
   def apply(id: UUID = UUID.randomUUID(), host: String, port: Int = 6379, timeout: FiniteDuration)(
       implicit actorSystem: ActorSystem
-  ): RedisFutureFutureClient = {
+  ): RedisFutureClient = {
     val redisActorRef = actorSystem.actorOf(RedisActor.props(id, host, port))
     apply(redisActorRef, Timeout(timeout))
   }
 
-  def apply(redisActorRef: ActorRef, timeout: Timeout): RedisFutureFutureClient =
+  def apply(redisActorRef: ActorRef, timeout: Timeout): RedisFutureClient =
     new Default(redisActorRef, timeout)
 
   class Default(protected val redisActor: ActorRef, protected val timeout: Timeout)
-      extends RedisFutureFutureClient
+      extends RedisFutureClient
       with RedisStringFutureClient
 
 }

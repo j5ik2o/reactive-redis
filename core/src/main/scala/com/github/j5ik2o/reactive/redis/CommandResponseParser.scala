@@ -1,6 +1,5 @@
 package com.github.j5ik2o.reactive.redis
 
-import scala.reflect.ClassTag
 import scala.util.parsing.combinator.RegexParsers
 import scala.util.parsing.input.Reader
 

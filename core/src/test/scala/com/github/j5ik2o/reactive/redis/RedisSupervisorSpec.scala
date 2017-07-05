@@ -3,7 +3,7 @@ package com.github.j5ik2o.reactive.redis
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicLong
 
-import akka.actor.ActorSystem
+import akka.actor.{ ActorSystem, PoisonPill }
 import akka.pattern.ask
 import com.github.j5ik2o.reactive.redis.StringsOperations.{ SetRequest, SetSucceeded }
 
@@ -26,6 +26,7 @@ class RedisSupervisorSpec extends ActorSpec(ActorSystem("RedisSupervisorSpec")) 
       val id2 = idGenerator.incrementAndGet().toString
       assert((actorRef ? SetRequest(UUID.randomUUID, id2, "a")).futureValue.isInstanceOf[SetSucceeded])
 
+      actorRef ! PoisonPill
     }
   }
 
