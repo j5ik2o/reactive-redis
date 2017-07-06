@@ -4,6 +4,8 @@ import java.io._
 import java.net.InetSocketAddress
 import java.util.UUID
 
+import com.typesafe.scalalogging.LazyLogging
+
 import scala.collection.JavaConverters._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success }
@@ -20,7 +22,9 @@ object RedisMode {
 
 }
 
-class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = None) extends RandomPortSupport {
+class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = None)
+    extends RandomPortSupport
+    with LazyLogging {
   private[this] var process: Option[Process]      = None
   private[this] val forbiddenPorts                = 6300.until(7300)
   private var _address: Option[InetSocketAddress] = None
@@ -33,8 +37,8 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
 
   private[this] def assertRedisBinaryPresent()(implicit ec: ExecutionContext): Unit = {
     val p = new ProcessBuilder(path, "--help").start()
-    printlnStreamFuture(new BufferedReader(new InputStreamReader(p.getInputStream)))
-    printlnStreamFuture(new BufferedReader(new InputStreamReader(p.getErrorStream)))
+    // printlnStreamFuture(new BufferedReader(new InputStreamReader(p.getInputStream)))
+    // printlnStreamFuture(new BufferedReader(new InputStreamReader(p.getErrorStream)))
     p.waitFor()
     val exitValue = p.exitValue()
     require(exitValue == 0 || exitValue == 1, "redis-server binary must be present.")
@@ -82,7 +86,7 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
       br.readLine()
     }.flatMap { result =>
         if (result != null) {
-          println(result)
+          logger.debug(result)
           printlnStreamFuture(br)
         } else
           Future.successful(())

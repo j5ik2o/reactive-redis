@@ -24,7 +24,7 @@ class RedisFutureClientSpec
     // --- APPEND
     it("should be able to APPEND") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key = UUID.randomUUID().toString
       val result = (for {
         r1 <- redisClient.append(key, "1")
@@ -40,7 +40,7 @@ class RedisFutureClientSpec
     // --- BITCOUNT
     it("should be able to BITCOUNT") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = "a"
       val result = (for {
@@ -52,7 +52,7 @@ class RedisFutureClientSpec
     // --- BITFIELD
     it("should be able to BITFIELD") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = "a"
       val result = (for {
@@ -63,7 +63,7 @@ class RedisFutureClientSpec
     // --- BITOP
     it("should be able to BITOP") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key1 = UUID.randomUUID().toString
       val key2 = UUID.randomUUID().toString
       val key3 = UUID.randomUUID().toString
@@ -77,7 +77,7 @@ class RedisFutureClientSpec
     // --- BITPOS
     it("should be able to BITPOS") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key = UUID.randomUUID().toString
       val result = (for {
         _      <- redisClient.set(key, """\xff\xf0\x00""")
@@ -88,7 +88,7 @@ class RedisFutureClientSpec
     // --- DECR
     it("should be able to DECR") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = "1"
       val result = (for {
@@ -100,7 +100,7 @@ class RedisFutureClientSpec
     // --- DECRBY
     it("should be able to DECRBY") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = "1"
       val result = (for {
@@ -112,7 +112,7 @@ class RedisFutureClientSpec
     // --- GET
     it("should be able to GET") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = UUID.randomUUID().toString
 
@@ -125,7 +125,7 @@ class RedisFutureClientSpec
     // --- GETBIT
     it("should be able to GETBIT") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = UUID.randomUUID().toString
 
@@ -137,7 +137,7 @@ class RedisFutureClientSpec
     // --- GETRANGE
     it("should be able to GETRANGE") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key = UUID.randomUUID().toString
       val result = (for {
         _      <- redisClient.set(key, "This is a string")
@@ -148,7 +148,7 @@ class RedisFutureClientSpec
     // --- GETSET
     it("should be able to GETSET") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key    = UUID.randomUUID().toString
       val value1 = UUID.randomUUID().toString
       val value2 = UUID.randomUUID().toString
@@ -164,7 +164,7 @@ class RedisFutureClientSpec
     // --- INCR
     it("should be able to INCR") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = "1"
       val result = (for {
@@ -176,7 +176,7 @@ class RedisFutureClientSpec
     // --- INCRBY
     it("should be able to INCRBY") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = "1"
       val result = (for {
@@ -188,7 +188,7 @@ class RedisFutureClientSpec
     // --- INCRBYFLOAT
     it("should be able to INCRBYFLOAT") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = "1"
       val result = (for {
@@ -200,7 +200,7 @@ class RedisFutureClientSpec
     // --- MGET
     it("should be able to MGET") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key1   = UUID.randomUUID().toString
       val value1 = UUID.randomUUID().toString
       val key2   = UUID.randomUUID().toString
@@ -217,7 +217,7 @@ class RedisFutureClientSpec
     // --- MSET
     it("should be able to MSET") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key1   = UUID.randomUUID().toString
       val value1 = UUID.randomUUID().toString
       val key2   = UUID.randomUUID().toString
@@ -233,7 +233,7 @@ class RedisFutureClientSpec
     // --- MSETNX
     it("should be able to MSETNX") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key1   = UUID.randomUUID().toString
       val value1 = UUID.randomUUID().toString
       val key2   = UUID.randomUUID().toString
@@ -250,7 +250,7 @@ class RedisFutureClientSpec
     // --- PSETEX
     it("should be able to PSETEX") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = UUID.randomUUID().toString
       val result = (for {
@@ -265,7 +265,7 @@ class RedisFutureClientSpec
     // --- SET
     it("should be able to SET") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = UUID.randomUUID().toString
       val result = (for {
@@ -276,7 +276,7 @@ class RedisFutureClientSpec
     // --- SETBIT
     it("should be able to SETBIT") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = UUID.randomUUID().toString
       val result = (for {
@@ -291,7 +291,7 @@ class RedisFutureClientSpec
     // --- SETEX
     it("should be able to SETEX") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = UUID.randomUUID().toString
       val result = (for {
@@ -306,7 +306,7 @@ class RedisFutureClientSpec
     // --- SETNX
     it("should be able to SETNX") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = UUID.randomUUID().toString
       val result = (for {
@@ -319,7 +319,7 @@ class RedisFutureClientSpec
     // --- SETRANGE
     it("should be able to SETRANGE") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = "Hello World"
       val result = (for {
@@ -332,7 +332,7 @@ class RedisFutureClientSpec
     // --- STRLEN
     it("should be able to STRLEN") {
       val redisClient =
-        RedisFutureFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
+        RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key   = UUID.randomUUID().toString
       val value = "12345"
       val result = (for {
