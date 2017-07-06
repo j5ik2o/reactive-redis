@@ -6,20 +6,20 @@ import akka.testkit.{ ImplicitSender, TestKit }
 import akka.util.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{ Seconds, Span }
-import org.scalatest.{ BeforeAndAfterAll, FunSpecLike }
+import org.scalatest.{ BeforeAndAfterAll, DiagrammedAssertions, FunSpecLike }
 
-import scala.concurrent.Await
-import scala.concurrent.duration.{ Duration, _ }
+import scala.concurrent.duration._
 
 abstract class ActorSpec(_system: ActorSystem)
     extends TestKit(_system)
     with ImplicitSender
     with FunSpecLike
     with BeforeAndAfterAll
+    with DiagrammedAssertions
     with ScalaFutures {
 
   override implicit def patienceConfig: PatienceConfig =
-    PatienceConfig(timeout = scaled(Span(10, Seconds)), interval = scaled(Span(1, Seconds)))
+    PatienceConfig(timeout = scaled(Span(10, Seconds)), interval = scaled(Span(3, Seconds)))
 
   implicit val materializer = ActorMaterializer()
 
@@ -27,7 +27,7 @@ abstract class ActorSpec(_system: ActorSystem)
 
   override protected def afterAll(): Unit = {
     system.terminate()
-    Await.result(system.whenTerminated, Duration.Inf)
+    // Await.result(system.whenTerminated, Duration.Inf)
     super.beforeAll()
   }
 

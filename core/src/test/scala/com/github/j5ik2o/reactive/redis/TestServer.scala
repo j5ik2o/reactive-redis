@@ -4,7 +4,7 @@ import java.io._
 import java.net.InetSocketAddress
 import java.util.UUID
 
-import com.typesafe.scalalogging.LazyLogging
+import com.typesafe.scalalogging.{ LazyLogging, StrictLogging }
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ ExecutionContext, Future }
@@ -24,9 +24,11 @@ object RedisMode {
 
 class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = None)
     extends RandomPortSupport
-    with LazyLogging {
-  private[this] var process: Option[Process]      = None
-  private[this] val forbiddenPorts                = 6300.until(7300)
+    with StrictLogging {
+  @volatile
+  private[this] var process: Option[Process] = None
+  private[this] val forbiddenPorts           = 6300.until(7300)
+  @volatile
   private var _address: Option[InetSocketAddress] = None
 
   def getPort = portOpt.getOrElse(_address.get.getPort)
@@ -51,13 +53,15 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
       if (forbiddenPorts.contains(_address.get.getPort)) {
         _address = None
         tries -= 1
-        println("try to get port...")
+        logger.info("try to get port...")
         Thread.sleep(5)
       }
     }
-    _address.getOrElse {
+    val result = _address.getOrElse {
       sys.error("Couldn't get an address for the external redis instance")
     }
+    logger.info(s"findAddress: ${_address}")
+    result
   }
 
   protected def createConfigFile(port: Int): File = {
@@ -78,6 +82,7 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
       if (out != null)
         out.close()
     }
+    logger.info(s"createConfigFile: $f")
     f
   }
 
@@ -99,7 +104,7 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
       case Success(_) =>
         br.close()
       case Failure(ex) =>
-        ex.printStackTrace()
+        logger.error("Occurred error", ex)
         br.close()
     }
     result
@@ -108,6 +113,7 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
   def start()(implicit ec: ExecutionContext) {
     assertRedisBinaryPresent()
     findAddress()
+    logger.info("redis test server will be started")
     val port = getPort
     val conf = createConfigFile(port).getAbsolutePath
     val cmd: Seq[String] = if (mode == RedisMode.Sentinel) {
@@ -121,12 +127,15 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
     printlnStreamFuture(new BufferedReader(new InputStreamReader(_process.getErrorStream)))
     process = Some(_process)
     Thread.sleep(200)
+    logger.info("redis test server has started")
   }
 
   def stop(): Unit = {
     process.foreach { p =>
+      logger.info("redis test server will be stopped")
       p.destroy()
       p.waitFor()
+      logger.info("redis test server has stopped")
     }
   }
 

@@ -1,9 +1,11 @@
 package com.github.j5ik2o.reactive.redis
 
+import com.typesafe.scalalogging.StrictLogging
 import org.scalatest.{ BeforeAndAfterAll, Suite }
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
-trait RedisServerSupport extends BeforeAndAfterAll { this: Suite =>
+trait RedisServerSupport extends BeforeAndAfterAll with StrictLogging { this: Suite =>
 
   private var _testServer: TestServer = _
 

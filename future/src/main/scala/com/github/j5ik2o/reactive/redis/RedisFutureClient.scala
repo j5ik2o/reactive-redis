@@ -11,14 +11,14 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 trait RedisFutureClient extends RedisStringFutureClient {
 
-  protected val redisActor: ActorRef
+  val redisActor: ActorRef
 
   protected val timeout: Timeout
 
   private implicit val to = timeout
 
-  def dispose()(implicit ec: ExecutionContext): Future[Unit] = {
-    (redisActor ? PoisonPill).map(_ => ())
+  def dispose(): Unit = {
+    redisActor ! PoisonPill
   }
 
 }
@@ -35,7 +35,7 @@ object RedisFutureClient {
   def apply(redisActorRef: ActorRef, timeout: Timeout): RedisFutureClient =
     new Default(redisActorRef, timeout)
 
-  class Default(protected val redisActor: ActorRef, protected val timeout: Timeout)
+  class Default(val redisActor: ActorRef, protected val timeout: Timeout)
       extends RedisFutureClient
       with RedisStringFutureClient
 

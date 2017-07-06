@@ -4,7 +4,7 @@ lazy val commonSettings = Seq(
   sonatypeProfileName := "com.github.j5ik2o",
   organization := "com.github.j5ik2o",
   scalaVersion := "2.12.2",
-  crossScalaVersions := Seq("2.11.8", "2.12.2"),
+  crossScalaVersions := Seq("2.11.11", "2.12.2"),
   scalacOptions ++= Seq(
     "-feature",
     "-unchecked",
@@ -90,7 +90,7 @@ lazy val future = (project in file("future"))
       "ch.qos.logback"    % "logback-classic"      % "1.2.3"     % "provided"
     )
   )
-  .dependsOn(core % "compile;test->test")
+  .dependsOn(core % "compile->compile;test->test")
 
 lazy val catsFree = (project in file("cats-free"))
   .settings(commonSettings)
@@ -103,4 +103,4 @@ lazy val catsFree = (project in file("cats-free"))
       "ch.qos.logback"    % "logback-classic" % "1.2.3" % "provided"
     )
   )
-  .dependsOn(core % "compile;test->test", future)
+  .dependsOn(core % "compile->compile;test->test", future)
