@@ -10,10 +10,11 @@ import scala.concurrent.duration._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class StringsInterpreterSpec
+class StringsFreeFeatureSpec
     extends ActorSpec(ActorSystem("RedisClientSpec"))
     with RedisServerSupport
-    with ScalaFutures {
+    with ScalaFutures
+    with StringsFreeFeature {
 
   describe("StringsInterpreter") {
     it("should be able to APPEND") {
@@ -21,10 +22,10 @@ class StringsInterpreterSpec
         RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key = UUID.randomUUID().toString
       val program = for {
-        r1 <- StringsCommand.append(key, "A")
-        r2 <- StringsCommand.append(key, "B")
-        r3 <- StringsCommand.append(key, "C")
-        r4 <- StringsCommand.get(key)
+        r1 <- append(key, "A")
+        r2 <- append(key, "B")
+        r3 <- append(key, "C")
+        r4 <- get(key)
       } yield (r1, r2, r3, r4)
       val interpreter = new StringsInterpreter(redisFutureClient)
       val future      = program.foldMap(interpreter)

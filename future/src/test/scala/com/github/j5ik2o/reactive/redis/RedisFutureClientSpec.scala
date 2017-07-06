@@ -271,7 +271,6 @@ class RedisFutureClientSpec
       val result = (for {
         _ <- redisClient.set(key, value)
       } yield ()).futureValue
-      assert(result == ())
     }
     // --- SETBIT
     it("should be able to SETBIT") {

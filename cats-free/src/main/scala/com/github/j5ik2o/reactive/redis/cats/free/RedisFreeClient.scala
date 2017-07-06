@@ -6,7 +6,7 @@ import com.github.j5ik2o.reactive.redis.RedisFutureClient
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-class RedisCommandExecutor(redisFutureClient: RedisFutureClient)(implicit ec: ExecutionContext) {
+class RedisFreeClient(redisFutureClient: RedisFutureClient)(implicit ec: ExecutionContext) extends StringsFreeFeature {
 
   private val interpreter = new StringsInterpreter(redisFutureClient)
 
