@@ -23,19 +23,19 @@
         <appender-ref ref="akka-async" />
     </logger>
 
-    <logger name="com.github.j5ik2o.reactive.redis.RedisActor" level="DEBUG" additivity="false">
+    <logger name="com.github.j5ik2o.reactive.redis.RedisActor" level="INFO" additivity="false">
         <appender-ref ref="akka-async" />
     </logger>
 
-    <logger name="com.github.j5ik2o.reactive.redis.ConnectionActor" level="DEBUG" additivity="false">
+    <logger name="com.github.j5ik2o.reactive.redis.ConnectionActor" level="INFO" additivity="false">
         <appender-ref ref="akka-async" />
     </logger>
 
-    <logger name="com.github.j5ik2o.reactive.redis.RedisSupervisor" level="DEBUG" additivity="false">
+    <logger name="com.github.j5ik2o.reactive.redis.RedisSupervisor" level="INFO" additivity="false">
         <appender-ref ref="akka-async" />
     </logger>
 
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="async"/>
     </root>
 

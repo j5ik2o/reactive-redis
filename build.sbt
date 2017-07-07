@@ -65,7 +65,7 @@ lazy val core = (project in file("core"))
   .settings(commonSettings)
   .settings(
     name := "reactive-redis-core",
-    parallelExecution in Test := false,
+    // parallelExecution in Test := false,
     libraryDependencies ++= Seq(
       "com.typesafe.akka"          %% "akka-actor"               % akkaVersion,
       "com.typesafe.akka"          %% "akka-slf4j"               % akkaVersion,
@@ -82,7 +82,7 @@ lazy val future = (project in file("future"))
   .settings(commonSettings)
   .settings(
     name := "reactive-redis-future",
-    parallelExecution in Test := false,
+    // parallelExecution in Test := false,
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-testkit"   % akkaVersion % "test",
       "ch.qos.logback"    % "logback-classic" % "1.2.3"     % "provided"
@@ -90,15 +90,39 @@ lazy val future = (project in file("future"))
   )
   .dependsOn(core % "compile->compile;test->test")
 
+lazy val freeCore = (project in file("free-core"))
+  .settings(commonSettings)
+  .settings(
+    name := "reactive-redis-free-core",
+    // parallelExecution in Test := false,
+    libraryDependencies ++= Seq(
+      "ch.qos.logback" % "logback-classic" % "1.2.3" % "provided"
+    )
+  )
+  .dependsOn(core % "compile->compile;test->test", future)
+
 lazy val catsFree = (project in file("cats-free"))
   .settings(commonSettings)
   .settings(
     name := "reactive-redis-cats-free",
-    parallelExecution in Test := false,
+    // parallelExecution in Test := false,
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-testkit"   % akkaVersion % "test",
       "org.typelevel"     %% "cats"           % "0.9.0",
       "ch.qos.logback"    % "logback-classic" % "1.2.3" % "provided"
     )
   )
-  .dependsOn(core % "compile->compile;test->test", future)
+  .dependsOn(core % "compile->compile;test->test", freeCore)
+
+lazy val scalazFree = (project in file("scalaz-free"))
+  .settings(commonSettings)
+  .settings(
+    name := "reactive-redis-scalaz-free",
+    // parallelExecution in Test := false,
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-testkit"   % akkaVersion % "test",
+      "org.scalaz"        %% "scalaz-core"    % "7.2.14",
+      "ch.qos.logback"    % "logback-classic" % "1.2.3" % "provided"
+    )
+  )
+  .dependsOn(core % "compile->compile;test->test", freeCore)
