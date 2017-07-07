@@ -5,7 +5,7 @@ import org.scalatest.{ BeforeAndAfterAll, Suite }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-trait RedisServerSupport extends BeforeAndAfterAll with StrictLogging { this: Suite =>
+trait RedisServerSupport extends BeforeAndAfterAll with StrictLogging { this: ActorSpec =>
 
   private var _testServer: TestServer = _
 

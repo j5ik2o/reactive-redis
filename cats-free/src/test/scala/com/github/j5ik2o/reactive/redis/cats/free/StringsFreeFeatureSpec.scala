@@ -6,13 +6,14 @@ import akka.actor.ActorSystem
 import cats.implicits._
 import com.github.j5ik2o.reactive.redis.{ ActorSpec, RedisFutureClient, RedisServerSupport }
 
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 class StringsFreeFeatureSpec
     extends ActorSpec(ActorSystem("StringsFreeFeatureSpec"))
-    with RedisServerSupport
-    with StringsFreeFeature {
+    with StringsFreeFeature
+    with RedisServerSupport {
 
   describe("StringsFreeFeature") {
     // --- APPEND
@@ -28,7 +29,7 @@ class StringsFreeFeatureSpec
       } yield (r1, r2, r3, r4)
       val interpreter = new StringsInterpreter(redisFutureClient)
       val future      = program.foldMap(interpreter)
-      val result      = future.futureValue
+      val result      = Await.result(future, Duration.Inf)
       assert(result._1.contains(5))
       assert(result._2.contains(7))
       assert(result._3.contains(13))

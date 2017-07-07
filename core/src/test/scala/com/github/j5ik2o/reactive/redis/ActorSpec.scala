@@ -7,7 +7,6 @@ import akka.util.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{ BeforeAndAfterAll, DiagrammedAssertions, FunSpecLike }
 
-import scala.concurrent.Await
 import scala.concurrent.duration._
 
 abstract class ActorSpec(_system: ActorSystem)
@@ -26,8 +25,7 @@ abstract class ActorSpec(_system: ActorSystem)
   implicit val timeout = Timeout(15 seconds)
 
   override protected def afterAll(): Unit = {
-    system.terminate()
-    Await.result(system.whenTerminated, Duration.Inf)
+    shutdown()
     super.beforeAll()
   }
 
