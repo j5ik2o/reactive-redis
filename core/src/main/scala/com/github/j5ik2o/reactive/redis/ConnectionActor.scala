@@ -12,7 +12,7 @@ import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.stream.actor._
 import akka.stream.scaladsl.Tcp.OutgoingConnection
 import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, Sink, Source, Tcp, Unzip, Zip }
-import akka.stream.{ ActorMaterializer, Attributes, FlowShape }
+import akka.stream.{ ActorAttributes, ActorMaterializer, Attributes, FlowShape }
 import akka.util.ByteString
 import com.github.j5ik2o.reactive.redis.Protocol._
 import com.github.j5ik2o.reactive.redis.TransactionOperations._
@@ -136,6 +136,7 @@ class ConnectionActor(
     .withAttributes(Attributes.logLevels(onElement = Logging.DebugLevel))
     .via(connectionFlow)
     .toMat(Sink.fromSubscriber(ActorSubscriber[ResponseContext](self)))(Keep.left)
+    .withAttributes(ActorAttributes.dispatcher("reactive-redis.dispatcher"))
     .run()
 
   override val requestStrategy = new MaxInFlightRequestStrategy(max = maxRequestCount) {

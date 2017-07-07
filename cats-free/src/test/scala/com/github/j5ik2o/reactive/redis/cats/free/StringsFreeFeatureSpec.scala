@@ -7,13 +7,14 @@ import cats.implicits._
 import com.github.j5ik2o.reactive.redis.{ ActorSpec, RedisFutureClient, RedisServerSupport }
 
 import scala.concurrent.Await
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 class StringsFreeFeatureSpec
     extends ActorSpec(ActorSystem("StringsFreeFeatureSpec"))
     with StringsFreeFeature
     with RedisServerSupport {
+
+  import system.dispatcher
 
   describe("StringsFreeFeature") {
     // --- APPEND
