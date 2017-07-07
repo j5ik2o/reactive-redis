@@ -4,6 +4,7 @@ import com.typesafe.scalalogging.StrictLogging
 import org.scalatest.{ BeforeAndAfterAll, Suite }
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 trait RedisServerSupport extends BeforeAndAfterAll with StrictLogging { this: ActorSpec =>
 
@@ -20,6 +21,15 @@ trait RedisServerSupport extends BeforeAndAfterAll with StrictLogging { this: Ac
   override protected def afterAll(): Unit = {
     _testServer.stop()
     super.afterAll()
+  }
+
+  def restartTestServer() = {
+    _testServer.stop()
+    Future {
+      Thread.sleep(500)
+      _testServer = new TestServer(portOpt = Some(_testServer.getPort))
+      _testServer.start()
+    }
   }
 
 }

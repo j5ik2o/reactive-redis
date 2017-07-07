@@ -5,14 +5,14 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 import akka.NotUsed
-import akka.actor.{ ActorRef, Props }
+import akka.actor.{ ActorRef, PoisonPill, Props }
 import akka.event.Logging
 import akka.io.Inet.SocketOption
-import akka.stream.actor.ActorSubscriberMessage.OnNext
+import akka.stream._
+import akka.stream.actor.ActorSubscriberMessage.{ OnError, OnNext }
 import akka.stream.actor._
 import akka.stream.scaladsl.Tcp.OutgoingConnection
 import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, Sink, Source, Tcp, Unzip, Zip }
-import akka.stream.{ ActorAttributes, ActorMaterializer, Attributes, FlowShape }
 import akka.util.ByteString
 import com.github.j5ik2o.reactive.redis.Protocol._
 import com.github.j5ik2o.reactive.redis.TransactionOperations._
@@ -20,7 +20,7 @@ import com.github.j5ik2o.reactive.redis.TransactionOperations._
 import scala.annotation.tailrec
 import scala.collection.immutable
 import scala.concurrent.Future
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 
 object ConnectionActor {
 
@@ -32,6 +32,7 @@ object ConnectionActor {
       halfClose: Boolean,
       connectTimeout: Duration,
       idleTimeout: Duration,
+      responseTimeout: FiniteDuration,
       maxRequestCount: Int = 50
   ): Props =
     Props(
@@ -43,6 +44,7 @@ object ConnectionActor {
         halfClose,
         connectTimeout,
         idleTimeout,
+        responseTimeout,
         maxRequestCount
       )
     )
@@ -57,6 +59,7 @@ class ConnectionActor(
     halfClose: Boolean,
     connectTimeout: Duration,
     idleTimeout: Duration,
+    responseTimeout: FiniteDuration,
     maxRequestCount: Int = 50
 ) extends ActorPublisher[RequestContext]
     with ActorSubscriber {
@@ -72,7 +75,8 @@ class ConnectionActor(
     collection.mutable.ArrayBuffer.empty
 
   private val tcpFlow: Flow[ByteString, ByteString, Future[OutgoingConnection]] =
-    Tcp().outgoingConnection(remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout)
+    Tcp()
+      .outgoingConnection(remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout)
 
   private val connectionFlow: Flow[RequestContext, ResponseContext, NotUsed] =
     Flow.fromGraph(GraphDSL.create() { implicit b =>
@@ -80,13 +84,13 @@ class ConnectionActor(
       val requestFlow = b.add(
         Flow[RequestContext]
           .map { rc =>
-            log.debug("request: {}", rc.request.message)
+            log.debug("request = {}", rc.request.message)
             (ByteString.fromString(rc.request.message + "\r\n"), rc)
           }
       )
       val responseFlow = b.add(Flow[(ByteString, RequestContext)].map {
         case (byteString, requestContext) =>
-          log.debug("response: {}", byteString.utf8String)
+          log.debug("response = {}", byteString.utf8String)
           ResponseContext(byteString, requestContext)
       })
       val unzip = b.add(Unzip[ByteString, RequestContext]())
@@ -128,13 +132,16 @@ class ConnectionActor(
       .asInstanceOf[ExecResponse]
   }
 
-  implicit val adapter = Logging(context.system, "customLogger")
+  implicit val adapter = Logging(context.system, "message-logger")
 
   Source
     .fromPublisher(ActorPublisher(self))
-    .log("custom")
+    .log("request")
     .withAttributes(Attributes.logLevels(onElement = Logging.DebugLevel))
     .via(connectionFlow)
+    .log("response")
+    .withAttributes(Attributes.logLevels(onElement = Logging.DebugLevel))
+    .completionTimeout(responseTimeout)
     .toMat(Sink.fromSubscriber(ActorSubscriber[ResponseContext](self)))(Keep.left)
     .withAttributes(ActorAttributes.dispatcher("reactive-redis.dispatcher"))
     .run()
@@ -156,11 +163,13 @@ class ConnectionActor(
         case InTransactionRequest(msg: SimpleRequest) =>
           SimpleRequestComplete(replyTo, msg, parseSimpleResponse(msg, res))
         case msg: SimpleRequest =>
-          log.debug("response = " + msg.toString)
           SimpleRequestComplete(replyTo, msg, parseSimpleResponse(msg, res))
       }
       responder ! response
       requestContexts -= rc.id
+    case OnError(e) =>
+      log.error(s"Tcp connection pool has shut down with error ${e.getMessage}")
+      self ! PoisonPill
     case request: Request =>
       if (requestContexts.isEmpty && totalDemand > 0) {
         val rc = RequestContext(sender(), request, ZonedDateTime.now())
@@ -194,7 +203,6 @@ class ConnectionActor(
         requestContexts = keep
         use.foreach {
           case (_, e) =>
-            log.debug(s"onNex = $e")
             onNext(e)
         }
       } else {
@@ -202,7 +210,6 @@ class ConnectionActor(
         requestContexts = keep
         use.foreach {
           case (_, e) =>
-            log.debug(s"onNex = $e")
             onNext(e)
         }
         deliverBuf()

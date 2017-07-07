@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory
 import scala.annotation.tailrec
 import scala.collection.immutable
 import scala.concurrent.Future
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.util.parsing.input.{ CharSequenceReader, Reader }
 
 trait Request {
@@ -84,6 +84,8 @@ object RedisActor {
 
   def name(id: UUID): String = s"redis-actor-$id"
 
+  def name(name: String): String = s"redis-actor-$name"
+
   def props(id: UUID, host: String, port: Int): Props =
     props(id, new InetSocketAddress(host, port))
 
@@ -95,10 +97,19 @@ object RedisActor {
       halfClose: Boolean = true,
       connectTimeout: Duration = Duration.Inf,
       idleTimeout: Duration = Duration.Inf,
+      responseTimeout: FiniteDuration = 5 seconds,
       maxRequestCount: Int = 50
   ): Props =
     Props(
-      new RedisActor(id, remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout, maxRequestCount)
+      new RedisActor(id,
+                     remoteAddress,
+                     localAddress,
+                     options,
+                     halfClose,
+                     connectTimeout,
+                     idleTimeout,
+                     responseTimeout,
+                     maxRequestCount)
     )
 
 }
@@ -134,6 +145,7 @@ class RedisActor(
     halfClose: Boolean,
     connectTimeout: Duration,
     idleTimeout: Duration,
+    responseTimeout: FiniteDuration,
     maxRequestCount: Int = 50
 ) extends Actor
     with ActorLogging {
@@ -147,6 +159,7 @@ class RedisActor(
       halfClose,
       connectTimeout,
       idleTimeout,
+      responseTimeout,
       maxRequestCount
     ),
     "connection"
