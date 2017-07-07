@@ -11,8 +11,9 @@ before_cache:
 
 
 before_install:
- - sudo apt-get update -qq && sudo apt-get install -y redis-server
+ - sudo apt-get update -qq 
  - sudo hostname "$(hostname | cut -c1-63)"
+ - ./install-redis.sh
 
 os: linux
 dist: trusty
@@ -27,7 +28,7 @@ scala:
 jdk: oraclejdk8
 
 env:
-  - REDIS_SERVER_PATH=/usr/bin/redis-server
+  - REDIS_SERVER_PATH=redis-3.2.0/src/redis-server
 
 sbt_args: -no-colors -J-Xss2m -J-Xms1g -J-Xmx3g -J-XX:ReservedCodeCacheSize=256M -Dfile.encoding=UTF8
 
