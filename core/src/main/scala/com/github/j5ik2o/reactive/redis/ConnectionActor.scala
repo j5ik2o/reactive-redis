@@ -129,6 +129,7 @@ class ConnectionActor(
   }
 
   implicit val adapter = Logging(context.system, "customLogger")
+
   Source
     .fromPublisher(ActorPublisher(self))
     .log("custom")
@@ -154,6 +155,7 @@ class ConnectionActor(
         case InTransactionRequest(msg: SimpleRequest) =>
           SimpleRequestComplete(replyTo, msg, parseSimpleResponse(msg, res))
         case msg: SimpleRequest =>
+          log.debug("response = " + msg.toString)
           SimpleRequestComplete(replyTo, msg, parseSimpleResponse(msg, res))
       }
       responder ! response
@@ -191,6 +193,7 @@ class ConnectionActor(
         requestContexts = keep
         use.foreach {
           case (_, e) =>
+            log.debug(s"onNex = $e")
             onNext(e)
         }
       } else {
@@ -198,6 +201,7 @@ class ConnectionActor(
         requestContexts = keep
         use.foreach {
           case (_, e) =>
+            log.debug(s"onNex = $e")
             onNext(e)
         }
         deliverBuf()

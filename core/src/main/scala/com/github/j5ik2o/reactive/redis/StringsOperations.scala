@@ -33,7 +33,7 @@ object StringsOperations {
 
   case class AppendRequest(id: UUID, key: String, value: String) extends SimpleRequest {
     override val responseFactory: SimpleResponseFactory = AppendRequest
-    override val message: String                        = s"APPEND $key $value"
+    override val message: String                        = s"""APPEND $key "$value""""
   }
 
   sealed trait AppendResponse extends Response

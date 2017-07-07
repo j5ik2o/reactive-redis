@@ -71,7 +71,6 @@ lazy val core = (project in file("core"))
       "com.typesafe.akka"          %% "akka-slf4j"               % akkaVersion,
       "com.typesafe.akka"          %% "akka-stream"              % akkaVersion,
       "com.typesafe.akka"          %% "akka-testkit"             % akkaVersion % "test",
-      "com.typesafe.akka"          %% "akka-stream-testkit"      % akkaVersion % "test",
       "org.slf4j"                  % "slf4j-api"                 % "1.7.21",
       "ch.qos.logback"             % "logback-classic"           % "1.2.3" % "provided",
       "com.typesafe.scala-logging" %% "scala-logging"            % "3.6.0",
@@ -85,9 +84,8 @@ lazy val future = (project in file("future"))
     name := "reactive-redis-future",
     parallelExecution in Test := false,
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-testkit"        % akkaVersion % "test",
-      "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % "test",
-      "ch.qos.logback"    % "logback-classic"      % "1.2.3"     % "provided"
+      "com.typesafe.akka" %% "akka-testkit"   % akkaVersion % "test",
+      "ch.qos.logback"    % "logback-classic" % "1.2.3"     % "provided"
     )
   )
   .dependsOn(core % "compile->compile;test->test")

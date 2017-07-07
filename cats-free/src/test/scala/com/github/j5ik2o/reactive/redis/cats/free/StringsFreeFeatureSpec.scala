@@ -21,18 +21,18 @@ class StringsFreeFeatureSpec
         RedisFutureClient(UUID.randomUUID, "127.0.0.1", testServer.getPort, 10 seconds)
       val key = UUID.randomUUID().toString
       val program = for {
-        r1 <- append(key, "A")
-        r2 <- append(key, "B")
-        r3 <- append(key, "C")
+        r1 <- append(key, "Hello")
+        r2 <- append(key, ", ")
+        r3 <- append(key, "World!")
         r4 <- get(key)
       } yield (r1, r2, r3, r4)
       val interpreter = new StringsInterpreter(redisFutureClient)
       val future      = program.foldMap(interpreter)
       val result      = future.futureValue
-      assert(result._1.contains(1))
-      assert(result._2.contains(2))
-      assert(result._3.contains(3))
-      assert(result._4.contains("ABC"))
+      assert(result._1.contains(5))
+      assert(result._2.contains(7))
+      assert(result._3.contains(13))
+      assert(result._4.contains("Hello, World!"))
       redisFutureClient.dispose()
     }
     // --- BITCOUNT

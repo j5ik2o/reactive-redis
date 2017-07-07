@@ -20,11 +20,13 @@ class RedisSupervisorSpec extends ActorSpec(ActorSystem("RedisSupervisorSpec")) 
         )
       )
 
-      val id1 = idGenerator.incrementAndGet().toString
-      assert((actorRef ? SetRequest(UUID.randomUUID, id1, "a")).futureValue.isInstanceOf[SetSucceeded])
+      val id1          = idGenerator.incrementAndGet().toString
+      val setResponse1 = (actorRef ? SetRequest(UUID.randomUUID, id1, "a")).futureValue
+      assert(setResponse1.isInstanceOf[SetSucceeded])
 
-      val id2 = idGenerator.incrementAndGet().toString
-      assert((actorRef ? SetRequest(UUID.randomUUID, id2, "a")).futureValue.isInstanceOf[SetSucceeded])
+      val id2          = idGenerator.incrementAndGet().toString
+      val setResponse2 = (actorRef ? SetRequest(UUID.randomUUID, id2, "a")).futureValue
+      assert(setResponse2.isInstanceOf[SetSucceeded])
 
       actorRef ! PoisonPill
     }
