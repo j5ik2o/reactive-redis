@@ -32,7 +32,9 @@ env:
 sbt_args: -no-colors -J-Xss2m -J-Xms1g -J-Xmx3g -J-XX:ReservedCodeCacheSize=256M -Dfile.encoding=UTF8
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION test
+  - sbt ++$TRAVIS_SCALA_VERSION 'core/test'
+  - sbt ++$TRAVIS_SCALA_VERSION 'future/test'
+  - sbt ++$TRAVIS_SCALA_VERSION 'catsFree/test'
 
 branches:
   only:
