@@ -43,13 +43,13 @@ object TransactionOperations {
   object ExecRequest extends TransactionResponseFactory {
     override def createResponseFromReader(
         requestId: UUID,
-        message: Reader[Char],
+        message: Reader[Byte],
         responseFactories: Vector[SimpleResponseFactory]
-    ): (Response, Reader[Char]) = {
+    ): (Response, Reader[Byte]) = {
       val result = parseResponseToExprWithInput(message)
       result match {
         case (ArraySizeExpr(size), next) =>
-          val result: (Reader[Char], Seq[Response]) =
+          val result: (Reader[Byte], Seq[Response]) =
             if (size == -1)
               (next, Seq.empty)
             else

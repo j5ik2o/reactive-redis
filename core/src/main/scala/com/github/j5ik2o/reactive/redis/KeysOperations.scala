@@ -2,7 +2,7 @@ package com.github.j5ik2o.reactive.redis
 
 import java.util.UUID
 
-import com.github.j5ik2o.reactive.redis.CommandResponseParser.{ ErrorExpr, NumberExpr, SimpleExpr, StringOptExpr }
+import com.github.j5ik2o.reactive.redis.CommandResponseParser._
 import com.sun.org.apache.xerces.internal.impl.xpath.regex.ParseException
 
 object KeysOperations {
@@ -42,32 +42,32 @@ object KeysOperations {
   // --- DUMP
   object DumpRequest extends SimpleResponseFactory {
 
-    override protected val responseParser = bulkStringReply
+    override protected val responseParser = bulkBytesReply
 
     override def receive(requestId: UUID) = {
-      case (StringOptExpr(n), next) =>
-        (DumpSucceeded(UUID.randomUUID(), requestId, n), next)
+      case (BytesExpr(bytes), next) =>
+        (DumpSucceeded(UUID.randomUUID(), requestId, bytes), next)
       case (SimpleExpr("QUEUED"), next) =>
         (DumpSuspended(UUID.randomUUID(), requestId), next)
       case (ErrorExpr(msg), next) =>
         (DumpFailed(UUID.randomUUID(), requestId, new Exception(msg)), next)
       case (expr, o) =>
-        logger.error("DEL request = {}", expr)
-        throw new ParseException("DEL request", o.offset)
+        logger.error("DUMP request = {}", expr)
+        throw new ParseException("DUMP request", o.offset)
     }
 
   }
 
   case class DumpRequest(id: UUID, key: String) extends SimpleRequest {
-    override val responseFactory: SimpleResponseFactory = DelRequest
-    override val message: String                        = s"""DEL $key"""
+    override val responseFactory: SimpleResponseFactory = DumpRequest
+    override val message: String                        = s"""DUMP $key"""
   }
 
   sealed trait DumpResponse extends Response
 
   case class DumpSuspended(id: UUID, requestId: UUID) extends DumpResponse
 
-  case class DumpSucceeded(id: UUID, requestId: UUID, value: Option[String]) extends DumpResponse
+  case class DumpSucceeded(id: UUID, requestId: UUID, value: Array[Byte]) extends DumpResponse
 
   case class DumpFailed(id: UUID, requestId: UUID, ex: Exception) extends DumpResponse
   // --- EXISTS

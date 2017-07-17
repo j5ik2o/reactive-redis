@@ -90,7 +90,8 @@ class ConnectionActor(
       )
       val responseFlow = b.add(Flow[(ByteString, RequestContext)].map {
         case (byteString, requestContext) =>
-          log.debug("response = {}", byteString.utf8String)
+          log.debug("response.byteString = {}", byteString)
+          log.debug("response.utfu8String = {}", byteString.utf8String)
           ResponseContext(byteString, requestContext)
       })
       val unzip = b.add(Unzip[ByteString, RequestContext]())
@@ -107,7 +108,7 @@ class ConnectionActor(
       responseAsByteString: ByteString
   ): Response = {
     request.responseFactory
-      .createResponseFromString(request.id, responseAsByteString.utf8String)
+      .createResponseFromReader(request.id, new ByteReader(responseAsByteString.toArray))
       ._1
   }
 
@@ -116,7 +117,7 @@ class ConnectionActor(
       responseAsByteString: ByteString
   ): DiscardResponse = {
     request.responseFactory
-      .createResponseFromString(request.id, responseAsByteString.utf8String)
+      .createResponseFromReader(request.id, new ByteReader(responseAsByteString.toArray))
       ._1
       .asInstanceOf[DiscardResponse]
   }
@@ -127,7 +128,7 @@ class ConnectionActor(
       responseFactories: Vector[SimpleResponseFactory]
   ): ExecResponse = {
     request.responseFactory
-      .createResponseFromString(request.id, responseAsByteString.utf8String, responseFactories)
+      .createResponseFromReader(request.id, new ByteReader(responseAsByteString.toArray), responseFactories)
       ._1
       .asInstanceOf[ExecResponse]
   }

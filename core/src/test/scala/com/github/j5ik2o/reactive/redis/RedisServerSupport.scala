@@ -1,7 +1,7 @@
 package com.github.j5ik2o.reactive.redis
 
 import com.typesafe.scalalogging.StrictLogging
-import org.scalatest.{ BeforeAndAfterAll, Suite }
+import org.scalatest.{ BeforeAndAfterAll }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

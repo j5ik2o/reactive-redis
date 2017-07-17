@@ -1,13 +1,14 @@
 package com.github.j5ik2o.reactive.redis
 
 import java.util.UUID
-import java.util.concurrent.atomic.AtomicLong
 
 import akka.actor.{ ActorSystem, PoisonPill }
 import akka.pattern.ask
+import akka.util.ByteString
 import com.github.j5ik2o.reactive.redis.Options.StartAndEnd
 import com.github.j5ik2o.reactive.redis.StringsOperations.BitFieldRequest.SingedBitType
 import com.github.j5ik2o.reactive.redis.StringsOperations._
+import com.github.j5ik2o.reactive.redis.KeysOperations._
 import com.github.j5ik2o.reactive.redis.TransactionOperations._
 
 import scala.concurrent.duration._
@@ -355,6 +356,39 @@ class RedisActorSpec extends ActorSpec(ActorSystem("RedisActorSpec")) with Redis
       assert(getResponse1.isInstanceOf[GetSuspended])
       assert(discardResponse.isInstanceOf[DiscardSucceeded])
       assert(getResponse2.value.contains("c"))
+      actorRef ! PoisonPill
+    }
+  }
+
+  describe("KeyOperations") {
+    it("should be able to DEL") {
+      val actorRef     = system.actorOf(props)
+      val id           = UUID.randomUUID().toString
+      val setResponse1 = (actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue
+      val getResponse1 = (actorRef ? GetRequest(UUID.randomUUID, id)).futureValue.asInstanceOf[GetSucceeded]
+      val delResponse  = (actorRef ? DelRequest(UUID.randomUUID(), id)).futureValue.asInstanceOf[DelSucceeded]
+      assert(setResponse1.isInstanceOf[SetSucceeded])
+      assert(getResponse1.value.contains("a"))
+      assert(delResponse.value == 1)
+      actorRef ! PoisonPill
+    }
+    it("should be able to DUMP") {
+      val actorRef     = system.actorOf(props)
+      val id           = UUID.randomUUID().toString
+      val setResponse1 = (actorRef ? SetRequest(UUID.randomUUID, id, "abc")).futureValue
+      val dumpResponse = (actorRef ? DumpRequest(UUID.randomUUID(), id)).futureValue.asInstanceOf[DumpSucceeded]
+      assert(setResponse1.isInstanceOf[SetSucceeded])
+      assert(dumpResponse.value.nonEmpty)
+      val result =
+        dumpResponse.value
+          .map(_.toInt)
+          .toList
+          .zip(List(0, 3, 97, 98, 99, 7, 0, 38, -98, -27, -50))
+          .forall {
+            case (l, r) =>
+              l == r
+          }
+      assert(result)
       actorRef ! PoisonPill
     }
   }

@@ -51,10 +51,7 @@ trait SimpleResponseFactory extends CommandResponseParserSupport {
 
   val logger = LoggerFactory.getLogger(classOf[SimpleResponseFactory])
 
-  def createResponseFromString(requestId: UUID, message: String): (Response, Reader[Char]) =
-    createResponseFromReader(requestId, new CharSequenceReader(message))
-
-  def createResponseFromReader(requestId: UUID, message: Reader[Char]): (Response, Reader[Char]) = {
+  def createResponseFromReader(requestId: UUID, message: Reader[Byte]): (Response, Reader[Byte]) = {
     val result = parseResponseToExprWithInput(message)
     receive(requestId)(result)
   }
@@ -67,14 +64,9 @@ trait TransactionResponseFactory extends CommandResponseParserSupport {
 
   val logger = LoggerFactory.getLogger(classOf[TransactionResponseFactory])
 
-  def createResponseFromString(requestId: UUID,
-                               message: String,
-                               responseFactories: Vector[SimpleResponseFactory]): (Response, Reader[Char]) =
-    createResponseFromReader(requestId, new CharSequenceReader(message), responseFactories)
-
   def createResponseFromReader(requestId: UUID,
-                               message: Reader[Char],
-                               responseFactories: Vector[SimpleResponseFactory]): (Response, Reader[Char])
+                               message: Reader[Byte],
+                               responseFactories: Vector[SimpleResponseFactory]): (Response, Reader[Byte])
 
 }
 

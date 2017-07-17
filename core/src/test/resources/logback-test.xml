@@ -27,7 +27,7 @@
         <appender-ref ref="akka-async" />
     </logger>
 
-    <logger name="com.github.j5ik2o.reactive.redis.ConnectionActor" level="INFO" additivity="false">
+    <logger name="com.github.j5ik2o.reactive.redis.ConnectionActor" level="DEBUG" additivity="false">
         <appender-ref ref="akka-async" />
     </logger>
 
