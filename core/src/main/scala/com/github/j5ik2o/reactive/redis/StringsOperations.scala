@@ -5,7 +5,7 @@ import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.CommandResponseParser._
 
-import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.concurrent.duration.FiniteDuration
 
 object StringsOperations {
 
@@ -15,7 +15,7 @@ object StringsOperations {
 
   object AppendRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = numberWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = integerReply
 
     override def receive(requestId: UUID): Handler = {
       case (NumberExpr(n), next) =>
@@ -48,7 +48,7 @@ object StringsOperations {
 
   object BitCountRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = numberWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = integerReply
 
     override def receive(requestId: UUID): Handler = {
       case (NumberExpr(n), next) =>
@@ -129,7 +129,7 @@ object StringsOperations {
     }
 
     override protected val responseParser: Parser[Expr] =
-      numberArrayWithCrLfOrErrorWithCrLf
+      integerArrayReply
 
     override def receive(requestId: UUID): Handler = {
       case (ArrayExpr(values), next) =>
@@ -176,7 +176,7 @@ object StringsOperations {
 
     }
 
-    override protected val responseParser: Parser[Expr] = numberWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = integerReply
 
     override def receive(requestId: UUID): Handler = {
       case (NumberExpr(n), next) =>
@@ -213,7 +213,7 @@ object StringsOperations {
   // --- BITPOS
   object BitPosRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = numberWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = integerReply
 
     override def receive(requestId: UUID): Handler = {
       case (NumberExpr(n), next) =>
@@ -246,7 +246,7 @@ object StringsOperations {
   // --- DECR
   object DecrRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: DecrRequest.Parser[Expr] = numberWithCrLfOrErrorWithCrLf
+    override protected val responseParser: DecrRequest.Parser[Expr] = integerReply
 
     override def receive(requestId: UUID): Handler = {
       case (NumberExpr(n), next) =>
@@ -279,7 +279,7 @@ object StringsOperations {
   object DecrByRequest extends SimpleResponseFactory {
 
     override protected val responseParser: DecrByRequest.Parser[Expr] =
-      numberWithCrLfOrErrorWithCrLf
+      integerReply
 
     override def receive(requestId: UUID): Handler = {
       case (NumberExpr(n), next) =>
@@ -311,8 +311,8 @@ object StringsOperations {
   // --- GET
   object GetRequest extends SimpleResponseFactory {
 
-    override protected val responseParser
-      : Parser[Expr] = simpleWithCrLfOrErrorWithCrLf | bulkStringWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] =
+    bulkStringReply | simpleStringReply
 
     override def receive(requestId: UUID): Handler = {
       case (StringOptExpr(s), next) =>
@@ -344,7 +344,7 @@ object StringsOperations {
   // --- GETBIT
   object GetBitRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = numberWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = integerReply
 
     override def receive(requestId: UUID): Handler = {
       case (NumberExpr(n), next) =>
@@ -376,9 +376,7 @@ object StringsOperations {
   // --- GETRANGE
   object GetRangeRequest extends SimpleResponseFactory {
 
-    override protected val responseParser
-      : Parser[Expr] = simpleWithCrLfOrErrorWithCrLf | bulkStringWithCrLfOrErrorWithCrLf
-
+    override protected val responseParser: Parser[Expr] = bulkStringReply | simpleStringReply
     override def receive(requestId: UUID): Handler = {
       case (StringOptExpr(s), next) =>
         (GetRangeSucceeded(UUID.randomUUID(), requestId, s), next)
@@ -409,8 +407,7 @@ object StringsOperations {
   // --- GETSET
   object GetSetResponse extends SimpleResponseFactory {
 
-    override protected val responseParser
-      : Parser[Expr] = simpleWithCrLfOrErrorWithCrLf | bulkStringWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = bulkStringReply | simpleStringReply
 
     override def receive(requestId: UUID): Handler = {
       case (StringOptExpr(s), next) =>
@@ -442,7 +439,7 @@ object StringsOperations {
   // --- INCR
   object IncrRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = numberWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = integerReply
 
     override def receive(requestId: UUID): Handler = {
       case (NumberExpr(n), next) =>
@@ -474,7 +471,7 @@ object StringsOperations {
   // --- INCRBY
   object IncrByRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = numberWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = integerReply
 
     override def receive(requestId: UUID): Handler = {
       case (NumberExpr(n), next) =>
@@ -506,7 +503,7 @@ object StringsOperations {
   // --- INCRBYFLOAT
   object IncrByFloatRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = bulkStringWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = bulkStringReply | simpleStringReply
 
     override def receive(requestId: UUID): Handler = {
       case (StringOptExpr(s), next) =>
@@ -537,7 +534,7 @@ object StringsOperations {
   // --- MGET
   object MGetRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = stringOptArrayWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = stringOptArrayReply
 
     override def receive(requestId: UUID): Handler = {
       case (ArrayExpr(values), next) =>
@@ -570,7 +567,7 @@ object StringsOperations {
   // --- MSET
   object MSetRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = simpleWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = simpleStringReply
 
     override def receive(requestId: UUID): Handler = {
       case (SimpleExpr("OK"), next) =>
@@ -608,7 +605,7 @@ object StringsOperations {
   // --- MSETNX
   object MSetNxRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = numberWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = integerReply
 
     override def receive(requestId: UUID): Handler = {
       case (NumberExpr(n), next) =>
@@ -646,7 +643,7 @@ object StringsOperations {
   // --- PSETEX
   object PSetExRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = simpleWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = simpleStringReply
 
     override def receive(requestId: UUID): Handler = {
       case (SimpleExpr("OK"), next) =>
@@ -690,7 +687,7 @@ object StringsOperations {
   // --- SET
   object SetRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = simpleWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = simpleStringReply
 
     override def receive(requestId: UUID): Handler = {
       case (SimpleExpr("OK"), next) =>
@@ -728,7 +725,7 @@ object StringsOperations {
   // --- SETBIT
   object SetBitRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = numberWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = integerReply
 
     override def receive(requestId: UUID): Handler = {
       case (NumberExpr(n), next) =>
@@ -771,7 +768,7 @@ object StringsOperations {
         throw new ParseException("SETEX request", o.offset)
     }
 
-    override protected val responseParser: Parser[Expr] = simpleWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = simpleStringReply
   }
 
   case class SetExRequest(id: UUID, key: String, expires: FiniteDuration, value: String) extends SimpleRequest {
@@ -790,7 +787,7 @@ object StringsOperations {
   // --- SETNX
   object SetNxRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = numberWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = integerReply
 
     override def receive(requestId: UUID): Handler = {
       case (NumberExpr(n), next) =>
@@ -833,7 +830,7 @@ object StringsOperations {
         throw new ParseException("SETRANGE request", o.offset)
     }
 
-    override protected val responseParser: Parser[Expr] = numberWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = integerReply
   }
 
   case class SetRangeRequest(id: UUID, key: String, range: Int, value: String) extends SimpleRequest {
@@ -852,7 +849,7 @@ object StringsOperations {
   // --- STRLEN
   object StrLenRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = numberWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = integerReply
 
     override def receive(requestId: UUID): Handler = {
       case (NumberExpr(n), next) =>

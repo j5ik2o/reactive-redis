@@ -14,7 +14,7 @@ object TransactionOperations {
 
   object MultiRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = simpleWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = simpleStringReply
 
     override def receive(requestId: UUID): Handler = {
       case (SimpleExpr(_), next) =>
@@ -86,7 +86,7 @@ object TransactionOperations {
 
   object DiscardRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = simpleWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = simpleStringReply
 
     override def receive(requestId: UUID): Handler = {
       case (SimpleExpr(_), next) =>
@@ -114,7 +114,7 @@ object TransactionOperations {
 
   object WatchRequest extends SimpleResponseFactory {
 
-    override protected val responseParser: Parser[Expr] = simpleWithCrLfOrErrorWithCrLf
+    override protected val responseParser: Parser[Expr] = simpleStringReply
 
     override def receive(requestId: UUID): Handler = {
       case (SimpleExpr(_), next) =>
