@@ -1,6 +1,5 @@
 package com.github.j5ik2o.reactive.redis
 
-import scala.collection.mutable
 import scala.util.matching.Regex
 import scala.util.parsing.combinator.Parsers
 import scala.util.parsing.input.{ Position, Reader }
@@ -43,7 +42,7 @@ object CommandResponseParser {
 
 }
 
-trait ParsersUtil extends Parsers {
+trait ParsersUtil { this: Parsers =>
   lazy val anyElem: Parser[Elem] = elem("anyElem", _ => true)
 
   def elemExcept(xs: Elem*): Parser[Elem] = elem("elemExcept", x => !(xs contains x))
@@ -52,9 +51,9 @@ trait ParsersUtil extends Parsers {
 
   def take(n: Int): Parser[Seq[Elem]] = repN(n, anyElem)
 
-  def takeUntil(cond: Parser[Elem]): Parser[Seq[Elem]] = takeUntil(cond, anyElem)
+  def takeUntil(cond: Parser[_]): Parser[Seq[Elem]] = takeUntil(cond, anyElem)
 
-  def takeUntil(cond: Parser[Elem], p: Parser[Elem]): Parser[Seq[Elem]] = rep(not(cond) ~> p)
+  def takeUntil(cond: Parser[_], p: Parser[Elem]): Parser[Seq[Elem]] = rep(not(cond) ~> p)
 
   def takeWhile(p: Parser[Elem]): Parser[Seq[Elem]] = rep(p)
 }
@@ -217,7 +216,7 @@ trait CommandResponseParserSupport extends BinaryParsers {
 
   override def skipWhitespace: Boolean = false
 
-  private lazy val CRLF = """\r\n""".r
+  private lazy val CRLF: Parser[String] = """\r\n""".r
 
   private lazy val ERROR: Parser[ErrorExpr] = elem('-') ~> """[a-zA-Z0-9. ]+""".r ^^ { msg =>
     ErrorExpr(msg)
@@ -236,7 +235,9 @@ trait CommandResponseParserSupport extends BinaryParsers {
     NumberExpr(n.toInt)
   }
 
-  private lazy val STRING: Parser[String] = """.*[^\r\n]""".r
+  private lazy val STRING: Parser[String] = rep(not(CRLF) ~> anyElem) ^^ { array =>
+    new String(array.toArray, "UTF-8")
+  }
 
   private lazy val VALUE: Parser[StringExpr] = STRING ^^ { s =>
     StringExpr(s)
@@ -265,6 +266,8 @@ trait CommandResponseParserSupport extends BinaryParsers {
     }
 
   private lazy val stringOptArrayElement: Parser[StringOptExpr] = LENGTH ~ CRLF ~ opt(STRING) ^^ {
+    case size ~ _ ~ _ if (size.value == -1) =>
+      StringOptExpr(None)
     case size ~ _ ~ value =>
       // require(size.value == -1 || size.value == value.size)
       StringOptExpr(value)

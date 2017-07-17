@@ -1,9 +1,12 @@
 package com.github.j5ik2o.reactive.redis
 
+import java.time.ZonedDateTime
 import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.CommandResponseParser._
 import com.sun.org.apache.xerces.internal.impl.xpath.regex.ParseException
+
+import scala.concurrent.duration.FiniteDuration
 
 object KeysOperations {
 
@@ -70,9 +73,103 @@ object KeysOperations {
   case class DumpSucceeded(id: UUID, requestId: UUID, value: Array[Byte]) extends DumpResponse
 
   case class DumpFailed(id: UUID, requestId: UUID, ex: Exception) extends DumpResponse
+
   // --- EXISTS
+  object ExistsRequest extends SimpleResponseFactory {
+
+    override protected val responseParser = integerReply
+
+    override def receive(requestId: UUID) = {
+      case (NumberExpr(n), next) =>
+        (ExistsSucceeded(UUID.randomUUID(), requestId, n == 1), next)
+      case (SimpleExpr("QUEUED"), next) =>
+        (ExistsSuspended(UUID.randomUUID(), requestId), next)
+      case (ErrorExpr(msg), next) =>
+        (ExistsFailed(UUID.randomUUID(), requestId, new Exception(msg)), next)
+      case (expr, o) =>
+        logger.error("DUMP request = {}", expr)
+        throw new ParseException("DUMP request", o.offset)
+    }
+
+  }
+
+  case class ExistsRequest(id: UUID, key: String) extends SimpleRequest {
+    override val responseFactory: SimpleResponseFactory = ExistsRequest
+    override val message: String                        = s"""EXISTS $key"""
+  }
+
+  sealed trait ExistsResponse extends Response
+
+  case class ExistsSuspended(id: UUID, requestId: UUID) extends ExistsResponse
+
+  case class ExistsSucceeded(id: UUID, requestId: UUID, value: Boolean) extends ExistsResponse
+
+  case class ExistsFailed(id: UUID, requestId: UUID, ex: Exception) extends ExistsResponse
+
   // --- EXPIRE
+  object ExpireRequest extends SimpleResponseFactory {
+
+    override protected val responseParser = integerReply
+
+    override def receive(requestId: UUID) = {
+      case (NumberExpr(n), next) =>
+        (ExpireSucceeded(UUID.randomUUID(), requestId, n == 1), next)
+      case (SimpleExpr("QUEUED"), next) =>
+        (ExpireSuspended(UUID.randomUUID(), requestId), next)
+      case (ErrorExpr(msg), next) =>
+        (ExpireFailed(UUID.randomUUID(), requestId, new Exception(msg)), next)
+      case (expr, o) =>
+        logger.error("DUMP request = {}", expr)
+        throw new ParseException("DUMP request", o.offset)
+    }
+
+  }
+
+  case class ExpireRequest(id: UUID, key: String, seconds: FiniteDuration) extends SimpleRequest {
+    override val responseFactory: SimpleResponseFactory = ExpireRequest
+    override val message: String                        = s"""EXPIRE $key ${seconds.toSeconds}"""
+  }
+
+  sealed trait ExpireResponse extends Response
+
+  case class ExpireSuspended(id: UUID, requestId: UUID) extends ExpireResponse
+
+  case class ExpireSucceeded(id: UUID, requestId: UUID, value: Boolean) extends ExpireResponse
+
+  case class ExpireFailed(id: UUID, requestId: UUID, ex: Exception) extends ExpireResponse
+
   // --- EXPIREAT
+  object ExpireAtRequest extends SimpleResponseFactory {
+
+    override protected val responseParser = integerReply
+
+    override def receive(requestId: UUID) = {
+      case (NumberExpr(n), next) =>
+        (ExpireAtSucceeded(UUID.randomUUID(), requestId, n == 1), next)
+      case (SimpleExpr("QUEUED"), next) =>
+        (ExpireAtSuspended(UUID.randomUUID(), requestId), next)
+      case (ErrorExpr(msg), next) =>
+        (ExpireAtFailed(UUID.randomUUID(), requestId, new Exception(msg)), next)
+      case (expr, o) =>
+        logger.error("DUMP request = {}", expr)
+        throw new ParseException("DUMP request", o.offset)
+    }
+
+  }
+
+  case class ExpireAtRequest(id: UUID, key: String, expiresAt: ZonedDateTime) extends SimpleRequest {
+    override val responseFactory: SimpleResponseFactory = ExpireRequest
+    override val message: String                        = s"""EXPIREAT $key ${expiresAt.toEpochSecond}"""
+  }
+
+  sealed trait ExpireAtResponse extends Response
+
+  case class ExpireAtSuspended(id: UUID, requestId: UUID) extends ExpireAtResponse
+
+  case class ExpireAtSucceeded(id: UUID, requestId: UUID, value: Boolean) extends ExpireAtResponse
+
+  case class ExpireAtFailed(id: UUID, requestId: UUID, ex: Exception) extends ExpireAtResponse
+
   // --- KEYS
   // --- MIGRATE
   // --- MOVE

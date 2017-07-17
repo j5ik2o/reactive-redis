@@ -1,5 +1,6 @@
 package com.github.j5ik2o.reactive.redis
 
+import java.time.ZonedDateTime
 import java.util.UUID
 
 import akka.actor.{ ActorSystem, PoisonPill }
@@ -389,6 +390,42 @@ class RedisActorSpec extends ActorSpec(ActorSystem("RedisActorSpec")) with Redis
               l == r
           }
       assert(result)
+      actorRef ! PoisonPill
+    }
+    it("should be able to EXISTS") {
+      val actorRef        = system.actorOf(props)
+      val id              = UUID.randomUUID().toString
+      val setResponse1    = (actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue
+      val existsResponse1 = (actorRef ? ExistsRequest(UUID.randomUUID, id)).futureValue.asInstanceOf[ExistsSucceeded]
+      assert(setResponse1.isInstanceOf[SetSucceeded])
+      assert(existsResponse1.value)
+      actorRef ! PoisonPill
+    }
+    it("should be able to EXPIRE") {
+      val actorRef     = system.actorOf(props)
+      val id           = UUID.randomUUID().toString
+      val setResponse1 = (actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue
+      val expireResponse1 =
+        (actorRef ? ExpireRequest(UUID.randomUUID, id, 1 seconds)).futureValue.asInstanceOf[ExpireSucceeded]
+      Thread.sleep(1001)
+      val getResponse1 = (actorRef ? GetRequest(UUID.randomUUID, id)).futureValue.asInstanceOf[GetSucceeded]
+      assert(setResponse1.isInstanceOf[SetSucceeded])
+      assert(expireResponse1.value)
+      assert(getResponse1.value.isEmpty)
+      actorRef ! PoisonPill
+    }
+    it("should be able to EXPIREAT") {
+      val actorRef     = system.actorOf(props)
+      val id           = UUID.randomUUID().toString
+      val setResponse1 = (actorRef ? SetRequest(UUID.randomUUID, id, "a")).futureValue
+      val expireResponse1 =
+        (actorRef ? ExpireAtRequest(UUID.randomUUID, id, ZonedDateTime.now.plusSeconds(1))).futureValue
+          .asInstanceOf[ExpireSucceeded]
+      Thread.sleep(1001)
+      val getResponse1 = (actorRef ? GetRequest(UUID.randomUUID, id)).futureValue.asInstanceOf[GetSucceeded]
+      assert(setResponse1.isInstanceOf[SetSucceeded])
+      assert(expireResponse1.value)
+      assert(getResponse1.value.isEmpty)
       actorRef ! PoisonPill
     }
   }
