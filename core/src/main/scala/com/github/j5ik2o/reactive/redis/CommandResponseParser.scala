@@ -3,6 +3,8 @@ package com.github.j5ik2o.reactive.redis
 import scala.util.matching.Regex
 import scala.util.parsing.combinator.Parsers
 import scala.util.parsing.input.{ Position, Reader }
+import java.lang.Double.longBitsToDouble
+import java.lang.Float.intBitsToFloat
 
 object CommandResponseParser {
 
@@ -66,9 +68,6 @@ case class ByteOffsetPosition(offset: Int) extends Position {
   def lineContents: String = ""
 }
 
-import java.lang.Double.longBitsToDouble
-import java.lang.Float.intBitsToFloat
-
 import scala.util.parsing.input.CharArrayReader.EofCh
 
 class ByteReader(val bytes: Array[Byte], override val offset: Int) extends Reader[Byte] {
@@ -96,24 +95,24 @@ class ByteReader(val bytes: Array[Byte], override val offset: Int) extends Reade
 
   def take(n: Int): Seq[Byte] = bytes.slice(offset, offset + n)
 
-  override def toString = "ByteReader(%d / %d)".format(offset, bytes.length)
+  override def toString: String = "ByteReader(%d / %d)".format(offset, bytes.length)
 }
 
 class SubSequence(s: CharSequence, start: Int, val length: Int) extends CharSequence {
   def this(s: CharSequence, start: Int) = this(s, start, s.length - start)
 
-  def charAt(i: Int) =
+  def charAt(i: Int): Char =
     if (i >= 0 && i < length) s.charAt(start + i)
     else throw new IndexOutOfBoundsException(s"index: $i, length: $length")
 
-  def subSequence(_start: Int, _end: Int) = {
-    if (_start < 0 || _end < 0 || _end > length || _start > _end)
-      throw new IndexOutOfBoundsException(s"start: ${_start}, end: ${_end}, length: $length")
+  def subSequence(start: Int, end: Int): SubSequence = {
+    if (start < 0 || end < 0 || end > length || start > end)
+      throw new IndexOutOfBoundsException(s"start: $start, end: $end, length: $length")
 
-    new SubSequence(s, start + _start, _end - _start)
+    new SubSequence(s, this.start + start, end - start)
   }
 
-  override def toString = s.subSequence(start, start + length).toString
+  override def toString: String = s.subSequence(start, start + length).toString
 }
 
 trait BinaryParsers extends Parsers with ParsersUtil {
@@ -216,64 +215,63 @@ trait CommandResponseParserSupport extends BinaryParsers {
 
   override def skipWhitespace: Boolean = false
 
-  private lazy val CRLF: Parser[String] = """\r\n""".r
+  private lazy val crlf: Parser[String] = """\r\n""".r
 
-  private lazy val ERROR: Parser[ErrorExpr] = elem('-') ~> """[a-zA-Z0-9. ]+""".r ^^ { msg =>
+  private lazy val error: Parser[ErrorExpr] = elem('-') ~> """[a-zA-Z0-9. ]+""".r ^^ { msg =>
     ErrorExpr(msg)
   }
 
-  private lazy val LENGTH: Parser[LengthExpr] = log(elem('$'))("length") ~> log("""[0-9-]+""".r)("digit") ^^ { n =>
-    println(s"n = $n")
+  private lazy val length: Parser[LengthExpr] = elem('$') ~> """[0-9-]+""".r ^^ { n =>
     LengthExpr(n.toInt)
   }
 
-  private lazy val SIMPLE: Parser[SimpleExpr] = elem('+') ~> """[a-zA-Z0-9. ]+""".r ^^ { msg =>
+  private lazy val simple: Parser[SimpleExpr] = elem('+') ~> """[a-zA-Z0-9. ]+""".r ^^ { msg =>
     SimpleExpr(msg)
   }
 
-  private lazy val NUMBER: Parser[NumberExpr] = elem(':') ~> """[-0-9]+""".r ^^ { n =>
+  private lazy val number: Parser[NumberExpr] = elem(':') ~> """[-0-9]+""".r ^^ { n =>
     NumberExpr(n.toInt)
   }
 
-  private lazy val STRING: Parser[String] = rep(not(CRLF) ~> anyElem) ^^ { array =>
+  private lazy val stringValue: Parser[String] = rep(not(crlf) ~> anyElem) ^^ { array =>
     new String(array.toArray, "UTF-8")
   }
 
-  private lazy val VALUE: Parser[StringExpr] = STRING ^^ { s =>
+  private lazy val string: Parser[StringExpr] = stringValue ^^ { s =>
     StringExpr(s)
   }
 
-  private lazy val ARRAY_PREFIX: Parser[Int] = elem('*') ~> """[0-9]+""".r ^^ (_.toInt)
+  private lazy val arrayPrefix: Parser[Int] = elem('*') ~> """[0-9]+""".r ^^ (_.toInt)
 
-  private lazy val errorWithCrLf: Parser[Expr] = ERROR <~ CRLF
+  private lazy val errorWithCrLf: Parser[Expr] = error <~ crlf
 
-  private lazy val simpleWithCrLf: Parser[Expr] = SIMPLE <~ CRLF
+  private lazy val simpleWithCrLf: Parser[Expr] = simple <~ crlf
 
-  private lazy val integerWithCrLf: Parser[NumberExpr] = NUMBER <~ CRLF
+  private lazy val integerWithCrLf: Parser[NumberExpr] = number <~ crlf
 
-  private lazy val arrayPrefixWithCrLf: Parser[ArraySizeExpr] = ARRAY_PREFIX <~ CRLF ^^ { n =>
+  private lazy val arrayPrefixWithCrLf: Parser[ArraySizeExpr] = arrayPrefix <~ crlf ^^ { n =>
     ArraySizeExpr(n)
   }
 
   def array[A <: Expr](elementExpr: Parser[A]): Parser[ArrayExpr[A]] =
     arrayPrefixWithCrLf ~ repsep(
       elementExpr,
-      CRLF
+      crlf
     ) ^^ {
       case size ~ values =>
         require(size.value == values.size)
         ArrayExpr(values)
     }
 
-  private lazy val stringOptArrayElement: Parser[StringOptExpr] = LENGTH ~ CRLF ~ opt(STRING) ^^ {
-    case size ~ _ ~ _ if (size.value == -1) =>
+  private lazy val stringOptArrayElement: Parser[StringOptExpr] = length ~ crlf ~ opt(stringValue) ^^ {
+    case size ~ _ ~ _ if size.value == -1 =>
       StringOptExpr(None)
     case size ~ _ ~ value =>
       // require(size.value == -1 || size.value == value.size)
       StringOptExpr(value)
   }
 
-  private lazy val integerArrayElement: Parser[NumberExpr] = opt(LENGTH <~ CRLF) ~ NUMBER ^^ {
+  private lazy val integerArrayElement: Parser[NumberExpr] = opt(length <~ crlf) ~ number ^^ {
     case size ~ value =>
       // require(size.map(_.value).fold(true)(_ == value.size))
       value
@@ -283,16 +281,17 @@ trait CommandResponseParserSupport extends BinaryParsers {
 
   private lazy val integerArrayWithCrLf: Parser[ArrayExpr[NumberExpr]] = array(integerArrayElement)
 
-  private lazy val bulkStringWithCrLf: Parser[StringOptExpr] = LENGTH ~ CRLF ~ opt(STRING <~ CRLF) ^^ {
+  private lazy val bulkStringWithCrLf: Parser[StringOptExpr] = length ~ crlf ~ opt(stringValue <~ crlf) ^^ {
     case l ~ _ ~ s =>
       StringOptExpr(s)
   }
 
-  private lazy val bulkBytesWithCrLf: Parser[BytesExpr] = LENGTH <~ CRLF >> { _ =>
-    rep(not(CRLF) ~> anyElem) ^^ { byteSeq =>
+  private lazy val bulkBytesWithCrLf: Parser[BytesExpr] = length <~ crlf >> { _ =>
+    rep(not(crlf) ~> anyElem) ^^ { byteSeq =>
       BytesExpr(byteSeq.toArray)
     }
   }
+
   lazy val simpleStringReply: Parser[Expr] = simpleWithCrLf | errorWithCrLf
 
   lazy val integerReply: Parser[Expr] = integerWithCrLf | errorWithCrLf
