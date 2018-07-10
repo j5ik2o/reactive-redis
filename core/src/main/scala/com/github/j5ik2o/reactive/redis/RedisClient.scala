@@ -2,8 +2,9 @@ package com.github.j5ik2o.reactive.redis
 
 import java.net.InetSocketAddress
 import java.time.ZonedDateTime
+import java.util.UUID
 
-import akka.NotUsed
+import akka.{ Done, NotUsed }
 import akka.actor.ActorSystem
 import akka.io.Inet.SocketOption
 import akka.stream.scaladsl.Tcp.OutgoingConnection
@@ -33,18 +34,23 @@ case class RequestContext(commandRequest: CommandRequest, promise: Promise[Comma
 }
 
 case class ResponseContext(byteString: ByteString, requestContext: RequestContext, responseAt: ZonedDateTime)
+case class ClientConfig(remoteAddress: InetSocketAddress,
+                        localAddress: Option[InetSocketAddress] = None,
+                        options: immutable.Seq[SocketOption] = immutable.Seq.empty,
+                        halfClose: Boolean = false,
+                        connectTimeout: Duration = Duration.Inf,
+                        idleTimeout: Duration = Duration.Inf,
+                        minBackoff: FiniteDuration = 3 seconds,
+                        maxBackoff: FiniteDuration = 30 seconds,
+                        randomFactor: Double = 0.2,
+                        maxRestarts: Int = -1,
+                        requestBufferSize: Int = 1024)
 
-class RedisClient(remoteAddress: InetSocketAddress,
-                  localAddress: Option[InetSocketAddress] = None,
-                  options: immutable.Seq[SocketOption] = immutable.Seq.empty,
-                  halfClose: Boolean = false,
-                  connectTimeout: Duration = Duration.Inf,
-                  idleTimeout: Duration = Duration.Inf,
-                  minBackoff: FiniteDuration = 3 seconds,
-                  maxBackoff: FiniteDuration = 30 seconds,
-                  randomFactor: Double = 0.2,
-                  maxRestarts: Int = -1,
-                  requestBufferSize: Int = 32)(implicit system: ActorSystem) {
+class RedisClient(clientConfig: ClientConfig)(implicit system: ActorSystem) {
+
+  val id = UUID.randomUUID()
+
+  import clientConfig._
 
   private val log = system.log
 
@@ -90,6 +96,8 @@ class RedisClient(remoteAddress: InetSocketAddress,
     }
     .toMat(Sink.ignore)(Keep.left)
     .run()
+
+  def shutdown(): Future[Done] = requestQueue.watchCompletion()
 
   def sendCommandRequest[C <: CommandRequest](cmd: C): Task[cmd.Response] = Task.deferFutureAction { implicit ec =>
     val promise = Promise[CommandResponse]()
