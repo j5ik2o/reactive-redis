@@ -8,3 +8,11 @@ exit
 exit
 ;set _root_.scala.collection.Seq(shellPrompt := { _ => "" },SettingKey[_root_.scala.Option[_root_.sbt.File]]("sbtStructureOutputFile") in _root_.sbt.Global := _root_.scala.Some(_root_.sbt.file("/private/var/folders/xl/z0cssc8n2nq2xjjpnf_p8pqc0000gn/T/sbt-structure.xml")),SettingKey[_root_.java.lang.String]("sbtStructureOptions") in _root_.sbt.Global := "download, resolveClassifiers");apply -cp "/Users/j5ik2o/Library/Application Support/IntelliJIdea2018.1/Scala/launcher/sbt-structure-1.0.jar" org.jetbrains.sbt.CreateTasks;*/*:dumpStructure
 exit
+;set _root_.scala.collection.Seq(shellPrompt := { _ => "" },SettingKey[_root_.scala.Option[_root_.sbt.File]]("sbtStructureOutputFile") in _root_.sbt.Global := _root_.scala.Some(_root_.sbt.file("/private/var/folders/xl/z0cssc8n2nq2xjjpnf_p8pqc0000gn/T/sbt-structure.xml")),SettingKey[_root_.java.lang.String]("sbtStructureOptions") in _root_.sbt.Global := "download");apply -cp "/Users/j5ik2o/Library/Application Support/IntelliJIdea2018.1/Scala/launcher/sbt-structure-1.0.jar" org.jetbrains.sbt.CreateTasks;*/*:dumpStructure
+exit
+;reload; set _root_.org.jetbrains.sbt.StructureKeys.sbtStructureOptions in Global := "download" ;*/*:dumpStructureTo /private/var/folders/xl/z0cssc8n2nq2xjjpnf_p8pqc0000gn/T/sbt-structure.xml; session clear-all
+all {file:/Users/j5ik2o/Sources/reactive-redis/}core/products {file:/Users/j5ik2o/Sources/reactive-redis/}core/test:products
+all {file:/Users/j5ik2o/Sources/reactive-redis/}root/products {file:/Users/j5ik2o/Sources/reactive-redis/}root/test:products {file:/Users/j5ik2o/Sources/reactive-redis/}core/products {file:/Users/j5ik2o/Sources/reactive-redis/}core/test:products
+all {file:/Users/j5ik2o/Sources/reactive-redis/}core/products {file:/Users/j5ik2o/Sources/reactive-redis/}core/test:products
+all {file:/Users/j5ik2o/Sources/reactive-redis/}root/products {file:/Users/j5ik2o/Sources/reactive-redis/}root/test:products {file:/Users/j5ik2o/Sources/reactive-redis/}core/products {file:/Users/j5ik2o/Sources/reactive-redis/}core/test:products
+all {file:/Users/j5ik2o/Sources/reactive-redis/}core/products {file:/Users/j5ik2o/Sources/reactive-redis/}core/test:products
