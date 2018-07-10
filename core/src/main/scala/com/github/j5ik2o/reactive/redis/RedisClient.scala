@@ -28,11 +28,11 @@ import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.concurrent.{ Future, Promise }
 
-case class RequestContext(command: CommandRequest, promise: Promise[CommandResponse], requestAt: ZonedDateTime) {
-  val id = command.id
+case class RequestContext(commandRequest: CommandRequest, promise: Promise[CommandResponse], requestAt: ZonedDateTime) {
+  val id = commandRequest.id
 }
 
-case class ResponseContext(byteString: ByteString, requestContext: RequestContext)
+case class ResponseContext(byteString: ByteString, requestContext: RequestContext, responseAt: ZonedDateTime)
 
 class RedisClient(remoteAddress: InetSocketAddress,
                   localAddress: Option[InetSocketAddress] = None,
@@ -61,15 +61,14 @@ class RedisClient(remoteAddress: InetSocketAddress,
       val requestFlow = b.add(
         Flow[RequestContext]
           .map { rc =>
-            log.info("request = {}", rc)
-            (ByteString.fromString(rc.command.asString + "\r\n"), rc)
+            log.info("request = {}", rc.commandRequest.asString)
+            (ByteString.fromString(rc.commandRequest.asString + "\r\n"), rc)
           }
       )
       val responseFlow = b.add(Flow[(ByteString, RequestContext)].map {
         case (byteString, requestContext) =>
-          log.info("response.byteString = {}", byteString)
-          log.info("response.utf8String = {}", byteString.utf8String)
-          ResponseContext(byteString, requestContext)
+          log.info("response = {}", byteString.utf8String)
+          ResponseContext(byteString, requestContext, ZonedDateTime.now())
       })
       val unzip = b.add(Unzip[ByteString, RequestContext]())
       val zip   = b.add(Zip[ByteString, RequestContext]())
@@ -85,7 +84,7 @@ class RedisClient(remoteAddress: InetSocketAddress,
     .via(connectionFlow)
     .map { responseContext =>
       // TODO: 通常のリクエストの場合
-      val r = responseContext.requestContext.command.parse(responseContext.byteString.utf8String)
+      val r = responseContext.requestContext.commandRequest.parse(responseContext.byteString.utf8String)
       responseContext.requestContext.promise.complete(r.toTry)
       //
     }

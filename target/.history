@@ -16,3 +16,5 @@ all {file:/Users/j5ik2o/Sources/reactive-redis/}root/products {file:/Users/j5ik2
 all {file:/Users/j5ik2o/Sources/reactive-redis/}core/products {file:/Users/j5ik2o/Sources/reactive-redis/}core/test:products
 all {file:/Users/j5ik2o/Sources/reactive-redis/}root/products {file:/Users/j5ik2o/Sources/reactive-redis/}root/test:products {file:/Users/j5ik2o/Sources/reactive-redis/}core/products {file:/Users/j5ik2o/Sources/reactive-redis/}core/test:products
 all {file:/Users/j5ik2o/Sources/reactive-redis/}core/products {file:/Users/j5ik2o/Sources/reactive-redis/}core/test:products
+all {file:/Users/j5ik2o/Sources/reactive-redis/}core/products {file:/Users/j5ik2o/Sources/reactive-redis/}core/test:products {file:/Users/j5ik2o/Sources/reactive-redis/}root/products {file:/Users/j5ik2o/Sources/reactive-redis/}root/test:products
+all {file:/Users/j5ik2o/Sources/reactive-redis/}core/products {file:/Users/j5ik2o/Sources/reactive-redis/}core/test:products

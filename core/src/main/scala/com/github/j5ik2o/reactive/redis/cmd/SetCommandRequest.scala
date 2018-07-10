@@ -3,7 +3,7 @@ package com.github.j5ik2o.reactive.redis.cmd
 import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
-import com.github.j5ik2o.reactive.redis.model.{ErrorExpr, Expr, SimpleExpr}
+import com.github.j5ik2o.reactive.redis.model.{ ErrorExpr, Expr, SimpleExpr }
 import com.github.j5ik2o.reactive.redis.parser.Parsers
 import fastparse.all.P
 
