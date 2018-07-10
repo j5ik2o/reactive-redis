@@ -1,0 +1,254 @@
+[info] Updating {file:/Users/j5ik2o/Sources/reactive-redis/}scalazFree...
+[debug] :: building artificial module descriptors from com.github.j5ik2o#reactive-redis-scalaz-free_2.12;1.0.0-SNAPSHOT
+[debug] ::: dd: dependency: org.scala-lang#scala-compiler;2.12.2 {scala-tool=[default, optional(default)]} (artifacts: )
+[debug] ::: dd: sbt.ivyint.MergedDescriptors@57314f89 (artifacts: )
+[debug] ::: dd: dependency: com.github.j5ik2o#reactive-redis-core_2.12;1.0.0-SNAPSHOT {compile=[compile], test=[test]} (artifacts: )
+[debug] ::: dd: dependency: com.github.j5ik2o#reactive-redis-free-core_2.12;1.0.0-SNAPSHOT {compile=[default(compile)]} (artifacts: )
+[debug] ::: dd: dependency: org.scalatest#scalatest_2.12;3.0.1 {test=[default(compile)]} (artifacts: )
+[debug] ::: dd: dependency: com.typesafe.akka#akka-testkit_2.12;2.5.0 {test=[default(compile)]} (artifacts: )
+[debug] ::: dd: dependency: org.scalaz#scalaz-core_2.12;7.2.14 {compile=[default(compile)]} (artifacts: )
+[debug] ::: dd: dependency: ch.qos.logback#logback-classic;1.2.3 {provided=[default(compile)]} (artifacts: )
+[debug] parsing /Users/j5ik2o/.sbt/0.13/dependency/module/dynamic/0f99539c/com.github.j5ik2o/reactive-redis-free-core_2.12/1.0.0-SNAPSHOT_temp-resolve-242699d3648507ba64cacb0bd81f8ac0f234998a/graphs/graph.json
+[debug] :: call ivy resolution: dependency: org.scalaz#scalaz-core_2.12;7.2.14 {compile=[default(compile)]}
+[debug] :: resolving dependencies :: org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0
+[debug] 	confs: [compile, runtime, test, provided, optional, compile-internal, runtime-internal, test-internal, plugin, sources, docs, pom, scala-tool]
+[debug] 	validate = true
+[debug] 	refresh = false
+[debug] resolving dependencies for configuration 'compile'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->default(compile)]
+[info] Resolving org.scalaz#scalaz-core_2.12;7.2.14 ...
+[debug] sbt-chain: Checking cache for: dependency: org.scalaz#scalaz-core_2.12;7.2.14 {compile=[default(compile)]}
+[debug] sbt-chain: module revision found in cache: org.scalaz#scalaz-core_2.12;7.2.14
+[debug] 	found org.scalaz#scalaz-core_2.12;7.2.14 in sbt-chain
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->runtime]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->compile]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [compile->master(compile)]
+[info] Resolving org.scala-lang#scala-library;2.12.2 ...
+[debug] sbt-chain: Checking cache for: dependency: org.scala-lang#scala-library;2.12.2 {compile=[compile(*), master(compile)], runtime=[runtime(*)]}
+[debug] sbt-chain: module revision found in cache: org.scala-lang#scala-library;2.12.2
+[debug] 	found org.scala-lang#scala-library;2.12.2 in sbt-chain
+[debug] 	[2.12.2] org.scala-lang#scala-library;2.12.2
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [compile->compile(*)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [compile->runtime(*)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [compile->compile]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [runtime->compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->master]
+[debug] resolving dependencies for configuration 'runtime'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [runtime]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->default(compile)]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->runtime]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->compile]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [compile->master(compile)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [compile->compile(*)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [runtime->compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->master]
+[debug] resolving dependencies for configuration 'test'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [test]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [runtime]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->default(compile)]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->runtime]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->compile]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [compile->master(compile)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [compile->compile(*)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [runtime->compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->master]
+[debug] resolving dependencies for configuration 'provided'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [provided]
+[debug] resolving dependencies for configuration 'optional'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [optional]
+[debug] resolving dependencies for configuration 'compile-internal'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [compile-internal]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->default(compile)]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->runtime]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->compile]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [compile->master(compile)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [compile->compile(*)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [runtime->compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->master]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [optional]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [provided]
+[debug] resolving dependencies for configuration 'runtime-internal'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [runtime-internal]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [runtime]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->default(compile)]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->runtime]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->compile]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [compile->master(compile)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [compile->compile(*)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [runtime->compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->master]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [optional]
+[debug] resolving dependencies for configuration 'test-internal'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [test-internal]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [test]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [runtime]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->default(compile)]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->runtime]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->compile]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [compile->master(compile)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [compile->compile(*)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalaz#scalaz-core_2.12;7.2.14->org.scala-lang#scala-library;2.12.2 [runtime->compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0->org.scalaz#scalaz-core_2.12;7.2.14 [compile->master]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [optional]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [provided]
+[debug] resolving dependencies for configuration 'plugin'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [plugin]
+[debug] resolving dependencies for configuration 'sources'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [sources]
+[debug] resolving dependencies for configuration 'docs'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [docs]
+[debug] resolving dependencies for configuration 'pom'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [pom]
+[debug] resolving dependencies for configuration 'scala-tool'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 [scala-tool]
+[debug] 	resolved ivy file produced in cache
+[debug] :: downloading artifacts ::
+[debug] 	[NOT REQUIRED] org.scalaz#scalaz-core_2.12;7.2.14!scalaz-core_2.12.jar(bundle)
+[debug] 	[NOT REQUIRED] org.scala-lang#scala-library;2.12.2!scala-library.jar
+[debug] :: resolution report :: resolve 18ms :: artifacts dl 1ms
+[debug] 	report for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 compile produced in /Users/j5ik2o/Sources/reactive-redis/scalaz-free/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-scalaz-free_2.12-compile.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 runtime produced in /Users/j5ik2o/Sources/reactive-redis/scalaz-free/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-scalaz-free_2.12-runtime.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 test produced in /Users/j5ik2o/Sources/reactive-redis/scalaz-free/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-scalaz-free_2.12-test.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 provided produced in /Users/j5ik2o/Sources/reactive-redis/scalaz-free/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-scalaz-free_2.12-provided.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 optional produced in /Users/j5ik2o/Sources/reactive-redis/scalaz-free/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-scalaz-free_2.12-optional.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 compile-internal produced in /Users/j5ik2o/Sources/reactive-redis/scalaz-free/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-scalaz-free_2.12-compile-internal.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 runtime-internal produced in /Users/j5ik2o/Sources/reactive-redis/scalaz-free/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-scalaz-free_2.12-runtime-internal.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 test-internal produced in /Users/j5ik2o/Sources/reactive-redis/scalaz-free/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-scalaz-free_2.12-test-internal.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 plugin produced in /Users/j5ik2o/Sources/reactive-redis/scalaz-free/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-scalaz-free_2.12-plugin.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 sources produced in /Users/j5ik2o/Sources/reactive-redis/scalaz-free/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-scalaz-free_2.12-sources.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 docs produced in /Users/j5ik2o/Sources/reactive-redis/scalaz-free/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-scalaz-free_2.12-docs.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 pom produced in /Users/j5ik2o/Sources/reactive-redis/scalaz-free/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-scalaz-free_2.12-pom.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-77e0e521c19c244619a65755f79f444187544fc6;1.0 scala-tool produced in /Users/j5ik2o/Sources/reactive-redis/scalaz-free/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-scalaz-free_2.12-scala-tool.xml
+[debug] 	resolve done (18ms resolve - 1ms download)
+[debug] saving minigraph to /Users/j5ik2o/.sbt/0.13/dependency/module/static/org.scalaz/scalaz-core_2.12/7.2.14_temp-resolve-77e0e521c19c244619a65755f79f444187544fc6/graphs/graph.json
+[debug] :: merging update reports
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.1 - Vector((Artifact(scala-library,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.1.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.0 - Vector((Artifact(scala-library,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.0.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.2 - Vector((Artifact(scala-library,jar,jar,None,ArraySeq(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.2.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-actor_2.12:2.5.0 - Vector((Artifact(akka-actor_2.12,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-actor_2.12/jars/akka-actor_2.12-2.5.0.jar))
+[debug] :: merging module report for org.scala-lang.modules:scala-java8-compat_2.12:0.8.0 - Vector((Artifact(scala-java8-compat_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang.modules/scala-java8-compat_2.12/bundles/scala-java8-compat_2.12-0.8.0.jar))
+[debug] :: merging module report for com.typesafe:config:1.2.0 - Vector()
+[debug] :: merging module report for com.typesafe:config:1.3.1 - Vector((Artifact(config,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe/config/bundles/config-1.3.1.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-slf4j_2.12:2.5.0 - Vector((Artifact(akka-slf4j_2.12,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-slf4j_2.12/jars/akka-slf4j_2.12-2.5.0.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.21 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.21.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.23 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.23.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.25 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.25.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-stream_2.12:2.5.0 - Vector((Artifact(akka-stream_2.12,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-stream_2.12/jars/akka-stream_2.12-2.5.0.jar))
+[debug] :: merging module report for com.typesafe:ssl-config-core_2.12:0.2.1 - Vector((Artifact(ssl-config-core_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe/ssl-config-core_2.12/bundles/ssl-config-core_2.12-0.2.1.jar))
+[debug] :: merging module report for org.scala-lang.modules:scala-parser-combinators_2.12:1.0.4 - Vector((Artifact(scala-parser-combinators_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang.modules/scala-parser-combinators_2.12/bundles/scala-parser-combinators_2.12-1.0.4.jar))
+[debug] :: merging module report for org.reactivestreams:reactive-streams:1.0.0 - Vector((Artifact(reactive-streams,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.reactivestreams/reactive-streams/jars/reactive-streams-1.0.0.jar))
+[debug] :: merging module report for com.typesafe.scala-logging:scala-logging_2.12:3.6.0 - Vector((Artifact(scala-logging_2.12,bundle,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.scala-logging/scala-logging_2.12/bundles/scala-logging_2.12-3.6.0.jar))
+[debug] :: merging module report for org.scala-lang:scala-reflect:2.12.2 - Vector((Artifact(scala-reflect,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.2.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.1 - Vector((Artifact(scala-library,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.1.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.0 - Vector((Artifact(scala-library,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.0.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.2 - Vector((Artifact(scala-library,jar,jar,None,ArraySeq(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.2.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-actor_2.12:2.5.0 - Vector((Artifact(akka-actor_2.12,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-actor_2.12/jars/akka-actor_2.12-2.5.0.jar))
+[debug] :: merging module report for org.scala-lang.modules:scala-java8-compat_2.12:0.8.0 - Vector((Artifact(scala-java8-compat_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang.modules/scala-java8-compat_2.12/bundles/scala-java8-compat_2.12-0.8.0.jar))
+[debug] :: merging module report for com.typesafe:config:1.2.0 - Vector()
+[debug] :: merging module report for com.typesafe:config:1.3.1 - Vector((Artifact(config,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe/config/bundles/config-1.3.1.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-slf4j_2.12:2.5.0 - Vector((Artifact(akka-slf4j_2.12,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-slf4j_2.12/jars/akka-slf4j_2.12-2.5.0.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.21 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.21.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.23 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.23.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.25 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.25.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-stream_2.12:2.5.0 - Vector((Artifact(akka-stream_2.12,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-stream_2.12/jars/akka-stream_2.12-2.5.0.jar))
+[debug] :: merging module report for com.typesafe:ssl-config-core_2.12:0.2.1 - Vector((Artifact(ssl-config-core_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe/ssl-config-core_2.12/bundles/ssl-config-core_2.12-0.2.1.jar))
+[debug] :: merging module report for org.scala-lang.modules:scala-parser-combinators_2.12:1.0.4 - Vector((Artifact(scala-parser-combinators_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang.modules/scala-parser-combinators_2.12/bundles/scala-parser-combinators_2.12-1.0.4.jar))
+[debug] :: merging module report for org.reactivestreams:reactive-streams:1.0.0 - Vector((Artifact(reactive-streams,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.reactivestreams/reactive-streams/jars/reactive-streams-1.0.0.jar))
+[debug] :: merging module report for com.typesafe.scala-logging:scala-logging_2.12:3.6.0 - Vector((Artifact(scala-logging_2.12,bundle,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.scala-logging/scala-logging_2.12/bundles/scala-logging_2.12-3.6.0.jar))
+[debug] :: merging module report for org.scala-lang:scala-reflect:2.12.2 - Vector((Artifact(scala-reflect,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.2.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.1 - Vector((Artifact(scala-library,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.1.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.0 - Vector((Artifact(scala-library,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.0.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.2 - Vector((Artifact(scala-library,jar,jar,None,ArraySeq(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.2.jar))
+[debug] - conflict in test:org.scala-lang:scala-library (org.scala-lang:scala-library:2.12.1 (), org.scala-lang:scala-library:2.12.0, org.scala-lang:scala-library:2.12.2 ())
+[debug] :: merging module report for com.typesafe.akka:akka-actor_2.12:2.5.0 - Vector((Artifact(akka-actor_2.12,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-actor_2.12/jars/akka-actor_2.12-2.5.0.jar))
+[debug] :: merging module report for org.scala-lang.modules:scala-java8-compat_2.12:0.8.0 - Vector((Artifact(scala-java8-compat_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang.modules/scala-java8-compat_2.12/bundles/scala-java8-compat_2.12-0.8.0.jar))
+[debug] :: merging module report for com.typesafe:config:1.2.0 - Vector()
+[debug] :: merging module report for com.typesafe:config:1.3.1 - Vector((Artifact(config,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe/config/bundles/config-1.3.1.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-slf4j_2.12:2.5.0 - Vector((Artifact(akka-slf4j_2.12,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-slf4j_2.12/jars/akka-slf4j_2.12-2.5.0.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.21 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.21.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.23 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.23.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.25 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.25.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-stream_2.12:2.5.0 - Vector((Artifact(akka-stream_2.12,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-stream_2.12/jars/akka-stream_2.12-2.5.0.jar))
+[debug] :: merging module report for com.typesafe:ssl-config-core_2.12:0.2.1 - Vector((Artifact(ssl-config-core_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe/ssl-config-core_2.12/bundles/ssl-config-core_2.12-0.2.1.jar))
+[debug] :: merging module report for org.scala-lang.modules:scala-parser-combinators_2.12:1.0.4 - Vector((Artifact(scala-parser-combinators_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang.modules/scala-parser-combinators_2.12/bundles/scala-parser-combinators_2.12-1.0.4.jar))
+[debug] :: merging module report for org.reactivestreams:reactive-streams:1.0.0 - Vector((Artifact(reactive-streams,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.reactivestreams/reactive-streams/jars/reactive-streams-1.0.0.jar))
+[debug] :: merging module report for com.typesafe.scala-logging:scala-logging_2.12:3.6.0 - Vector((Artifact(scala-logging_2.12,bundle,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.scala-logging/scala-logging_2.12/bundles/scala-logging_2.12-3.6.0.jar))
+[debug] :: merging module report for org.scala-lang:scala-reflect:2.12.2 - Vector((Artifact(scala-reflect,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.2.jar))
+[debug] :: merging module report for org.scala-lang:scala-reflect:2.12.0 - Vector((Artifact(scala-reflect,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.0.jar))
+[debug] - conflict in test:org.scala-lang:scala-reflect (org.scala-lang:scala-reflect:2.12.2 (), org.scala-lang:scala-reflect:2.12.0 ())
+[debug] :: merging module report for org.scalatest:scalatest_2.12:3.0.1 - Vector((Artifact(scalatest_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scalatest/scalatest_2.12/bundles/scalatest_2.12-3.0.1.jar))
+[debug] :: merging module report for org.scala-lang.modules:scala-xml_2.12:1.0.5 - Vector((Artifact(scala-xml_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang.modules/scala-xml_2.12/bundles/scala-xml_2.12-1.0.5.jar))
+[debug] :: merging module report for org.scalactic:scalactic_2.12:3.0.1 - Vector((Artifact(scalactic_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scalactic/scalactic_2.12/bundles/scalactic_2.12-3.0.1.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-testkit_2.12:2.5.0 - Vector((Artifact(akka-testkit_2.12,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-testkit_2.12/jars/akka-testkit_2.12-2.5.0.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.1 - Vector((Artifact(scala-library,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.1.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.0 - Vector((Artifact(scala-library,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.0.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.2 - Vector((Artifact(scala-library,jar,jar,None,ArraySeq(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.2.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-actor_2.12:2.5.0 - Vector((Artifact(akka-actor_2.12,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-actor_2.12/jars/akka-actor_2.12-2.5.0.jar))
+[debug] :: merging module report for org.scala-lang.modules:scala-java8-compat_2.12:0.8.0 - Vector((Artifact(scala-java8-compat_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang.modules/scala-java8-compat_2.12/bundles/scala-java8-compat_2.12-0.8.0.jar))
+[debug] :: merging module report for com.typesafe:config:1.2.0 - Vector()
+[debug] :: merging module report for com.typesafe:config:1.3.1 - Vector((Artifact(config,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe/config/bundles/config-1.3.1.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-slf4j_2.12:2.5.0 - Vector((Artifact(akka-slf4j_2.12,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-slf4j_2.12/jars/akka-slf4j_2.12-2.5.0.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.21 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.21.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.23 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.23.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.25 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.25.jar), (Artifact(slf4j-api,jar,jar,None,ArraySeq(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.25.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-stream_2.12:2.5.0 - Vector((Artifact(akka-stream_2.12,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-stream_2.12/jars/akka-stream_2.12-2.5.0.jar))
+[debug] :: merging module report for com.typesafe:ssl-config-core_2.12:0.2.1 - Vector((Artifact(ssl-config-core_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe/ssl-config-core_2.12/bundles/ssl-config-core_2.12-0.2.1.jar))
+[debug] :: merging module report for org.scala-lang.modules:scala-parser-combinators_2.12:1.0.4 - Vector((Artifact(scala-parser-combinators_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang.modules/scala-parser-combinators_2.12/bundles/scala-parser-combinators_2.12-1.0.4.jar))
+[debug] :: merging module report for org.reactivestreams:reactive-streams:1.0.0 - Vector((Artifact(reactive-streams,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.reactivestreams/reactive-streams/jars/reactive-streams-1.0.0.jar))
+[debug] :: merging module report for com.typesafe.scala-logging:scala-logging_2.12:3.6.0 - Vector((Artifact(scala-logging_2.12,bundle,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.scala-logging/scala-logging_2.12/bundles/scala-logging_2.12-3.6.0.jar))
+[debug] :: merging module report for org.scala-lang:scala-reflect:2.12.2 - Vector((Artifact(scala-reflect,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.2.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.1 - Vector((Artifact(scala-library,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.1.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.0 - Vector((Artifact(scala-library,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.0.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.2 - Vector((Artifact(scala-library,jar,jar,None,ArraySeq(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.2.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-actor_2.12:2.5.0 - Vector((Artifact(akka-actor_2.12,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-actor_2.12/jars/akka-actor_2.12-2.5.0.jar))
+[debug] :: merging module report for org.scala-lang.modules:scala-java8-compat_2.12:0.8.0 - Vector((Artifact(scala-java8-compat_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang.modules/scala-java8-compat_2.12/bundles/scala-java8-compat_2.12-0.8.0.jar))
+[debug] :: merging module report for com.typesafe:config:1.2.0 - Vector()
+[debug] :: merging module report for com.typesafe:config:1.3.1 - Vector((Artifact(config,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe/config/bundles/config-1.3.1.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-slf4j_2.12:2.5.0 - Vector((Artifact(akka-slf4j_2.12,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-slf4j_2.12/jars/akka-slf4j_2.12-2.5.0.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.21 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.21.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.23 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.23.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.25 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.25.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-stream_2.12:2.5.0 - Vector((Artifact(akka-stream_2.12,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-stream_2.12/jars/akka-stream_2.12-2.5.0.jar))
+[debug] :: merging module report for com.typesafe:ssl-config-core_2.12:0.2.1 - Vector((Artifact(ssl-config-core_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe/ssl-config-core_2.12/bundles/ssl-config-core_2.12-0.2.1.jar))
+[debug] :: merging module report for org.scala-lang.modules:scala-parser-combinators_2.12:1.0.4 - Vector((Artifact(scala-parser-combinators_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang.modules/scala-parser-combinators_2.12/bundles/scala-parser-combinators_2.12-1.0.4.jar))
+[debug] :: merging module report for org.reactivestreams:reactive-streams:1.0.0 - Vector((Artifact(reactive-streams,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.reactivestreams/reactive-streams/jars/reactive-streams-1.0.0.jar))
+[debug] :: merging module report for com.typesafe.scala-logging:scala-logging_2.12:3.6.0 - Vector((Artifact(scala-logging_2.12,bundle,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.scala-logging/scala-logging_2.12/bundles/scala-logging_2.12-3.6.0.jar))
+[debug] :: merging module report for org.scala-lang:scala-reflect:2.12.2 - Vector((Artifact(scala-reflect,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.2.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.1 - Vector((Artifact(scala-library,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.1.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.0 - Vector((Artifact(scala-library,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.0.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.2 - Vector((Artifact(scala-library,jar,jar,None,ArraySeq(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.2.jar))
+[debug] - conflict in test-internal:org.scala-lang:scala-library (org.scala-lang:scala-library:2.12.1 (), org.scala-lang:scala-library:2.12.0, org.scala-lang:scala-library:2.12.2 ())
+[debug] :: merging module report for com.typesafe.akka:akka-actor_2.12:2.5.0 - Vector((Artifact(akka-actor_2.12,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-actor_2.12/jars/akka-actor_2.12-2.5.0.jar))
+[debug] :: merging module report for org.scala-lang.modules:scala-java8-compat_2.12:0.8.0 - Vector((Artifact(scala-java8-compat_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang.modules/scala-java8-compat_2.12/bundles/scala-java8-compat_2.12-0.8.0.jar))
+[debug] :: merging module report for com.typesafe:config:1.2.0 - Vector()
+[debug] :: merging module report for com.typesafe:config:1.3.1 - Vector((Artifact(config,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe/config/bundles/config-1.3.1.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-slf4j_2.12:2.5.0 - Vector((Artifact(akka-slf4j_2.12,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-slf4j_2.12/jars/akka-slf4j_2.12-2.5.0.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.21 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.21.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.23 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.23.jar))
+[debug] :: merging module report for org.slf4j:slf4j-api:1.7.25 - Vector((Artifact(slf4j-api,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.25.jar), (Artifact(slf4j-api,jar,jar,None,ArraySeq(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.25.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-stream_2.12:2.5.0 - Vector((Artifact(akka-stream_2.12,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-stream_2.12/jars/akka-stream_2.12-2.5.0.jar))
+[debug] :: merging module report for com.typesafe:ssl-config-core_2.12:0.2.1 - Vector((Artifact(ssl-config-core_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe/ssl-config-core_2.12/bundles/ssl-config-core_2.12-0.2.1.jar))
+[debug] :: merging module report for org.scala-lang.modules:scala-parser-combinators_2.12:1.0.4 - Vector((Artifact(scala-parser-combinators_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang.modules/scala-parser-combinators_2.12/bundles/scala-parser-combinators_2.12-1.0.4.jar))
+[debug] :: merging module report for org.reactivestreams:reactive-streams:1.0.0 - Vector((Artifact(reactive-streams,jar,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.reactivestreams/reactive-streams/jars/reactive-streams-1.0.0.jar))
+[debug] :: merging module report for com.typesafe.scala-logging:scala-logging_2.12:3.6.0 - Vector((Artifact(scala-logging_2.12,bundle,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.scala-logging/scala-logging_2.12/bundles/scala-logging_2.12-3.6.0.jar))
+[debug] :: merging module report for org.scala-lang:scala-reflect:2.12.2 - Vector((Artifact(scala-reflect,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.2.jar))
+[debug] :: merging module report for org.scala-lang:scala-reflect:2.12.0 - Vector((Artifact(scala-reflect,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.0.jar))
+[debug] - conflict in test-internal:org.scala-lang:scala-reflect (org.scala-lang:scala-reflect:2.12.2 (), org.scala-lang:scala-reflect:2.12.0 ())
+[debug] :: merging module report for org.scalatest:scalatest_2.12:3.0.1 - Vector((Artifact(scalatest_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scalatest/scalatest_2.12/bundles/scalatest_2.12-3.0.1.jar))
+[debug] :: merging module report for org.scala-lang.modules:scala-xml_2.12:1.0.5 - Vector((Artifact(scala-xml_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang.modules/scala-xml_2.12/bundles/scala-xml_2.12-1.0.5.jar))
+[debug] :: merging module report for org.scalactic:scalactic_2.12:3.0.1 - Vector((Artifact(scalactic_2.12,bundle,jar,None,Vector(master),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scalactic/scalactic_2.12/bundles/scalactic_2.12-3.0.1.jar))
+[debug] :: merging module report for com.typesafe.akka:akka-testkit_2.12:2.5.0 - Vector((Artifact(akka-testkit_2.12,jar,jar,None,Vector(),None,Map()),/Users/j5ik2o/.ivy2/cache/com.typesafe.akka/akka-testkit_2.12/jars/akka-testkit_2.12-2.5.0.jar))
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.2 - Vector((Artifact(scala-library,jar,jar,None,ArraySeq(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.2.jar))
+[info] Done updating.

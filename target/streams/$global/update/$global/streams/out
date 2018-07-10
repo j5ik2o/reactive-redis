@@ -1,0 +1,427 @@
+[info] Updating {file:/Users/j5ik2o/Sources/reactive-redis/}root...
+[debug] :: building artificial module descriptors from com.github.j5ik2o#reactive-redis-project_2.12;1.0.0-SNAPSHOT
+[debug] ::: dd: dependency: org.scala-lang#scala-compiler;2.12.2 {scala-tool=[default, optional(default)]} (artifacts: )
+[debug] ::: dd: sbt.ivyint.MergedDescriptors@597b1e1e (artifacts: )
+[debug] ::: dd: dependency: org.scalatest#scalatest_2.12;3.0.1 {test=[default(compile)]} (artifacts: )
+[debug] :: call ivy resolution: dependency: org.scala-lang#scala-compiler;2.12.2 {scala-tool=[default, optional(default)]}
+[debug] :: resolving dependencies :: org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0
+[debug] 	confs: [compile, runtime, test, provided, optional, compile-internal, runtime-internal, test-internal, plugin, sources, docs, pom, scala-tool]
+[debug] 	validate = true
+[debug] 	refresh = false
+[debug] resolving dependencies for configuration 'compile'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [compile]
+[debug] resolving dependencies for configuration 'runtime'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [runtime]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [compile]
+[debug] resolving dependencies for configuration 'test'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [test]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [runtime]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [compile]
+[debug] resolving dependencies for configuration 'provided'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [provided]
+[debug] resolving dependencies for configuration 'optional'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [optional]
+[debug] resolving dependencies for configuration 'compile-internal'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [compile-internal]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [compile]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [optional]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [provided]
+[debug] resolving dependencies for configuration 'runtime-internal'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [runtime-internal]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [runtime]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [compile]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [optional]
+[debug] resolving dependencies for configuration 'test-internal'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [test-internal]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [test]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [runtime]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [compile]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [optional]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [provided]
+[debug] resolving dependencies for configuration 'plugin'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [plugin]
+[debug] resolving dependencies for configuration 'sources'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [sources]
+[debug] resolving dependencies for configuration 'docs'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [docs]
+[debug] resolving dependencies for configuration 'pom'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [pom]
+[debug] resolving dependencies for configuration 'scala-tool'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 [scala-tool]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0->org.scala-lang#scala-compiler;2.12.2 [scala-tool->default]
+[info] Resolving org.scala-lang#scala-compiler;2.12.2 ...
+[debug] sbt-chain: Checking cache for: dependency: org.scala-lang#scala-compiler;2.12.2 {scala-tool=[default, optional(default)]}
+[debug] sbt-chain: module revision found in cache: org.scala-lang#scala-compiler;2.12.2
+[debug] 	found org.scala-lang#scala-compiler;2.12.2 in sbt-chain
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0->org.scala-lang#scala-compiler;2.12.2 [scala-tool->runtime]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0->org.scala-lang#scala-compiler;2.12.2 [scala-tool->compile]
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang#scala-library;2.12.2 [compile->master(compile)]
+[info] Resolving org.scala-lang#scala-library;2.12.2 ...
+[debug] sbt-chain: Checking cache for: dependency: org.scala-lang#scala-library;2.12.2 {compile=[compile(*), master(compile)], runtime=[runtime(*)]}
+[debug] sbt-chain: module revision found in cache: org.scala-lang#scala-library;2.12.2
+[debug] 	found org.scala-lang#scala-library;2.12.2 in sbt-chain
+[debug] 	[2.12.2] org.scala-lang#scala-library;2.12.2
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang#scala-library;2.12.2 [compile->compile(*)]
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang#scala-library;2.12.2 [compile->runtime(*)]
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang#scala-library;2.12.2 [compile->compile]
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang#scala-reflect;2.12.2 [compile->master(compile)]
+[info] Resolving org.scala-lang#scala-reflect;2.12.2 ...
+[debug] sbt-chain: Checking cache for: dependency: org.scala-lang#scala-reflect;2.12.2 {compile=[compile(*), master(compile)], runtime=[runtime(*)]}
+[debug] sbt-chain: module revision found in cache: org.scala-lang#scala-reflect;2.12.2
+[debug] 	found org.scala-lang#scala-reflect;2.12.2 in sbt-chain
+[debug] 	[2.12.2] org.scala-lang#scala-reflect;2.12.2
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang#scala-reflect;2.12.2 [compile->compile(*)]
+[debug] == resolving dependencies org.scala-lang#scala-reflect;2.12.2->org.scala-lang#scala-library;2.12.2 [compile->master(compile)]
+[debug] == resolving dependencies org.scala-lang#scala-reflect;2.12.2->org.scala-lang#scala-library;2.12.2 [compile->compile(*)]
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang#scala-reflect;2.12.2 [compile->runtime(*)]
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang#scala-reflect;2.12.2 [compile->compile]
+[debug] == resolving dependencies org.scala-lang#scala-reflect;2.12.2->org.scala-lang#scala-library;2.12.2 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scala-lang#scala-reflect;2.12.2->org.scala-lang#scala-library;2.12.2 [runtime->compile]
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang.modules#scala-xml_2.12;1.0.6 [compile->master(compile)]
+[info] Resolving org.scala-lang.modules#scala-xml_2.12;1.0.6 ...
+[debug] sbt-chain: Checking cache for: dependency: org.scala-lang.modules#scala-xml_2.12;1.0.6 {compile=[compile(*), master(compile)], runtime=[runtime(*)]}
+[debug] sbt-chain: module revision found in cache: org.scala-lang.modules#scala-xml_2.12;1.0.6
+[debug] 	found org.scala-lang.modules#scala-xml_2.12;1.0.6 in sbt-chain
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang.modules#scala-xml_2.12;1.0.6 [compile->compile(*)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-xml_2.12;1.0.6->org.scala-lang#scala-library;2.12.0 [compile->master(compile)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-xml_2.12;1.0.6->org.scala-lang#scala-library;2.12.2 [compile->master(compile)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-xml_2.12;1.0.6->org.scala-lang#scala-library;2.12.0 [compile->compile(*)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-xml_2.12;1.0.6->org.scala-lang#scala-library;2.12.2 [compile->compile(*)]
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang.modules#scala-xml_2.12;1.0.6 [compile->runtime(*)]
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang.modules#scala-xml_2.12;1.0.6 [compile->compile]
+[debug] == resolving dependencies org.scala-lang.modules#scala-xml_2.12;1.0.6->org.scala-lang#scala-library;2.12.0 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-xml_2.12;1.0.6->org.scala-lang#scala-library;2.12.2 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-xml_2.12;1.0.6->org.scala-lang#scala-library;2.12.2 [runtime->compile]
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang#scala-library;2.12.2 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang#scala-library;2.12.2 [runtime->compile]
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang#scala-reflect;2.12.2 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang#scala-reflect;2.12.2 [runtime->compile]
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang.modules#scala-xml_2.12;1.0.6 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->org.scala-lang.modules#scala-xml_2.12;1.0.6 [runtime->compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0->org.scala-lang#scala-compiler;2.12.2 [scala-tool->master]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0->org.scala-lang#scala-compiler;2.12.2 [scala-tool->optional(default)]
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->jline#jline;2.14.3 [optional->master(compile)]
+[info] Resolving jline#jline;2.14.3 ...
+[debug] sbt-chain: Checking cache for: dependency: jline#jline;2.14.3 {optional=[compile(*), master(compile)]}
+[debug] sbt-chain: module revision found in cache: jline#jline;2.14.3
+[debug] 	found jline#jline;2.14.3 in sbt-chain
+[debug] == resolving dependencies org.scala-lang#scala-compiler;2.12.2->jline#jline;2.14.3 [optional->compile(*)]
+[debug] 	resolved ivy file produced in cache
+[debug] :: downloading artifacts ::
+[debug] 	[NOT REQUIRED] org.scala-lang#scala-compiler;2.12.2!scala-compiler.jar
+[debug] 	[NOT REQUIRED] org.scala-lang#scala-library;2.12.2!scala-library.jar
+[debug] 	[NOT REQUIRED] org.scala-lang#scala-reflect;2.12.2!scala-reflect.jar
+[debug] 	[NOT REQUIRED] org.scala-lang.modules#scala-xml_2.12;1.0.6!scala-xml_2.12.jar(bundle)
+[debug] 	[NOT REQUIRED] jline#jline;2.14.3!jline.jar
+[debug] :: resolution report :: resolve 68ms :: artifacts dl 3ms
+[debug] 	report for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 compile produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-compile.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 runtime produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-runtime.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 test produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-test.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 provided produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-provided.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 optional produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-optional.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 compile-internal produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-compile-internal.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 runtime-internal produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-runtime-internal.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 test-internal produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-test-internal.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 plugin produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-plugin.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 sources produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-sources.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 docs produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-docs.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 pom produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-pom.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d;1.0 scala-tool produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-scala-tool.xml
+[debug] 	resolve done (68ms resolve - 3ms download)
+[debug] saving minigraph to /Users/j5ik2o/.sbt/0.13/dependency/module/static/org.scala-lang/scala-compiler/2.12.2_temp-resolve-d9ae8fba2e2605419daa1c959814f81f7a42b47d/graphs/graph.json
+[debug] :: call ivy resolution: sbt.ivyint.MergedDescriptors@597b1e1e
+[debug] :: resolving dependencies :: org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0
+[debug] 	confs: [compile, runtime, test, provided, optional, compile-internal, runtime-internal, test-internal, plugin, sources, docs, pom, scala-tool]
+[debug] 	validate = true
+[debug] 	refresh = false
+[debug] resolving dependencies for configuration 'compile'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->default(compile)]
+[info] Resolving org.scala-lang#scala-library;2.12.2 ...
+[debug] sbt-chain: Checking cache for: sbt.ivyint.MergedDescriptors@597b1e1e
+[debug] sbt-chain: module revision found in cache: org.scala-lang#scala-library;2.12.2
+[debug] 	found org.scala-lang#scala-library;2.12.2 in sbt-chain
+[debug] 	[2.12.2] org.scala-lang#scala-library;2.12.2
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->runtime]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->master]
+[debug] resolving dependencies for configuration 'runtime'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [runtime]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->default(compile)]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->runtime]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->master]
+[debug] resolving dependencies for configuration 'test'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [test]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [runtime]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->default(compile)]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->runtime]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->master]
+[debug] resolving dependencies for configuration 'provided'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [provided]
+[debug] resolving dependencies for configuration 'optional'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [optional]
+[debug] resolving dependencies for configuration 'compile-internal'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [compile-internal]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->default(compile)]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->runtime]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->master]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [optional]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [provided]
+[debug] resolving dependencies for configuration 'runtime-internal'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [runtime-internal]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [runtime]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->default(compile)]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->runtime]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->master]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [optional]
+[debug] resolving dependencies for configuration 'test-internal'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [test-internal]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [test]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [runtime]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->default(compile)]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->runtime]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [compile->master]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [optional]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [provided]
+[debug] resolving dependencies for configuration 'plugin'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [plugin]
+[debug] resolving dependencies for configuration 'sources'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [sources]
+[debug] resolving dependencies for configuration 'docs'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [docs]
+[debug] resolving dependencies for configuration 'pom'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [pom]
+[debug] resolving dependencies for configuration 'scala-tool'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 [scala-tool]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [scala-tool->default]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [scala-tool->runtime]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [scala-tool->compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [scala-tool->master]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0->org.scala-lang#scala-library;2.12.2 [scala-tool->optional(default)]
+[debug] 	resolved ivy file produced in cache
+[debug] :: downloading artifacts ::
+[debug] 	[NOT REQUIRED] org.scala-lang#scala-library;2.12.2!scala-library.jar
+[debug] :: resolution report :: resolve 8ms :: artifacts dl 1ms
+[debug] 	report for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 compile produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-compile.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 runtime produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-runtime.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 test produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-test.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 provided produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-provided.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 optional produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-optional.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 compile-internal produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-compile-internal.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 runtime-internal produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-runtime-internal.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 test-internal produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-test-internal.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 plugin produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-plugin.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 sources produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-sources.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 docs produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-docs.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 pom produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-pom.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d;1.0 scala-tool produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-scala-tool.xml
+[debug] 	resolve done (8ms resolve - 1ms download)
+[debug] saving minigraph to /Users/j5ik2o/.sbt/0.13/dependency/module/static/org.scala-lang/scala-library/2.12.2_temp-resolve-80dfed3e859c257d9783900c5a61064adc54f50d/graphs/graph.json
+[debug] :: call ivy resolution: dependency: org.scalatest#scalatest_2.12;3.0.1 {test=[default(compile)]}
+[debug] :: resolving dependencies :: org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0
+[debug] 	confs: [compile, runtime, test, provided, optional, compile-internal, runtime-internal, test-internal, plugin, sources, docs, pom, scala-tool]
+[debug] 	validate = true
+[debug] 	refresh = false
+[debug] resolving dependencies for configuration 'compile'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [compile]
+[debug] resolving dependencies for configuration 'runtime'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [runtime]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [compile]
+[debug] resolving dependencies for configuration 'test'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [test]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [runtime]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0->org.scalatest#scalatest_2.12;3.0.1 [test->default(compile)]
+[info] Resolving org.scalatest#scalatest_2.12;3.0.1 ...
+[debug] sbt-chain: Checking cache for: dependency: org.scalatest#scalatest_2.12;3.0.1 {test=[default(compile)]}
+[debug] sbt-chain: module revision found in cache: org.scalatest#scalatest_2.12;3.0.1
+[debug] 	found org.scalatest#scalatest_2.12;3.0.1 in sbt-chain
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0->org.scalatest#scalatest_2.12;3.0.1 [test->runtime]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0->org.scalatest#scalatest_2.12;3.0.1 [test->compile]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [compile->master(compile)]
+[info] Resolving org.scala-lang#scala-library;2.12.0 ...
+[debug] sbt-chain: Checking cache for: dependency: org.scala-lang#scala-library;2.12.0 {compile=[compile(*), master(compile)], runtime=[runtime(*)]}
+[debug] sbt-chain: module revision found in cache: org.scala-lang#scala-library;2.12.0
+[debug] 	found org.scala-lang#scala-library;2.12.0 in sbt-chain
+[debug] 	[2.12.0] org.scala-lang#scala-library;2.12.0
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [compile->compile(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [compile->runtime(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [compile->compile]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scalactic#scalactic_2.12;3.0.1 [compile->master(compile)]
+[info] Resolving org.scalactic#scalactic_2.12;3.0.1 ...
+[debug] sbt-chain: Checking cache for: dependency: org.scalactic#scalactic_2.12;3.0.1 {compile=[compile(*), master(compile)], runtime=[runtime(*)]}
+[debug] sbt-chain: module revision found in cache: org.scalactic#scalactic_2.12;3.0.1
+[debug] 	found org.scalactic#scalactic_2.12;3.0.1 in sbt-chain
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scalactic#scalactic_2.12;3.0.1 [compile->compile(*)]
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [compile->master(compile)]
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [compile->compile(*)]
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [compile->master(compile)]
+[info] Resolving org.scala-lang#scala-reflect;2.12.0 ...
+[debug] sbt-chain: Checking cache for: dependency: org.scala-lang#scala-reflect;2.12.0 {compile=[compile(*), master(compile)], runtime=[runtime(*)]}
+[debug] sbt-chain: module revision found in cache: org.scala-lang#scala-reflect;2.12.0
+[debug] 	found org.scala-lang#scala-reflect;2.12.0 in sbt-chain
+[debug] 	[2.12.0] org.scala-lang#scala-reflect;2.12.0
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [compile->compile(*)]
+[debug] == resolving dependencies org.scala-lang#scala-reflect;2.12.0->org.scala-lang#scala-library;2.12.0 [compile->master(compile)]
+[debug] == resolving dependencies org.scala-lang#scala-reflect;2.12.0->org.scala-lang#scala-library;2.12.0 [compile->compile(*)]
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [compile->runtime(*)]
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [compile->compile]
+[debug] == resolving dependencies org.scala-lang#scala-reflect;2.12.0->org.scala-lang#scala-library;2.12.0 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scala-lang#scala-reflect;2.12.0->org.scala-lang#scala-library;2.12.0 [runtime->compile]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scalactic#scalactic_2.12;3.0.1 [compile->runtime(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scalactic#scalactic_2.12;3.0.1 [compile->compile]
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [runtime->compile]
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [runtime->compile]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [compile->master(compile)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [compile->compile(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-xml_2.12;1.0.5 [compile->master(compile)]
+[info] Resolving org.scala-lang.modules#scala-xml_2.12;1.0.5 ...
+[debug] sbt-chain: Checking cache for: dependency: org.scala-lang.modules#scala-xml_2.12;1.0.5 {compile=[compile(*), master(compile)], runtime=[runtime(*)]}
+[debug] sbt-chain: module revision found in cache: org.scala-lang.modules#scala-xml_2.12;1.0.5
+[debug] 	found org.scala-lang.modules#scala-xml_2.12;1.0.5 in sbt-chain
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-xml_2.12;1.0.5 [compile->compile(*)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-xml_2.12;1.0.5->org.scala-lang#scala-library;2.12.0 [compile->master(compile)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-xml_2.12;1.0.5->org.scala-lang#scala-library;2.12.0 [compile->compile(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-xml_2.12;1.0.5 [compile->runtime(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-xml_2.12;1.0.5 [compile->compile]
+[debug] == resolving dependencies org.scala-lang.modules#scala-xml_2.12;1.0.5->org.scala-lang#scala-library;2.12.0 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-xml_2.12;1.0.5->org.scala-lang#scala-library;2.12.0 [runtime->compile]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4 [compile->master(compile)]
+[info] Resolving org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4 ...
+[debug] sbt-chain: Checking cache for: dependency: org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4 {compile=[compile(*), master(compile)], runtime=[runtime(*)]}
+[debug] sbt-chain: module revision found in cache: org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4
+[debug] 	found org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4 in sbt-chain
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4 [compile->compile(*)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4->org.scala-lang#scala-library;2.12.0 [compile->master(*)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4->org.scala-lang#scala-library;2.12.0 [compile->compile(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4 [compile->runtime(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4 [compile->compile]
+[debug] == resolving dependencies org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4->org.scala-lang#scala-library;2.12.0 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4->org.scala-lang#scala-library;2.12.0 [runtime->compile]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [runtime->compile]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scalactic#scalactic_2.12;3.0.1 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scalactic#scalactic_2.12;3.0.1 [runtime->compile]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [runtime->compile]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-xml_2.12;1.0.5 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-xml_2.12;1.0.5 [runtime->compile]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4 [runtime->compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0->org.scalatest#scalatest_2.12;3.0.1 [test->master]
+[debug] resolving dependencies for configuration 'provided'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [provided]
+[debug] resolving dependencies for configuration 'optional'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [optional]
+[debug] resolving dependencies for configuration 'compile-internal'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [compile-internal]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [compile]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [optional]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [provided]
+[debug] resolving dependencies for configuration 'runtime-internal'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [runtime-internal]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [runtime]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [compile]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [optional]
+[debug] resolving dependencies for configuration 'test-internal'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [test-internal]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [test]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [runtime]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0->org.scalatest#scalatest_2.12;3.0.1 [test->default(compile)]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0->org.scalatest#scalatest_2.12;3.0.1 [test->runtime]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0->org.scalatest#scalatest_2.12;3.0.1 [test->compile]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [compile->master(compile)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [compile->compile(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scalactic#scalactic_2.12;3.0.1 [compile->master(compile)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scalactic#scalactic_2.12;3.0.1 [compile->compile(*)]
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [compile->master(compile)]
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [compile->compile(*)]
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [compile->master(compile)]
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [compile->compile(*)]
+[debug] == resolving dependencies org.scala-lang#scala-reflect;2.12.0->org.scala-lang#scala-library;2.12.0 [compile->master(compile)]
+[debug] == resolving dependencies org.scala-lang#scala-reflect;2.12.0->org.scala-lang#scala-library;2.12.0 [compile->compile(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [compile->master(compile)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [compile->compile(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-xml_2.12;1.0.5 [compile->master(compile)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-xml_2.12;1.0.5 [compile->compile(*)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-xml_2.12;1.0.5->org.scala-lang#scala-library;2.12.0 [compile->master(compile)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-xml_2.12;1.0.5->org.scala-lang#scala-library;2.12.0 [compile->compile(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4 [compile->master(compile)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4 [compile->compile(*)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4->org.scala-lang#scala-library;2.12.0 [compile->master(*)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4->org.scala-lang#scala-library;2.12.0 [compile->compile(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [runtime->compile]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scalactic#scalactic_2.12;3.0.1 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scalactic#scalactic_2.12;3.0.1 [runtime->compile]
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-library;2.12.0 [runtime->compile]
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalactic#scalactic_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [runtime->compile]
+[debug] == resolving dependencies org.scala-lang#scala-reflect;2.12.0->org.scala-lang#scala-library;2.12.0 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scala-lang#scala-reflect;2.12.0->org.scala-lang#scala-library;2.12.0 [runtime->compile]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang#scala-reflect;2.12.0 [runtime->compile]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-xml_2.12;1.0.5 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-xml_2.12;1.0.5 [runtime->compile]
+[debug] == resolving dependencies org.scala-lang.modules#scala-xml_2.12;1.0.5->org.scala-lang#scala-library;2.12.0 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-xml_2.12;1.0.5->org.scala-lang#scala-library;2.12.0 [runtime->compile]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scalatest#scalatest_2.12;3.0.1->org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4 [runtime->compile]
+[debug] == resolving dependencies org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4->org.scala-lang#scala-library;2.12.0 [runtime->runtime(*)]
+[debug] == resolving dependencies org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4->org.scala-lang#scala-library;2.12.0 [runtime->compile]
+[debug] == resolving dependencies org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0->org.scalatest#scalatest_2.12;3.0.1 [test->master]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [optional]
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [provided]
+[debug] resolving dependencies for configuration 'plugin'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [plugin]
+[debug] resolving dependencies for configuration 'sources'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [sources]
+[debug] resolving dependencies for configuration 'docs'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [docs]
+[debug] resolving dependencies for configuration 'pom'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [pom]
+[debug] resolving dependencies for configuration 'scala-tool'
+[debug] == resolving dependencies for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 [scala-tool]
+[debug] 	resolved ivy file produced in cache
+[debug] :: downloading artifacts ::
+[debug] 	[NOT REQUIRED] org.scalatest#scalatest_2.12;3.0.1!scalatest_2.12.jar(bundle)
+[debug] 	[NOT REQUIRED] org.scala-lang#scala-library;2.12.0!scala-library.jar
+[debug] 	[NOT REQUIRED] org.scalactic#scalactic_2.12;3.0.1!scalactic_2.12.jar(bundle)
+[debug] 	[NOT REQUIRED] org.scala-lang#scala-reflect;2.12.0!scala-reflect.jar
+[debug] 	[NOT REQUIRED] org.scala-lang.modules#scala-xml_2.12;1.0.5!scala-xml_2.12.jar(bundle)
+[debug] 	[NOT REQUIRED] org.scala-lang.modules#scala-parser-combinators_2.12;1.0.4!scala-parser-combinators_2.12.jar(bundle)
+[debug] :: resolution report :: resolve 58ms :: artifacts dl 3ms
+[debug] 	report for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 compile produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-compile.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 runtime produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-runtime.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 test produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-test.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 provided produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-provided.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 optional produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-optional.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 compile-internal produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-compile-internal.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 runtime-internal produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-runtime-internal.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 test-internal produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-test-internal.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 plugin produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-plugin.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 sources produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-sources.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 docs produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-docs.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 pom produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-pom.xml
+[debug] 	report for org.scala-sbt.temp#temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f;1.0 scala-tool produced in /Users/j5ik2o/Sources/reactive-redis/target/resolution-cache/reports/com.github.j5ik2o-reactive-redis-project_2.12-scala-tool.xml
+[debug] 	resolve done (58ms resolve - 3ms download)
+[debug] saving minigraph to /Users/j5ik2o/.sbt/0.13/dependency/module/static/org.scalatest/scalatest_2.12/3.0.1_temp-resolve-1b84a944027c2f8aae865ad0183d0ad05ddfee1f/graphs/graph.json
+[debug] :: merging update reports
+[debug] - conflict in test:org.scala-lang:scala-library (org.scala-lang:scala-library:2.12.0 (), org.scala-lang:scala-library:2.12.2 ())
+[debug] - conflict in test-internal:org.scala-lang:scala-library (org.scala-lang:scala-library:2.12.0 (), org.scala-lang:scala-library:2.12.2 ())
+[debug] :: merging module report for org.scala-lang:scala-library:2.12.2 - Vector((Artifact(scala-library,jar,jar,None,ArraySeq(),None,Map()),/Users/j5ik2o/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.2.jar))
+[info] Done updating.

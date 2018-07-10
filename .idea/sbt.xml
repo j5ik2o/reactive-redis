@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaSbtSettings">
+    <option name="customLauncherEnabled" value="true" />
+    <option name="customLauncherPath" value="/usr/local/Cellar/sbt/1.1.6/libexec/bin/sbt-launch.jar" />
+    <option name="customVMPath" />
+    <option name="linkedExternalProjectsSettings">
+      <SbtProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/cats-free" />
+            <option value="$PROJECT_DIR$/cats-free/project" />
+            <option value="$PROJECT_DIR$/core" />
+            <option value="$PROJECT_DIR$/core/project" />
+            <option value="$PROJECT_DIR$/free-core" />
+            <option value="$PROJECT_DIR$/free-core/project" />
+            <option value="$PROJECT_DIR$/future" />
+            <option value="$PROJECT_DIR$/future/project" />
+            <option value="$PROJECT_DIR$/project" />
+            <option value="$PROJECT_DIR$/scalaz-free" />
+            <option value="$PROJECT_DIR$/scalaz-free/project" />
+          </set>
+        </option>
+        <option name="sbtVersion" value="0.13.8" />
+      </SbtProjectSettings>
+    </option>
+    <option name="maximumHeapSize" value="2048" />
+  </component>
+</project>
