@@ -1,6 +1,6 @@
 package com.github.j5ik2o.reactive.redis.parser
 
-import com.github.j5ik2o.reactive.redis.model._
+import com.github.j5ik2o.reactive.redis.parser.model._
 import fastparse.all._
 
 object Parsers {

@@ -3,7 +3,7 @@ package com.github.j5ik2o.reactive.redis.cmd
 import java.text.ParseException
 import java.util.UUID
 
-import com.github.j5ik2o.reactive.redis.model.Expr
+import com.github.j5ik2o.reactive.redis.parser.model.Expr
 import fastparse.all._
 import fastparse.core.Parsed
 
