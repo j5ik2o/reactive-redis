@@ -10,20 +10,12 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/cats-free" />
-            <option value="$PROJECT_DIR$/cats-free/project" />
             <option value="$PROJECT_DIR$/core" />
             <option value="$PROJECT_DIR$/core/project" />
-            <option value="$PROJECT_DIR$/free-core" />
-            <option value="$PROJECT_DIR$/free-core/project" />
-            <option value="$PROJECT_DIR$/future" />
-            <option value="$PROJECT_DIR$/future/project" />
             <option value="$PROJECT_DIR$/project" />
-            <option value="$PROJECT_DIR$/scalaz-free" />
-            <option value="$PROJECT_DIR$/scalaz-free/project" />
           </set>
         </option>
-        <option name="sbtVersion" value="0.13.8" />
+        <option name="sbtVersion" value="1.1.6" />
       </SbtProjectSettings>
     </option>
     <option name="maximumHeapSize" value="2048" />
