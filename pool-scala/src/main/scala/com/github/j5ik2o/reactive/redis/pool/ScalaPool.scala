@@ -47,7 +47,7 @@ case class ScalaPool[M[_]](connectionPoolConfig: ScalaPoolConfig, peerConfigs: S
 
   override def withConnectionM[T](reader: ReaderRedisConnection[M, T]): M[T] = {
     getPool.acquire() { con =>
-      reader.apply(con)
+      reader.run(con)
     }
   }
 

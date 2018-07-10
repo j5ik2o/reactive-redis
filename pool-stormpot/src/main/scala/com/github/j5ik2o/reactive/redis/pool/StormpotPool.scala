@@ -1,10 +1,8 @@
 package com.github.j5ik2o.reactive.redis.pool
 
-import java.time.temporal.ChronoUnit
-import java.time.{ Instant, ZoneId, ZonedDateTime }
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.{ ThreadFactory, TimeUnit }
 
 import akka.NotUsed
 import akka.actor.ActorSystem
@@ -48,7 +46,7 @@ object PoolType extends Enum[PoolType] {
   case object Queue extends PoolType
 }
 
-case class StormpotConfig(poolType: PoolType = Blaze,
+case class StormpotConfig(poolType: PoolType = Queue,
                           size: Option[Int] = None,
                           claimTimeout: Option[FiniteDuration] = None,
                           backgroundExpirationEnabled: Option[Boolean] = None,
@@ -119,11 +117,14 @@ case class StormpotPool[M[_]](connectionPoolConfig: StormpotConfig, connectionCo
   override def withConnectionM[T](reader: ReaderRedisConnection[M, T]): M[T] = {
     var poolable: RedisConnectionPoolable = null
     try {
+      logger.debug("---- start")
       poolable = getPool.claim(claimTieout)
-      reader(poolable.redisConnection)
+      logger.debug(s"poolabel = $poolable")
+      reader.run(poolable.redisConnection)
     } finally {
       if (poolable != null)
         poolable.release()
+      logger.debug("---- finish")
     }
   }
 

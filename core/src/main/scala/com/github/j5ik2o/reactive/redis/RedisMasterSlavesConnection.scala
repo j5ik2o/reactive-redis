@@ -14,12 +14,12 @@ class RedisMasterSlavesConnection(masterConnectionFactory: => RedisConnection,
 
   override def id: UUID = UUID.randomUUID()
 
-  private lazy val masterConnection: RedisConnection           = masterConnectionFactory
-  private lazy val slaveConnections: RedisConnectionPool[Task] = slaveConnectionPoolFactory
+  private lazy val masterConnection: RedisConnection              = masterConnectionFactory
+  private lazy val slaveConnectionPool: RedisConnectionPool[Task] = slaveConnectionPoolFactory
 
   override def shutdown(): Unit = {
     masterConnection.shutdown()
-    slaveConnections.dispose()
+    slaveConnectionPool.dispose()
   }
 
   def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] =
@@ -27,7 +27,7 @@ class RedisMasterSlavesConnection(masterConnectionFactory: => RedisConnection,
       logger.debug(s"execute master command: $cmd")
       masterConnection.send(cmd)
     } else
-      slaveConnections.withConnectionF { con =>
+      slaveConnectionPool.withConnectionF { con =>
         logger.debug(s"execute slave command: $cmd")
         con.send(cmd)
       }

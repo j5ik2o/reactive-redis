@@ -56,12 +56,19 @@ val coreSettings = Seq(
   },
   scalafmtOnCompile in ThisBuild := true,
   scalafmtTestOnCompile in ThisBuild := true,
+  resolvers += Resolver.bintrayRepo("danslapman", "maven"),
+  resolvers += Resolver.sonatypeRepo("releases"),
+  addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
   libraryDependencies ++= Seq(
     "io.monix"       %% "monix"          % "3.0.0-RC1",
     "org.typelevel"  %% "cats-core"      % "1.1.0",
     "org.typelevel"  %% "cats-free"      % "1.1.0",
     "com.beachape"   %% "enumeratum"     % "1.5.13",
     "org.slf4j"      % "slf4j-api"       % "1.7.25",
+<<<<<<< HEAD
+=======
+    "danslapman"     %% "cats-conts"     % "0.4",
+>>>>>>> add files
     "org.scalatest"  %% "scalatest"      % "3.0.5" % Test,
     "org.scalacheck" %% "scalacheck"     % "1.14.0" % Test,
     "ch.qos.logback" % "logback-classic" % "1.2.3" % Test
@@ -81,7 +88,12 @@ lazy val core = (project in file("core")).settings(
       "com.lihaoyi"       %% "fastparse"      % "1.0.0",
       "com.lihaoyi"       %% "fastparse-byte" % "1.0.0",
       "com.github.kstyrc" % "embedded-redis"  % "0.6" % Test
+<<<<<<< HEAD
     )
+=======
+    ),
+    parallelExecution in Test := false
+>>>>>>> add files
   )
 )
 

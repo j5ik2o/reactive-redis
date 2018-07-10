@@ -4,8 +4,8 @@ import java.net.InetSocketAddress
 
 import org.scalatest.{ BeforeAndAfterAll, Suite }
 import redis.embedded
-import redis.embedded.{ RedisExecProvider, RedisServer, RedisServerEx }
 import redis.embedded.util.{ Architecture, OS }
+import redis.embedded.{ RedisExecProvider, RedisServer, RedisServerEx }
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -32,31 +32,37 @@ trait RedisSpecSupport extends RandomPortSupport with Suite with BeforeAndAfterA
                       masterPort.map(sp => new InetSocketAddress("127.0.0.1", sp)))
   }
 
-  def startSlaveServers = {
-    _redisSalveServers.clear()
-    _redisSalveServers.append(newSalveServers(_redisMasterServer.ports.get(0))(3): _*)
-    _redisSalveServers.foreach { s =>
-      s.start()
-    }
-    Thread.sleep(1000 * 3)
+  def startMasterServer(): Unit = {
+    _redisMasterServer = newRedisServer()
+    _redisMasterServer.start()
+    Thread.sleep(1 * 1000)
   }
 
-  def stopSlaveServers = {
+  def stopMasterServer(): Unit = {
+    _redisMasterServer.stop()
+  }
+
+  def startSlaveServers(): Unit = {
+    _redisSalveServers.clear()
+    _redisSalveServers.append(newSalveServers(_redisMasterServer.ports.get(0))(3): _*)
+    _redisSalveServers.foreach { slaveServer =>
+      slaveServer.start()
+      Thread.sleep(1 * 1000)
+    }
+  }
+
+  def stopSlaveServers(): Unit = {
     _redisSalveServers.foreach(_.stop())
     _redisSalveServers.clear()
-    Thread.sleep(1000 * 3)
   }
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    _redisMasterServer = newRedisServer()
-    _redisMasterServer.start()
-    Thread.sleep(1000 * 3)
+    startMasterServer()
   }
 
   override protected def afterAll(): Unit = {
-    _redisMasterServer.stop()
-    Thread.sleep(1000 * 3)
+    stopMasterServer()
     super.afterAll()
   }
 }

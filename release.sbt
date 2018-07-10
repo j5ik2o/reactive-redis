@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
 import sbtrelease._
 import Utils._
+=======
+import Utils._
+import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
+import sbtrelease._
+>>>>>>> add files
 
 val sonatypeURL = "https://oss.sonatype.org/service/local/repositories/"
 

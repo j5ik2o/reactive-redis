@@ -3,10 +3,10 @@ package com.github.j5ik2o.reactive.redis
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.Flow
+import cats.data.ReaderT
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequestBase, CommandResponse }
 import monix.eval.Task
 import monix.execution.Scheduler
-import cats.data.ReaderT
 
 object RedisConnectionPoolFlow {
 

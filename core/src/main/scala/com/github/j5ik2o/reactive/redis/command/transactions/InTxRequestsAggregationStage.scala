@@ -2,8 +2,8 @@ package com.github.j5ik2o.reactive.redis.command.transactions
 
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
-import akka.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import akka.stream.stage._
+import akka.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import com.github.j5ik2o.reactive.redis.ResponseContext
 import com.github.j5ik2o.reactive.redis.command.CommandRequest
 

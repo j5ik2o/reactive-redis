@@ -4,8 +4,8 @@ import java.util.UUID
 
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
-import com.github.j5ik2o.reactive.redis.{ RedisConnection, ResettableRedisConnection }
 import com.github.j5ik2o.reactive.redis.command.CommandRequestBase
+import com.github.j5ik2o.reactive.redis.{ RedisConnection, ResettableRedisConnection }
 import io.github.andrebeat.pool.Lease
 import monix.eval.Task
 import monix.execution.Scheduler

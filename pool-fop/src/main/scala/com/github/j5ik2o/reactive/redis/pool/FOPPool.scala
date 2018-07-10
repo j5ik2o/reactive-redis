@@ -5,14 +5,13 @@ import java.util.concurrent.atomic.AtomicLong
 
 import akka.actor.ActorSystem
 import cats.MonadError
-import cn.danielw.fop.{ ObjectFactory, ObjectPool, Poolable }
+import cn.danielw.fop.{ ObjectFactory, ObjectPool, PoolConfig, Poolable }
 import com.github.j5ik2o.reactive.redis._
+import com.github.j5ik2o.reactive.redis.command.CommandRequestBase
+import monix.eval.Task
 import monix.execution.Scheduler
 
 import scala.concurrent.duration._
-import cn.danielw.fop.PoolConfig
-import com.github.j5ik2o.reactive.redis.command.CommandRequestBase
-import monix.eval.Task
 
 case class FOPConnectionWithIndex(index: Int, redisConnection: RedisConnection) extends RedisConnection {
   def id: UUID                                                  = redisConnection.id

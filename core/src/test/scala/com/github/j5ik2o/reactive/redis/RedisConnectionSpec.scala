@@ -4,17 +4,17 @@ import java.net.InetSocketAddress
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import com.github.j5ik2o.reactive.redis.command.strings.BitFieldRequest.SingedBitType
-import com.github.j5ik2o.reactive.redis.command.strings._
-import monix.execution.Scheduler.Implicits.global
 import cats.implicits._
 import com.github.j5ik2o.reactive.redis.command.keys.{ KeysRequest, KeysSucceeded }
+import com.github.j5ik2o.reactive.redis.command.strings.BitFieldRequest.SingedBitType
+import com.github.j5ik2o.reactive.redis.command.strings._
 import com.github.j5ik2o.reactive.redis.command.transactions.{
   ExecRequest,
   ExecSucceeded,
   MultiRequest,
   MultiSucceeded
 }
+import monix.execution.Scheduler.Implicits.global
 
 class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisClientSpec")) {
 

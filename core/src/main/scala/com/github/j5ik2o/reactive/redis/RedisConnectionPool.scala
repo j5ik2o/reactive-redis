@@ -9,6 +9,7 @@ import com.github.j5ik2o.reactive.redis.pool.RedisConnectionActor.{ BorrowConnec
 import com.github.j5ik2o.reactive.redis.pool.{ RedisConnectionActor, RedisConnectionPoolActor }
 import monix.eval.Task
 import monix.execution.Scheduler
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
 
@@ -39,8 +40,7 @@ object RedisConnectionPool {
   )(implicit system: ActorSystem, scheduler: Scheduler, ME: MonadError[Task, Throwable]): RedisConnectionPool[Task] =
     apply(RoundRobinPool(sizePerPeer, resizer), peerConfigs, newConnection, passingTimeout)(
       system,
-      scheduler,
-      ME
+      scheduler
     )
 
   def ofBalancing(sizePerPeer: Int,
@@ -53,8 +53,7 @@ object RedisConnectionPool {
   ): RedisConnectionPool[Task] =
     apply(BalancingPool(sizePerPeer), peerConfigs, newConnection, passingTimeout)(
       system,
-      scheduler,
-      ME
+      scheduler
     )
 
   def apply(pool: Pool,
@@ -62,14 +61,15 @@ object RedisConnectionPool {
             newConnection: PeerConfig => RedisConnection,
             passingTimeout: FiniteDuration = 3 seconds)(
       implicit system: ActorSystem,
-      scheduler: Scheduler,
-      ME: MonadError[Task, Throwable]
+      scheduler: Scheduler
   ): RedisConnectionPool[Task] =
-    new DefaultPool(pool, peerConfigs, newConnection, passingTimeout)(system, scheduler, ME)
+    new DefaultPool(pool, peerConfigs, newConnection, passingTimeout)(system, scheduler)
 
 }
 
-abstract class RedisConnectionPool[M[_]](implicit ME: MonadError[M, Throwable]) {
+abstract class RedisConnectionPool[M[_]] {
+
+  protected val logger = LoggerFactory.getLogger(getClass)
 
   def withConnectionF[T](f: RedisConnection => M[T]): M[T] = withConnectionM(ReaderT(f))
 
@@ -92,7 +92,7 @@ private class DefaultPool(
     peerConfigs: Seq[PeerConfig],
     newConnection: PeerConfig => RedisConnection,
     passingTimeout: FiniteDuration = 3 seconds
-)(implicit system: ActorSystem, scheduler: Scheduler, ME: MonadError[Task, Throwable])
+)(implicit system: ActorSystem, scheduler: Scheduler)
     extends RedisConnectionPool[Task]() {
 
   private val connectionPoolActor =
@@ -106,18 +106,20 @@ private class DefaultPool(
   implicit val to: Timeout = passingTimeout
 
   override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = {
-    for {
-      con    <- borrowConnection
-      result <- reader.run(con)
-      _      <- returnConnection(con)
-    } yield result
+    borrowConnection.flatMap { con =>
+      reader.run(con).doOnFinish { _ =>
+        returnConnection(con)
+      }
+    }
   }
 
   override def borrowConnection: Task[RedisConnection] = Task.deferFutureAction { implicit ec =>
     (connectionPoolActor ? BorrowConnection).mapTo[ConnectionGotten].map(_.redisConnection)(ec)
   }
 
-  override def returnConnection(redisConnection: RedisConnection): Task[Unit] = Task.pure(())
+  override def returnConnection(redisConnection: RedisConnection): Task[Unit] = {
+    Task.pure(())
+  }
 
   override def numActive: Int = pool.nrOfInstances(system) * peerConfigs.size
 
