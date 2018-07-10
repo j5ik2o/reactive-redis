@@ -57,13 +57,13 @@ val coreSettings = Seq(
   scalafmtOnCompile in ThisBuild := true,
   scalafmtTestOnCompile in ThisBuild := true,
   libraryDependencies ++= Seq(
-    "io.monix" %% "monix" % "3.0.0-RC1",
-    "org.typelevel" %% "cats-core" % "1.1.0",
-    "org.typelevel" %% "cats-free" % "1.1.0",
-    "com.beachape" %% "enumeratum" % "1.5.13",
-    "org.slf4j" % "slf4j-api" % "1.7.25",
-    "org.scalatest" %% "scalatest" % "3.0.5" % Test,
-    "org.scalacheck" %% "scalacheck" % "1.14.0" % Test,
+    "io.monix"       %% "monix"          % "3.0.0-RC1",
+    "org.typelevel"  %% "cats-core"      % "1.1.0",
+    "org.typelevel"  %% "cats-free"      % "1.1.0",
+    "com.beachape"   %% "enumeratum"     % "1.5.13",
+    "org.slf4j"      % "slf4j-api"       % "1.7.25",
+    "org.scalatest"  %% "scalatest"      % "3.0.5" % Test,
+    "org.scalacheck" %% "scalacheck"     % "1.14.0" % Test,
     "ch.qos.logback" % "logback-classic" % "1.2.3" % Test
   )
 )
@@ -74,11 +74,14 @@ lazy val core = (project in file("core")).settings(
   coreSettings ++ Seq(
     name := "reactive-redis-core",
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
-      "com.typesafe.akka" %% "akka-stream" % akkaVersion,
-      "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
-      "com.lihaoyi" %% "fastparse" % "1.0.0",
-      "com.lihaoyi" %% "fastparse-byte" % "1.0.0"
+      "com.typesafe.akka"  %% "akka-actor"     % akkaVersion,
+      "com.typesafe.akka"  %% "akka-testkit"   % akkaVersion % Test,
+      "com.typesafe.akka"  %% "akka-stream"    % akkaVersion,
+      "com.typesafe.akka"  %% "akka-slf4j"     % akkaVersion,
+      "com.lihaoyi"        %% "fastparse"      % "1.0.0",
+      "com.lihaoyi"        %% "fastparse-byte" % "1.0.0",
+      "org.apache.commons" % "commons-pool2"   % "2.6.0",
+      "com.github.kstyrc"  % "embedded-redis"  % "0.6" % Test
     )
   )
 )
