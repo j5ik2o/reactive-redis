@@ -4,8 +4,8 @@ import java.net.InetSocketAddress
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import com.github.j5ik2o.reactive.redis.cmd.SetCommandRequest
-
+import com.github.j5ik2o.reactive.redis.command.SetCommandRequest
+import cats.implicits._
 class RedisConnectionPoolSpec extends ActorSpec(ActorSystem("RedisClientPoolSpec")) {
 
   val pool = new RedisConnectionPool(ConnectionPoolConfig(maxActive = 128),

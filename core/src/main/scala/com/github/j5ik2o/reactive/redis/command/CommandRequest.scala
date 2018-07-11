@@ -1,4 +1,4 @@
-package com.github.j5ik2o.reactive.redis.cmd
+package com.github.j5ik2o.reactive.redis.command
 
 import java.text.ParseException
 import java.util.UUID

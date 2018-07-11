@@ -1,6 +1,9 @@
 package com.github.j5ik2o.reactive.redis
 
 import akka.actor.ActorSystem
+import cats.MonadError
+import cats.implicits._
+import monix.eval.Task
 import org.apache.commons.pool2.impl.{ DefaultPooledObject, GenericObjectPool, GenericObjectPoolConfig }
 import org.apache.commons.pool2.{ BasePooledObjectFactory, ObjectPool, PooledObject }
 
@@ -31,11 +34,28 @@ private class RedisConnectionPoolFactory(connectionConfig: ConnectionConfig)(imp
 
 }
 
+object RedisConnectionPool {
+
+  implicit val taskMonadError = new MonadError[Task, Throwable] {
+    override def pure[A](x: A): Task[A] = Task.pure(x)
+
+    override def flatMap[A, B](fa: Task[A])(f: A => Task[B]): Task[B] = fa.flatMap(f)
+
+    override def tailRecM[A, B](a: A)(f: A => Task[Either[A, B]]): Task[B] = ???
+
+    override def raiseError[A](e: Throwable): Task[A] = Task.raiseError(e)
+
+    override def handleErrorWith[A](fa: Task[A])(f: Throwable => Task[A]): Task[A] = fa.onErrorRecoverWith {
+      case t: Throwable => f(t)
+    }
+  }
+}
+
 class RedisConnectionPool(connectionPoolConfig: ConnectionPoolConfig, connectionConfig: ConnectionConfig)(
     implicit system: ActorSystem
 ) {
 
-  private val config = new GenericObjectPoolConfig[RedisConnection]()
+  private val config: GenericObjectPoolConfig[RedisConnection] = new GenericObjectPoolConfig[RedisConnection]()
 
   config.setMaxTotal(connectionPoolConfig.maxActive)
   config.setMaxIdle(connectionPoolConfig.maxIdle)
@@ -52,19 +72,22 @@ class RedisConnectionPool(connectionPoolConfig: ConnectionPoolConfig, connection
   private val connectionPool: ObjectPool[RedisConnection] =
     new GenericObjectPool[RedisConnection](new RedisConnectionPoolFactory(connectionConfig), config)
 
-  def withClient[T](f: RedisConnection => T): Try[T] = {
+  def withConnection[M[_], T](f: RedisConnection => M[T])(implicit ME: MonadError[M, Throwable]): M[T] = {
     for {
-      client <- borrowClient
-      result <- Try(f(client))
-      _      <- returnClient(client)
+      client <- borrowClient[M]
+      result <- f(client)
+      _      <- returnClient[M](client)
     } yield result
   }
 
-  def borrowClient: Try[RedisConnection] = Try(connectionPool.borrowObject())
+  def borrowClient[M[_]](implicit ME: MonadError[M, Throwable]): M[RedisConnection] =
+    ME.pure(connectionPool.borrowObject())
 
-  def returnClient(redisClient: RedisConnection): Try[Unit] = Try(connectionPool.returnObject(redisClient))
+  def returnClient[M[_]](redisClient: RedisConnection)(implicit ME: MonadError[M, Throwable]): M[Unit] =
+    ME.pure(connectionPool.returnObject(redisClient))
 
-  def invalidateClient(redisClient: RedisConnection): Try[Unit] = Try(connectionPool.invalidateObject(redisClient))
+  def invalidateClient[M[_]](redisClient: RedisConnection)(implicit ME: MonadError[M, Throwable]): M[Unit] =
+    ME.pure(connectionPool.invalidateObject(redisClient))
 
   def numActive: Int = connectionPool.getNumActive
 

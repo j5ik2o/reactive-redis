@@ -21,7 +21,7 @@ import akka.stream.scaladsl.{
 import akka.stream.{ ActorMaterializer, FlowShape, OverflowStrategy, QueueOfferResult }
 import akka.util.ByteString
 import akka.{ Done, NotUsed }
-import com.github.j5ik2o.reactive.redis.cmd.{ CommandRequest, CommandResponse }
+import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse }
 import monix.eval.Task
 
 import scala.collection.immutable
