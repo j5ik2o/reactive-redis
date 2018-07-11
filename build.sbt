@@ -74,13 +74,13 @@ lazy val core = (project in file("core")).settings(
   coreSettings ++ Seq(
     name := "reactive-redis-core",
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor"     % akkaVersion,
-      "com.typesafe.akka" %% "akka-testkit"   % akkaVersion % Test,
-      "com.typesafe.akka" %% "akka-stream"    % akkaVersion,
-      "com.typesafe.akka" %% "akka-slf4j"     % akkaVersion,
-      "com.lihaoyi"       %% "fastparse"      % "1.0.0",
-      "com.lihaoyi"       %% "fastparse-byte" % "1.0.0",
-      "commons-pool"      % "commons-pool"    % "1.6"
+      "com.typesafe.akka"  %% "akka-actor"     % akkaVersion,
+      "com.typesafe.akka"  %% "akka-testkit"   % akkaVersion % Test,
+      "com.typesafe.akka"  %% "akka-stream"    % akkaVersion,
+      "com.typesafe.akka"  %% "akka-slf4j"     % akkaVersion,
+      "com.lihaoyi"        %% "fastparse"      % "1.0.0",
+      "com.lihaoyi"        %% "fastparse-byte" % "1.0.0",
+      "org.apache.commons" % "commons-pool2"   % "2.6.0"
     )
   )
 )
