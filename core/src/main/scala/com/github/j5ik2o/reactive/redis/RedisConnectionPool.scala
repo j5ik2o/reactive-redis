@@ -20,10 +20,12 @@ case class ConnectionPoolConfig(maxActive: Int = 8,
                                 softMinEvictableIdleTimeMillis: Long = 1800000L,
                                 lifo: Boolean = true)
 
-private class PoolFactory(connectionConfig: ConnectionConfig)(implicit system: ActorSystem)
+private class RedisConnectionPoolFactory(connectionConfig: ConnectionConfig)(implicit system: ActorSystem)
     extends BasePooledObjectFactory[RedisConnection] {
 
   override def create(): RedisConnection = new RedisConnection(connectionConfig)
+
+  override def destroyObject(p: PooledObject[RedisConnection]): Unit = super.destroyObject(p)
 
   override def wrap(t: RedisConnection): PooledObject[RedisConnection] = new DefaultPooledObject(t)
 
@@ -47,8 +49,8 @@ class RedisConnectionPool(connectionPoolConfig: ConnectionPoolConfig, connection
   config.setTestWhileIdle(connectionPoolConfig.testWhileIdle)
   config.setLifo(connectionPoolConfig.lifo)
 
-  private val pool: ObjectPool[RedisConnection] =
-    new GenericObjectPool[RedisConnection](new PoolFactory(connectionConfig), config)
+  private val connectionPool: ObjectPool[RedisConnection] =
+    new GenericObjectPool[RedisConnection](new RedisConnectionPoolFactory(connectionConfig), config)
 
   def withClient[T](f: RedisConnection => T): Try[T] = {
     for {
@@ -58,18 +60,18 @@ class RedisConnectionPool(connectionPoolConfig: ConnectionPoolConfig, connection
     } yield result
   }
 
-  def borrowClient: Try[RedisConnection] = Try(pool.borrowObject())
+  def borrowClient: Try[RedisConnection] = Try(connectionPool.borrowObject())
 
-  def returnClient(redisClient: RedisConnection): Try[Unit] = Try(pool.returnObject(redisClient))
+  def returnClient(redisClient: RedisConnection): Try[Unit] = Try(connectionPool.returnObject(redisClient))
 
-  def invalidateClient(redisClient: RedisConnection): Try[Unit] = Try(pool.invalidateObject(redisClient))
+  def invalidateClient(redisClient: RedisConnection): Try[Unit] = Try(connectionPool.invalidateObject(redisClient))
 
-  def numActive: Int = pool.getNumActive
+  def numActive: Int = connectionPool.getNumActive
 
-  def numIdle: Int = pool.getNumIdle
+  def numIdle: Int = connectionPool.getNumIdle
 
-  def clear(): Unit = pool.clear()
+  def clear(): Unit = connectionPool.clear()
 
-  def dispose(): Unit = pool.close()
+  def dispose(): Unit = connectionPool.close()
 
 }
