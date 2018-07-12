@@ -1,13 +1,14 @@
 package com.github.j5ik2o.reactive.redis
 
 import akka.actor.ActorSystem
-import cats.MonadError
+import cats.{ Monad, MonadError }
 import cats.implicits._
 import monix.eval.Task
 import org.apache.commons.pool2.impl.{ DefaultPooledObject, GenericObjectPool, GenericObjectPoolConfig }
 import org.apache.commons.pool2.{ BasePooledObjectFactory, ObjectPool, PooledObject }
 
-import scala.util.Try
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 case class ConnectionPoolConfig(maxActive: Int = 8,
                                 blockWhenExhausted: Boolean = true,
@@ -23,12 +24,15 @@ case class ConnectionPoolConfig(maxActive: Int = 8,
                                 softMinEvictableIdleTimeMillis: Long = 1800000L,
                                 lifo: Boolean = true)
 
-private class RedisConnectionPoolFactory(connectionConfig: ConnectionConfig)(implicit system: ActorSystem)
+private class RedisConnectionPoolFactory(connectionConfig: ConnectionConfig, disconnectTimeout: Duration = Duration.Inf)(implicit system: ActorSystem)
     extends BasePooledObjectFactory[RedisConnection] {
 
   override def create(): RedisConnection = new RedisConnection(connectionConfig)
 
-  override def destroyObject(p: PooledObject[RedisConnection]): Unit = super.destroyObject(p)
+  override def destroyObject(p: PooledObject[RedisConnection]): Unit = {
+    import monix.execution.Scheduler.Implicits.global
+    Await.result(p.getObject.shutdown().runAsync, disconnectTimeout)
+  }
 
   override def wrap(t: RedisConnection): PooledObject[RedisConnection] = new DefaultPooledObject(t)
 
@@ -37,11 +41,13 @@ private class RedisConnectionPoolFactory(connectionConfig: ConnectionConfig)(imp
 object RedisConnectionPool {
 
   implicit val taskMonadError = new MonadError[Task, Throwable] {
-    override def pure[A](x: A): Task[A] = Task.pure(x)
+    private val taskMonad = implicitly[Monad[Task]]
 
-    override def flatMap[A, B](fa: Task[A])(f: A => Task[B]): Task[B] = fa.flatMap(f)
+    override def pure[A](x: A): Task[A] = taskMonad.pure(x)
 
-    override def tailRecM[A, B](a: A)(f: A => Task[Either[A, B]]): Task[B] = ???
+    override def flatMap[A, B](fa: Task[A])(f: A => Task[B]): Task[B] = taskMonad.flatMap(fa)(f)
+
+    override def tailRecM[A, B](a: A)(f: A => Task[Either[A, B]]): Task[B] = taskMonad.tailRecM(a)(f)
 
     override def raiseError[A](e: Throwable): Task[A] = Task.raiseError(e)
 
@@ -51,8 +57,9 @@ object RedisConnectionPool {
   }
 }
 
-class RedisConnectionPool(connectionPoolConfig: ConnectionPoolConfig, connectionConfig: ConnectionConfig)(
-    implicit system: ActorSystem
+class RedisConnectionPool[M[_]](connectionPoolConfig: ConnectionPoolConfig, connectionConfig: ConnectionConfig)(
+    implicit system: ActorSystem,
+    ME: MonadError[M, Throwable]
 ) {
 
   private val config: GenericObjectPoolConfig[RedisConnection] = new GenericObjectPoolConfig[RedisConnection]()
@@ -72,21 +79,21 @@ class RedisConnectionPool(connectionPoolConfig: ConnectionPoolConfig, connection
   private val connectionPool: ObjectPool[RedisConnection] =
     new GenericObjectPool[RedisConnection](new RedisConnectionPoolFactory(connectionConfig), config)
 
-  def withConnection[M[_], T](f: RedisConnection => M[T])(implicit ME: MonadError[M, Throwable]): M[T] = {
+  def withConnection[T](f: RedisConnection => M[T]): M[T] = {
     for {
-      client <- borrowClient[M]
+      client <- borrowClient
       result <- f(client)
-      _      <- returnClient[M](client)
+      _      <- returnClient(client)
     } yield result
   }
 
-  def borrowClient[M[_]](implicit ME: MonadError[M, Throwable]): M[RedisConnection] =
+  def borrowClient: M[RedisConnection] =
     ME.pure(connectionPool.borrowObject())
 
-  def returnClient[M[_]](redisClient: RedisConnection)(implicit ME: MonadError[M, Throwable]): M[Unit] =
+  def returnClient(redisClient: RedisConnection): M[Unit] =
     ME.pure(connectionPool.returnObject(redisClient))
 
-  def invalidateClient[M[_]](redisClient: RedisConnection)(implicit ME: MonadError[M, Throwable]): M[Unit] =
+  def invalidateClient(redisClient: RedisConnection): M[Unit] =
     ME.pure(connectionPool.invalidateObject(redisClient))
 
   def numActive: Int = connectionPool.getNumActive

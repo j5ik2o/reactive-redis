@@ -13,10 +13,10 @@ class RedisConnectionSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
 
   "redisclient" - {
     "set & get" in {
-      val result1 = client.sendCommandRequest(SetCommandRequest(UUID.randomUUID(), "a", "1")).runAsync.futureValue
+      val result1 = client.send(SetCommandRequest(UUID.randomUUID(), "a", "1")).runAsync.futureValue
       result1.isInstanceOf[SetSucceeded] shouldBe true
 
-      val result2 = client.sendCommandRequest(GetCommandRequest(UUID.randomUUID(), "a")).runAsync.futureValue
+      val result2 = client.send(GetCommandRequest(UUID.randomUUID(), "a")).runAsync.futureValue
       result2.isInstanceOf[GetSucceeded] shouldBe true
 
     }

@@ -14,7 +14,7 @@ class RedisConnectionPoolSpec extends ActorSpec(ActorSystem("RedisClientPoolSpec
   "RedisClientPoool" - {
     "set & get" in {
       val clients = (for (i <- 1 to 100) yield { println(i); pool.borrowClient.get })
-      clients.foreach(_.sendCommandRequest(SetCommandRequest(UUID.randomUUID(), "a", "1")))
+      clients.foreach(_.send(SetCommandRequest(UUID.randomUUID(), "a", "1")))
       Thread.sleep(5000)
       pool.dispose()
     }

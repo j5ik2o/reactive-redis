@@ -4,6 +4,7 @@ import java.net.InetSocketAddress
 import java.time.ZonedDateTime
 import java.util.UUID
 
+import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.io.Inet.SocketOption
 import akka.stream.scaladsl.{
@@ -20,7 +21,6 @@ import akka.stream.scaladsl.{
 }
 import akka.stream.{ ActorMaterializer, FlowShape, OverflowStrategy, QueueOfferResult }
 import akka.util.ByteString
-import akka.{ Done, NotUsed }
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse }
 import monix.eval.Task
 
@@ -91,9 +91,18 @@ class RedisConnection(connectionConfig: ConnectionConfig)(implicit system: Actor
     .toMat(Sink.ignore)(Keep.left)
     .run()
 
-  def shutdown(): Future[Done] = requestQueue.watchCompletion()
+  def shutdown(): Task[Unit] = Task.deferFutureAction { implicit ec =>
+    requestQueue.complete()
+    requestQueue.watchCompletion().map(_ => ())
+  }
 
-  def sendCommandRequest[C <: CommandRequest](cmd: C): Task[cmd.Response] = Task.deferFutureAction { implicit ec =>
+  def toFlow[C <: CommandRequest](parallelism: Int = 1): Flow[C, C#Response, NotUsed] = Flow[C].mapAsync(parallelism) {
+    v =>
+      import monix.execution.Scheduler.Implicits.global
+      send(v).runAsync
+  }
+
+  def send[C <: CommandRequest](cmd: C): Task[cmd.Response] = Task.deferFutureAction { implicit ec =>
     val promise = Promise[CommandResponse]()
     requestQueue
       .offer(RequestContext(cmd, promise, ZonedDateTime.now()))

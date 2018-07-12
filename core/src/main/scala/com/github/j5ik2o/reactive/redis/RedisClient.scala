@@ -8,11 +8,11 @@ class RedisClient(connectionPoolConfig: ConnectionPoolConfig, connectionConfig: 
     implicit system: ActorSystem
 ) {
 
-  private val connectionPool = new RedisConnectionPool(connectionPoolConfig, connectionConfig)
+  private val connectionPool = new RedisConnectionPool[Task](connectionPoolConfig, connectionConfig)
 
   import connectionPool._
 
   def sendCommandRequest[C <: CommandRequest](cmd: C): Task[cmd.Response] =
-    withConnection[Task, cmd.Response](_.sendCommandRequest(cmd))
+    withConnection[cmd.Response](_.send(cmd))
 
 }
