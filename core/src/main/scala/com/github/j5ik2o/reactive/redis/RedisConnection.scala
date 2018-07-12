@@ -19,7 +19,7 @@ import akka.stream.scaladsl.{
   Unzip,
   Zip
 }
-import akka.stream.{ ActorMaterializer, FlowShape, OverflowStrategy, QueueOfferResult }
+import akka.stream._
 import akka.util.ByteString
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse }
 import monix.eval.Task
@@ -79,7 +79,7 @@ class RedisConnection(connectionConfig: ConnectionConfig)(implicit system: Actor
       FlowShape(requestFlow.in, responseFlow.out)
     })
 
-  private val requestQueue: SourceQueueWithComplete[RequestContext] = Source
+  private val (requestQueue, killSwitch) = Source
     .queue[RequestContext](requestBufferSize, OverflowStrategy.dropNew)
     .via(connectionFlow)
     .map { responseContext =>
@@ -88,18 +88,16 @@ class RedisConnection(connectionConfig: ConnectionConfig)(implicit system: Actor
       responseContext.requestContext.promise.complete(r.toTry)
       //
     }
+    .viaMat(KillSwitches.single)(Keep.both)
     .toMat(Sink.ignore)(Keep.left)
     .run()
 
-  def shutdown(): Task[Unit] = Task.deferFutureAction { implicit ec =>
-    requestQueue.complete()
-    requestQueue.watchCompletion().map(_ => ())
-  }
+  def shutdown(): Unit = killSwitch.shutdown()
 
   def toFlow[C <: CommandRequest](parallelism: Int = 1): Flow[C, C#Response, NotUsed] = Flow[C].mapAsync(parallelism) {
-    v =>
+    cmd =>
       import monix.execution.Scheduler.Implicits.global
-      send(v).runAsync
+      send(cmd).runAsync
   }
 
   def send[C <: CommandRequest](cmd: C): Task[cmd.Response] = Task.deferFutureAction { implicit ec =>

@@ -1,13 +1,12 @@
 package com.github.j5ik2o.reactive.redis
 
 import akka.actor.ActorSystem
-import cats.{ Monad, MonadError }
 import cats.implicits._
+import cats.{ Monad, MonadError }
 import monix.eval.Task
 import org.apache.commons.pool2.impl.{ DefaultPooledObject, GenericObjectPool, GenericObjectPoolConfig }
 import org.apache.commons.pool2.{ BasePooledObjectFactory, ObjectPool, PooledObject }
 
-import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 case class ConnectionPoolConfig(maxActive: Int = 8,
@@ -24,14 +23,14 @@ case class ConnectionPoolConfig(maxActive: Int = 8,
                                 softMinEvictableIdleTimeMillis: Long = 1800000L,
                                 lifo: Boolean = true)
 
-private class RedisConnectionPoolFactory(connectionConfig: ConnectionConfig, disconnectTimeout: Duration = Duration.Inf)(implicit system: ActorSystem)
-    extends BasePooledObjectFactory[RedisConnection] {
+private class RedisConnectionPoolFactory(connectionConfig: ConnectionConfig, disconnectTimeout: Duration = Duration.Inf)(
+    implicit system: ActorSystem
+) extends BasePooledObjectFactory[RedisConnection] {
 
   override def create(): RedisConnection = new RedisConnection(connectionConfig)
 
   override def destroyObject(p: PooledObject[RedisConnection]): Unit = {
-    import monix.execution.Scheduler.Implicits.global
-    Await.result(p.getObject.shutdown().runAsync, disconnectTimeout)
+    p.getObject.shutdown()
   }
 
   override def wrap(t: RedisConnection): PooledObject[RedisConnection] = new DefaultPooledObject(t)
@@ -40,7 +39,7 @@ private class RedisConnectionPoolFactory(connectionConfig: ConnectionConfig, dis
 
 object RedisConnectionPool {
 
-  implicit val taskMonadError = new MonadError[Task, Throwable] {
+  implicit val taskMonadError: MonadError[Task, Throwable] = new MonadError[Task, Throwable] {
     private val taskMonad = implicitly[Monad[Task]]
 
     override def pure[A](x: A): Task[A] = taskMonad.pure(x)
@@ -55,6 +54,12 @@ object RedisConnectionPool {
       case t: Throwable => f(t)
     }
   }
+
+  def apply[M[_]](connectionPoolConfig: ConnectionPoolConfig, connectionConfig: ConnectionConfig)(
+      implicit system: ActorSystem,
+      ME: MonadError[M, Throwable]
+  ): RedisConnectionPool[M] = new RedisConnectionPool[M](connectionPoolConfig, connectionConfig)
+
 }
 
 class RedisConnectionPool[M[_]](connectionPoolConfig: ConnectionPoolConfig, connectionConfig: ConnectionConfig)(
@@ -81,19 +86,19 @@ class RedisConnectionPool[M[_]](connectionPoolConfig: ConnectionPoolConfig, conn
 
   def withConnection[T](f: RedisConnection => M[T]): M[T] = {
     for {
-      client <- borrowClient
+      client <- borrowConnection
       result <- f(client)
-      _      <- returnClient(client)
+      _      <- returnConnection(client)
     } yield result
   }
 
-  def borrowClient: M[RedisConnection] =
+  def borrowConnection: M[RedisConnection] =
     ME.pure(connectionPool.borrowObject())
 
-  def returnClient(redisClient: RedisConnection): M[Unit] =
+  def returnConnection(redisClient: RedisConnection): M[Unit] =
     ME.pure(connectionPool.returnObject(redisClient))
 
-  def invalidateClient(redisClient: RedisConnection): M[Unit] =
+  def invalidateConnection(redisClient: RedisConnection): M[Unit] =
     ME.pure(connectionPool.invalidateObject(redisClient))
 
   def numActive: Int = connectionPool.getNumActive
