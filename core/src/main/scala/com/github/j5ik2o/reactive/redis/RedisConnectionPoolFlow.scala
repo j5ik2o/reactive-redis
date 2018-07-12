@@ -10,21 +10,24 @@ object RedisConnectionPoolFlow {
 
   def apply(connectionPoolConfig: ConnectionPoolConfig, connectionConfig: ConnectionConfig, parallelism: Int = 1)(
       implicit system: ActorSystem
+  ): Flow[CommandRequest, CommandResponse, NotUsed] = {
+    val connectionPool = new RedisConnectionPool[Task](connectionPoolConfig, connectionConfig)
+    new RedisConnectionPoolFlow(connectionPool).toFlow
+  }
+
+  def apply(redisConnectionPool: RedisConnectionPool[Task])(
+      implicit system: ActorSystem
   ): Flow[CommandRequest, CommandResponse, NotUsed] =
-    new RedisConnectionPoolFlow(connectionPoolConfig, connectionConfig, parallelism).toFlow
+    new RedisConnectionPoolFlow(redisConnectionPool).toFlow
 
 }
 
-private class RedisConnectionPoolFlow(connectionPoolConfig: ConnectionPoolConfig,
-                                      connectionConfig: ConnectionConfig,
-                                      parallelism: Int = 1)(implicit system: ActorSystem) {
-
-  private val connectionPool = new RedisConnectionPool[Task](connectionPoolConfig, connectionConfig)
+class RedisConnectionPoolFlow(redisConnectionPool: RedisConnectionPool[Task])(implicit system: ActorSystem) {
 
   private def toFlow: Flow[CommandRequest, CommandResponse, NotUsed] =
-    Flow[CommandRequest].mapAsync(parallelism) { cmd =>
+    Flow[CommandRequest].mapAsync(1) { cmd =>
       import monix.execution.Scheduler.Implicits.global
-      connectionPool.withConnection(_.send(cmd)).runAsync
+      redisConnectionPool.withConnection(_.send(cmd)).runAsync
     }
 
 }
