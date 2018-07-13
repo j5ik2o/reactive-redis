@@ -6,6 +6,7 @@ import akka.testkit.TestKit
 import akka.util.Timeout
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.prop.PropertyChecks
 
 import scala.concurrent.duration._
 
@@ -16,6 +17,7 @@ abstract class ActorSpec(_system: ActorSystem)
     with BeforeAndAfterAll
     with TimeFactorSupport
     with ScalaFutures
+    with PropertyChecks
     with RandomPortSupport {
 
   import redis.embedded.RedisServer

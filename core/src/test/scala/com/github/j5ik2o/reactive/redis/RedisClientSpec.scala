@@ -5,6 +5,7 @@ import java.net.InetSocketAddress
 import akka.actor.ActorSystem
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
+import org.scalacheck.{ Gen, Shrink }
 
 class RedisClientSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
   var connectionPool: RedisConnectionPool[Task] = _
@@ -18,22 +19,29 @@ class RedisClientSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
     redisClient = RedisClient()
   }
 
+  implicit val noShrink: Shrink[String] = Shrink.shrinkAny
+
+  val gen = for {
+    key   <- Gen.listOf(Gen.alphaNumChar).map(_.mkString).suchThat(_.nonEmpty)
+    value <- Gen.listOf(Gen.alphaNumChar).map(_.mkString).suchThat(_.nonEmpty)
+  } yield (key, value)
+
   "RedisClient" - {
-    "set & get" in {
+    "set & get" in forAll(gen) {
+      case (key, value) =>
+        val program = for {
+          _ <- redisClient.set(key, value)
+          v <- redisClient.get(key)
+        } yield v
 
-      val program = for {
-        _ <- redisClient.set("a", "1")
-        v <- redisClient.get("a")
-      } yield v
+        val result = connectionPool
+          .withConnection {
+            program.run
+          }
+          .runAsync
+          .futureValue
 
-      val value = connectionPool
-        .withConnection {
-          program.run
-        }
-        .runAsync
-        .futureValue
-
-      println(value)
+        result should not be empty
 
     }
   }

@@ -12,7 +12,7 @@ object Parsers {
 
   val crlf: P0 = P("\r\n")
 
-  val error: P[ErrorExpr] = P("-" ~ AnyChar.rep(1).!).map(ErrorExpr)
+  val error: P[ErrorExpr] = P("-" ~ (!crlf ~/ alphaDigit).rep(1).!).map(ErrorExpr)
   val length: P[LengthExpr] = P("$" ~ "-".!.? ~ digit.rep(1).!).map {
     case (m, n) =>
       LengthExpr(m.map(_ => -1).getOrElse(1) * n.toInt)
@@ -22,7 +22,7 @@ object Parsers {
     case (minus, n) =>
       NumberExpr(minus.map(_ => -1).getOrElse(1) * n.toInt)
   }
-  val string: P[StringExpr] = P((!crlf ~/ AnyChar).rep.!).map(StringExpr)
+  val string: P[StringExpr] = P((!crlf ~/ alphaDigit).rep.!).map(StringExpr)
 
   val arrayPrefix: P[Int] = P("*" ~ digit.rep(1)).!.map(_.toInt)
 
