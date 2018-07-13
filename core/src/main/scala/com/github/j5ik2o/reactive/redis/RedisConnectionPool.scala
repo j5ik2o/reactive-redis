@@ -9,20 +9,6 @@ import org.apache.commons.pool2.{ BasePooledObjectFactory, ObjectPool, PooledObj
 
 import scala.concurrent.duration.Duration
 
-case class ConnectionPoolConfig(maxActive: Int = 8,
-                                blockWhenExhausted: Boolean = true,
-                                maxWait: Long = -1L,
-                                maxIdle: Int = 8,
-                                minIdle: Int = 0,
-                                testOnBorrow: Boolean = false,
-                                testOnReturn: Boolean = false,
-                                timeBetweenEvictionRunsMillis: Long = -1L,
-                                numTestsPerEvictionRun: Int = 3,
-                                minEvictableIdleTimeMillis: Long = 1800000L,
-                                testWhileIdle: Boolean = false,
-                                softMinEvictableIdleTimeMillis: Long = 1800000L,
-                                lifo: Boolean = true)
-
 private class RedisConnectionPoolFactory(connectionConfig: ConnectionConfig, disconnectTimeout: Duration = Duration.Inf)(
     implicit system: ActorSystem
 ) extends BasePooledObjectFactory[RedisConnection] {
@@ -86,9 +72,15 @@ class RedisConnectionPool[M[_]](connectionPoolConfig: ConnectionPoolConfig, conn
 
   def withConnection[T](f: RedisConnection => M[T]): M[T] = {
     for {
-      client <- borrowConnection
-      result <- f(client)
-      _      <- returnConnection(client)
+      connection <- borrowConnection
+      result <- f(connection)
+        .flatMap { result =>
+          returnConnection(connection).map(_ => result)
+        }
+        .recoverWith {
+          case error =>
+            invalidateConnection(connection).flatMap(_ => ME.raiseError(error))
+        }
     } yield result
   }
 

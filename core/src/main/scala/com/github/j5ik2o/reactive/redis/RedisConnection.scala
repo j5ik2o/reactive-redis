@@ -1,54 +1,29 @@
 package com.github.j5ik2o.reactive.redis
 
-import java.net.InetSocketAddress
 import java.time.ZonedDateTime
 import java.util.UUID
 
 import akka.NotUsed
 import akka.actor.ActorSystem
-import akka.io.Inet.SocketOption
-import akka.stream.scaladsl.{
-  Flow,
-  GraphDSL,
-  Keep,
-  RestartFlow,
-  Sink,
-  Source,
-  SourceQueueWithComplete,
-  Tcp,
-  Unzip,
-  Zip
-}
 import akka.stream._
+import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, RestartFlow, Sink, Source, Tcp, Unzip, Zip }
 import akka.util.ByteString
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse }
 import monix.eval.Task
+import monix.execution.Scheduler
 
-import scala.collection.immutable
-import scala.concurrent.duration._
 import scala.concurrent.{ Future, Promise }
-
-case class ConnectionConfig(remoteAddress: InetSocketAddress,
-                            localAddress: Option[InetSocketAddress] = None,
-                            options: immutable.Seq[SocketOption] = immutable.Seq.empty,
-                            halfClose: Boolean = false,
-                            connectTimeout: Duration = Duration.Inf,
-                            idleTimeout: Duration = Duration.Inf,
-                            minBackoff: FiniteDuration = 3 seconds,
-                            maxBackoff: FiniteDuration = 30 seconds,
-                            randomFactor: Double = 0.2,
-                            maxRestarts: Int = -1,
-                            requestBufferSize: Int = 1024)
 
 class RedisConnection(connectionConfig: ConnectionConfig)(implicit system: ActorSystem) {
 
-  val id = UUID.randomUUID()
+  val id: UUID = UUID.randomUUID()
 
   import connectionConfig._
+  import connectionConfig.backoffConfig._
 
   private val log = system.log
 
-  implicit val mat = ActorMaterializer()
+  private implicit val mat = ActorMaterializer()
 
   private val tcpFlow = RestartFlow.withBackoff(minBackoff, maxBackoff, randomFactor, maxRestarts) { () =>
     Tcp()
@@ -61,13 +36,13 @@ class RedisConnection(connectionConfig: ConnectionConfig)(implicit system: Actor
       val requestFlow = b.add(
         Flow[RequestContext]
           .map { rc =>
-            log.info("request = {}", rc.commandRequest.asString)
+            log.debug("request = {}", rc.commandRequest.asString)
             (ByteString.fromString(rc.commandRequest.asString + "\r\n"), rc)
           }
       )
       val responseFlow = b.add(Flow[(ByteString, RequestContext)].map {
         case (byteString, requestContext) =>
-          log.info("response = {}", byteString.utf8String)
+          log.debug("response = {}", byteString.utf8String)
           ResponseContext(byteString, requestContext, ZonedDateTime.now())
       })
       val unzip = b.add(Unzip[ByteString, RequestContext]())
@@ -84,9 +59,8 @@ class RedisConnection(connectionConfig: ConnectionConfig)(implicit system: Actor
     .via(connectionFlow)
     .map { responseContext =>
       // TODO: 通常のリクエストの場合
-      val r = responseContext.requestContext.commandRequest.parse(responseContext.byteString.utf8String)
-      responseContext.requestContext.promise.complete(r.toTry)
-      //
+      val result = responseContext.parseResponse
+      responseContext.completePromise(result.toTry)
     }
     .viaMat(KillSwitches.single)(Keep.both)
     .toMat(Sink.ignore)(Keep.left)
@@ -94,11 +68,10 @@ class RedisConnection(connectionConfig: ConnectionConfig)(implicit system: Actor
 
   def shutdown(): Unit = killSwitch.shutdown()
 
-  def toFlow[C <: CommandRequest](parallelism: Int = 1): Flow[C, C#Response, NotUsed] = Flow[C].mapAsync(parallelism) {
-    cmd =>
-      import monix.execution.Scheduler.Implicits.global
+  def toFlow[C <: CommandRequest](parallelism: Int = 1)(implicit scheduler: Scheduler): Flow[C, C#Response, NotUsed] =
+    Flow[C].mapAsync(parallelism) { cmd =>
       send(cmd).runAsync
-  }
+    }
 
   def send[C <: CommandRequest](cmd: C): Task[cmd.Response] = Task.deferFutureAction { implicit ec =>
     val promise = Promise[CommandResponse]()

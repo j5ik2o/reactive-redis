@@ -5,26 +5,33 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import com.github.j5ik2o.reactive.redis.command.{ CommandResponse, GetCommandRequest, SetCommandRequest }
+import com.github.j5ik2o.reactive.redis.command.{ CommandResponse, GetRequest, SetRequest }
 import monix.eval.Task
 
 import scala.concurrent.Future
+import monix.execution.Scheduler.Implicits.global
 
 class RedisConnectionPoolSpec extends ActorSpec(ActorSystem("RedisClientPoolSpec")) {
 
-  val pool = new RedisConnectionPool[Task](ConnectionPoolConfig(maxActive = 5),
-                                           ConnectionConfig(new InetSocketAddress("127.0.0.1", 6379)))
+  var pool: RedisConnectionPool[Task] = _
+
+  override protected def beforeAll(): Unit = {
+    super.beforeAll()
+    pool = RedisConnectionPool[Task](
+      ConnectionPoolConfig(),
+      ConnectionConfig(new InetSocketAddress("127.0.0.1", redisServer.ports().get(0)))
+    )
+  }
 
   "RedisClientPool" - {
     "set & get" in {
-      import monix.execution.Scheduler.Implicits.global
       val futures: Seq[Future[CommandResponse]] = for (i <- 1 to 100)
         yield {
           pool
             .withConnection { con =>
               for {
-                _ <- con.send(SetCommandRequest(UUID.randomUUID(), "a", ZonedDateTime.now().toString))
-                r <- con.send(GetCommandRequest(UUID.randomUUID(), "a"))
+                _ <- con.send(SetRequest(UUID.randomUUID(), "a", ZonedDateTime.now().toString))
+                r <- con.send(GetRequest(UUID.randomUUID(), "a"))
               } yield r
             }
             .runAsync

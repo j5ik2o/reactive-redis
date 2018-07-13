@@ -4,29 +4,34 @@ import java.net.InetSocketAddress
 
 import akka.actor.ActorSystem
 import monix.eval.Task
+import monix.execution.Scheduler.Implicits.global
 
 class RedisClientSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
+  var connectionPool: RedisConnectionPool[Task] = _
+  var redisClient: RedisClient                  = _
 
-  import monix.execution.Scheduler.Implicits.global
-
-  val connectionPoolConfig: ConnectionPoolConfig = ConnectionPoolConfig()
-  val connectionConfig: ConnectionConfig         = ConnectionConfig(new InetSocketAddress("127.0.0.1", 6379))
-
-  val connectionPool: RedisConnectionPool[Task] = RedisConnectionPool[Task](connectionPoolConfig, connectionConfig)
-  val redisClient                               = RedisClient()
+  override protected def beforeAll(): Unit = {
+    super.beforeAll()
+    val connectionPoolConfig = ConnectionPoolConfig()
+    val connectionConfig     = ConnectionConfig(new InetSocketAddress("127.0.0.1", redisServer.ports.get(0)))
+    connectionPool = RedisConnectionPool[Task](connectionPoolConfig, connectionConfig)
+    redisClient = RedisClient()
+  }
 
   "RedisClient" - {
     "set & get" in {
-      import connectionPool._
 
       val program = for {
         _ <- redisClient.set("a", "1")
         v <- redisClient.get("a")
       } yield v
 
-      val value = withConnection {
-        program.run
-      }.runAsync.futureValue
+      val value = connectionPool
+        .withConnection {
+          program.run
+        }
+        .runAsync
+        .futureValue
 
       println(value)
 

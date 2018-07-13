@@ -80,7 +80,8 @@ lazy val core = (project in file("core")).settings(
       "com.typesafe.akka"  %% "akka-slf4j"     % akkaVersion,
       "com.lihaoyi"        %% "fastparse"      % "1.0.0",
       "com.lihaoyi"        %% "fastparse-byte" % "1.0.0",
-      "org.apache.commons" % "commons-pool2"   % "2.6.0"
+      "org.apache.commons" % "commons-pool2"   % "2.6.0",
+      "com.github.kstyrc"  % "embedded-redis"  % "0.6" % Test
     )
   )
 )

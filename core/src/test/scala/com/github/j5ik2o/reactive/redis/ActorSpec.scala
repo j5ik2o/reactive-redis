@@ -15,7 +15,12 @@ abstract class ActorSpec(_system: ActorSystem)
     with Matchers
     with BeforeAndAfterAll
     with TimeFactorSupport
-    with ScalaFutures {
+    with ScalaFutures
+    with RandomPortSupport {
+
+  import redis.embedded.RedisServer
+
+  var redisServer: RedisServer = _
 
   implicit override val patienceConfig: PatienceConfig = PatienceConfig(15 * timeFactor seconds)
 
@@ -23,8 +28,15 @@ abstract class ActorSpec(_system: ActorSystem)
 
   implicit val timeout = Timeout(15 seconds)
 
+  override protected def beforeAll(): Unit = {
+    super.beforeAll()
+    redisServer = new RedisServer(temporaryServerPort())
+    redisServer.start()
+  }
+
   override protected def afterAll(): Unit = {
     shutdown()
+    redisServer.stop()
     super.beforeAll()
   }
 
