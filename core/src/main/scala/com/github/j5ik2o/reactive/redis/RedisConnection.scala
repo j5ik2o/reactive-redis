@@ -81,15 +81,15 @@ class RedisConnection(connectionConfig: ConnectionConfig)(implicit system: Actor
         case QueueOfferResult.Enqueued =>
           promise.future.map(_.asInstanceOf[cmd.Response])
         case QueueOfferResult.Failure(t) =>
-          Future.failed(HttpRequestSendException("Failed to send request", Some(t)))
+          Future.failed(BufferOfferException("Failed to send request", Some(t)))
         case QueueOfferResult.Dropped =>
           Future.failed(
-            HttpRequestSendException(
+            BufferOfferException(
               s"Failed to send request, the queue buffer was full."
             )
           )
         case QueueOfferResult.QueueClosed =>
-          Future.failed(HttpRequestSendException("Failed to send request, the queue was closed"))
+          Future.failed(BufferOfferException("Failed to send request, the queue was closed"))
       }
   }
 
