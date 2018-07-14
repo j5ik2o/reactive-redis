@@ -4,16 +4,17 @@ import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command._
-import com.github.j5ik2o.reactive.redis.parser.Parsers
+import com.github.j5ik2o.reactive.redis.parser.StringParsers
 import com.github.j5ik2o.reactive.redis.parser.model.{ ArrayExpr, ErrorExpr, Expr, NumberExpr }
-import fastparse.all._
 
-case class BitFieldRequest(id: UUID, key: String, options: BitFieldRequest.SubOption*) extends CommandRequest {
+case class BitFieldRequest(id: UUID, key: String, options: BitFieldRequest.SubOption*)
+    extends CommandRequest
+    with StringParsersSupport {
   override type Response = BitFieldResponse
 
   override def asString: String = s"BITFIELD $key ${options.map(_.asString).mkString(" ")}"
 
-  override protected def responseParser: P[Expr] = Parsers.integerArrayReply
+  override protected def responseParser: P[Expr] = StringParsers.integerArrayReply
 
   override protected def parseResponse: Handler = {
     case ArrayExpr(values) =>

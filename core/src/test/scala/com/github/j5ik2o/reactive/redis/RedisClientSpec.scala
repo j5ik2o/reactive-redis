@@ -8,6 +8,8 @@ import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.{ Gen, Shrink }
 
+import cats.implicits._
+
 class RedisClientSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
   var connectionPool: RedisConnectionPool[Task] = _
   var redisClient: RedisClient                  = _

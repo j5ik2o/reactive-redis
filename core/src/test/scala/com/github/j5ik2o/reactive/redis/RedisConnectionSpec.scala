@@ -7,6 +7,8 @@ import akka.actor.ActorSystem
 import com.github.j5ik2o.reactive.redis.command.strings.BitFieldRequest.SingedBitType
 import com.github.j5ik2o.reactive.redis.command.strings._
 import monix.execution.Scheduler.Implicits.global
+import cats.implicits._
+import com.github.j5ik2o.reactive.redis.command.keys.{ KeysRequest, KeysSucceeded }
 
 class RedisConnectionSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
 
@@ -78,7 +80,7 @@ class RedisConnectionSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
     }
     "bitpos" in {
       val key = UUID.randomUUID().toString
-      redisClient.set(key, """"\xff\xf0\x00"""").run(connection).runAsync.futureValue
+      redisClient.set(key, """\xff\xf0\x00""").run(connection).runAsync.futureValue
       val result =
         connection.send(BitPosRequest(UUID.randomUUID(), key, 0)).runAsync.futureValue.asInstanceOf[BitPosSucceeded]
       result.value shouldBe 12
@@ -96,13 +98,67 @@ class RedisConnectionSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
         connection.send(DecrByRequest(UUID.randomUUID(), key, 2)).runAsync.futureValue.asInstanceOf[DecrBySucceeded]
       result.value shouldBe 8
     }
-    "set & get" in {
+    "get" in {
       val key   = UUID.randomUUID().toString
       val value = "1"
       redisClient.set(key, value).run(connection).runAsync.futureValue
       val result2 = connection.send(GetRequest(UUID.randomUUID(), key)).runAsync.futureValue
       result2.isInstanceOf[GetSucceeded] shouldBe true
       result2.asInstanceOf[GetSucceeded].value shouldBe Some(value)
+    }
+    "getbit" in {
+      val key = UUID.randomUUID().toString
+      val result =
+        connection.send(GetBitRequest(UUID.randomUUID(), key, 1)).runAsync.futureValue.asInstanceOf[GetBitSucceeded]
+      result.value shouldBe 0
+    }
+    "getrange" in {
+      val key   = UUID.randomUUID().toString
+      val value = "This is a string"
+      redisClient.set(key, value).run(connection).runAsync.futureValue
+      val result = connection
+        .send(GetRangeRequest(UUID.randomUUID(), key, StartAndEnd(0, 3)))
+        .runAsync
+        .futureValue
+        .asInstanceOf[GetRangeSucceeded]
+      result.value shouldBe Some("This")
+    }
+    "getset" in {
+      val key   = UUID.randomUUID().toString
+      val value = "a"
+      redisClient.set(key, value).run(connection).runAsync.futureValue
+      val result =
+        connection.send(GetSetRequest(UUID.randomUUID(), key, "b")).runAsync.futureValue.asInstanceOf[GetSetSucceeded]
+      result.value shouldBe Some("a")
+      val result2 = redisClient.get(key).run(connection).runAsync.futureValue
+      result2 shouldBe Some("b")
+    }
+    "incr" in {}
+    "incrby" in {}
+    "mget" in {}
+    "mset" in {}
+    "msetnx" in {}
+    "psetex" in {}
+    "set" in {}
+    "setbit" in {}
+    "setex" in {}
+    "setnx" in {}
+    "setrange" in {}
+    "strlen" in {}
+    "dump" in {
+      val key   = UUID.randomUUID().toString
+      val value = "a"
+      redisClient.set(key, value).run(connection).runAsync.futureValue
+      val result = redisClient.dump(key).run(connection).runAsync.futureValue
+      println(result)
+    }
+    "keys" in {
+      redisClient.set("test-1", UUID.randomUUID().toString).run(connection).runAsync.futureValue
+      redisClient.set("test-2", UUID.randomUUID().toString).run(connection).runAsync.futureValue
+      redisClient.set("test-3", UUID.randomUUID().toString).run(connection).runAsync.futureValue
+      val result =
+        connection.send(KeysRequest(UUID.randomUUID(), "tst-*")).runAsync.futureValue.asInstanceOf[KeysSucceeded]
+      println(result.values)
     }
   }
 }

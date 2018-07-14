@@ -3,17 +3,18 @@ package com.github.j5ik2o.reactive.redis.command.strings
 import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
-import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse }
-import com.github.j5ik2o.reactive.redis.parser.Parsers
+import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
+import com.github.j5ik2o.reactive.redis.parser.StringParsers
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, StringOptExpr }
-import fastparse.all._
 
-case class GetRangeRequest(id: UUID, key: String, startAndEnd: StartAndEnd) extends CommandRequest {
+case class GetRangeRequest(id: UUID, key: String, startAndEnd: StartAndEnd)
+    extends CommandRequest
+    with StringParsersSupport {
   override type Response = GetRangeResponse
 
   override def asString: String = s"GETRANGE $key ${startAndEnd.start} ${startAndEnd.end}"
 
-  override protected def responseParser: P[Expr] = Parsers.bulkStringReply
+  override protected def responseParser: P[Expr] = StringParsers.bulkStringReply
 
   override protected def parseResponse: Handler = {
     case StringOptExpr(s) =>

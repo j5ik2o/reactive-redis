@@ -1,9 +1,9 @@
 package com.github.j5ik2o.reactive.redis.parser
 
 import com.github.j5ik2o.reactive.redis.parser.model._
-import fastparse.all._
 
-object Parsers {
+object StringParsers {
+  import fastparse.all._
   val digit: P0      = P(CharIn('0' to '9'))
   val lowerAlpha: P0 = P(CharIn('a' to 'z'))
   val upperAlpha: P0 = P(CharIn('A' to 'Z'))
@@ -23,8 +23,7 @@ object Parsers {
       NumberExpr(minus.map(_ => -1).getOrElse(1) * n.toInt)
   }
   val string: P[StringExpr] = P((!crlf ~/ AnyChar).rep.!).map(StringExpr)
-
-  val arrayPrefix: P[Int] = P("*" ~ digit.rep(1).!).map(_.toInt)
+  val arrayPrefix: P[Int]   = P("*" ~ digit.rep(1).!).map(_.toInt)
 
   val errorWithCrLf: P[ErrorExpr]           = P(error ~ crlf)
   val simpleWithCrLf: P[SimpleExpr]         = P(simple ~ crlf)
@@ -47,9 +46,9 @@ object Parsers {
 
   val integerArrayElement: P[NumberExpr] = P(number)
 
-  val stringOptArrayWithCrLf: P[ArrayExpr[StringOptExpr]] = P(array(stringOptArrayElement) ~ crlf)
-  val integerArrayWithCrLf: P[ArrayExpr[NumberExpr]]      = P(array(integerArrayElement) ~ crlf)
-  def reset(l: Int): P[StringOptExpr] = {
+  val stringOptArrayWithCrLf: P[ArrayExpr[StringOptExpr]] = P(array(stringOptArrayElement) ~ crlf.?)
+  val integerArrayWithCrLf: P[ArrayExpr[NumberExpr]]      = P(array(integerArrayElement) ~ crlf.?)
+  def bulkStringRest(l: Int): P[StringOptExpr] = {
     if (l == -1) {
       P(End).!.map(_ => StringOptExpr(None))
     } else {
@@ -57,7 +56,7 @@ object Parsers {
     }
   }
 
-  val bulkStringWithCrLf: P[StringOptExpr] = P((length ~ crlf).flatMap(l => reset(l.n)))
+  val bulkStringWithCrLf: P[StringOptExpr] = P((length ~ crlf).flatMap(l => bulkStringRest(l.n)))
 
   val simpleStringReply: P[Expr]   = P(simpleWithCrLf | errorWithCrLf)
   val integerReply: P[Expr]        = P(integerWithCrLf | errorWithCrLf)

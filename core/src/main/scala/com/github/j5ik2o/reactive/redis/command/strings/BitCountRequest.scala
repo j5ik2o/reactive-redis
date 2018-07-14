@@ -4,16 +4,17 @@ import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command._
-import com.github.j5ik2o.reactive.redis.parser.Parsers
+import com.github.j5ik2o.reactive.redis.parser.StringParsers
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr }
-import fastparse.all._
 
-case class BitCountRequest(id: UUID, key: String, startAndEnd: Option[StartAndEnd] = None) extends CommandRequest {
+case class BitCountRequest(id: UUID, key: String, startAndEnd: Option[StartAndEnd] = None)
+    extends CommandRequest
+    with StringParsersSupport {
   override type Response = BitCountResponse
 
   override def asString: String = s"BITCOUNT $key" + startAndEnd.fold("")(e => " " + e.start + " " + e.end)
 
-  override protected def responseParser: P[Expr] = Parsers.integerReply
+  override protected def responseParser: P[Expr] = StringParsers.integerReply
 
   override protected def parseResponse: Handler = {
     case NumberExpr(n) =>
@@ -23,8 +24,6 @@ case class BitCountRequest(id: UUID, key: String, startAndEnd: Option[StartAndEn
   }
 }
 
-sealed trait BitCountResponse extends CommandResponse
-
-case class BitCountSucceeded(id: UUID, requestId: UUID, value: Int) extends BitCountResponse
-
+sealed trait BitCountResponse                                              extends CommandResponse
+case class BitCountSucceeded(id: UUID, requestId: UUID, value: Int)        extends BitCountResponse
 case class BitCountFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends BitCountResponse

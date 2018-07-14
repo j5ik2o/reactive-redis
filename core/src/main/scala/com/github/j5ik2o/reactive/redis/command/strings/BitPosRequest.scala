@@ -4,17 +4,17 @@ import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command._
-import com.github.j5ik2o.reactive.redis.parser.Parsers
+import com.github.j5ik2o.reactive.redis.parser.StringParsers
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr }
-import fastparse.all._
 
 case class BitPosRequest(id: UUID, key: String, bit: Int, startAndEnd: Option[StartAndEnd] = None)
-    extends CommandRequest {
+    extends CommandRequest
+    with StringParsersSupport {
   override type Response = BitPosResponse
 
   override def asString: String = s"BITPOS $key $bit" + startAndEnd.fold("")(e => " " + e.start + " " + e.end)
 
-  override protected def responseParser: P[Expr] = Parsers.integerReply
+  override protected def responseParser: P[Expr] = StringParsers.integerReply
 
   override protected def parseResponse: Handler = {
     case NumberExpr(n) =>

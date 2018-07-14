@@ -4,21 +4,21 @@ import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command._
-import com.github.j5ik2o.reactive.redis.parser.Parsers
+import com.github.j5ik2o.reactive.redis.parser.StringParsers
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr }
-import fastparse.all._
 
 case class BitOpRequest(id: UUID,
                         operand: BitOpRequest.Operand,
                         outputKey: String,
                         inputKey1: String,
                         inputKey2: String)
-    extends CommandRequest {
+    extends CommandRequest
+    with StringParsersSupport {
   override type Response = BitOpResponse
 
   override def asString: String = s"BITOP ${operand.toString} $outputKey $inputKey1 $inputKey2"
 
-  override protected def responseParser: P[Expr] = Parsers.integerReply
+  override protected def responseParser: P[Expr] = StringParsers.integerReply
 
   override protected def parseResponse: Handler = {
     case NumberExpr(n) =>
