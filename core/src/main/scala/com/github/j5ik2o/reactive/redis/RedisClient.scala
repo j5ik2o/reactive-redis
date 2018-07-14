@@ -9,6 +9,7 @@ import cats.data.{ NonEmptyList, ReaderT }
 import com.github.j5ik2o.reactive.redis.command._
 import com.github.j5ik2o.reactive.redis.command.keys._
 import com.github.j5ik2o.reactive.redis.command.strings._
+import monix.eval.Task
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -56,9 +57,30 @@ trait KeysClient { this: RedisClient =>
       case KeysFailed(_, _, ex)         => ReaderTTask.raiseError(ex)
     }
 
+  def migrate(host: String,
+              port: Int,
+              key: String,
+              toDbNo: Int,
+              timeout: FiniteDuration): ReaderTTaskRedisConnection[Unit] =
+    send(MigrateRequest(UUID.randomUUID(), host, port, key, toDbNo, timeout)).flatMap {
+      case MigrateSucceeded(_, _)  => ReaderTTask.pure(())
+      case MigrateFailed(_, _, ex) => ReaderTTask.raiseError(ex)
+    }
+
+  def move(key: String, db: Int): ReaderTTaskRedisConnection[Boolean] =
+    send(MoveRequest(UUID.randomUUID(), key, db)).flatMap {
+      case MoveSucceeded(_, _, result) => ReaderTTask.pure(result)
+      case MoveFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+    }
+
+  // object
+
+  def persist(key: String): ReaderTTaskRedisConnection[Boolean] = send(PersistRequest(UUID.randomUUID(), key)).flatMap {
+    case PersistSucceeded(_, _, result) => ReaderTTask.pure(result)
+    case PersistFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+  }
+
   /**
-  * MIGRATE
-  * MOVE
   * OBJECT
   * PERSIST
   * PEXPIRE
