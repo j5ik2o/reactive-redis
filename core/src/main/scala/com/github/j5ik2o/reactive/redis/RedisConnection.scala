@@ -7,7 +7,7 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.event.{ LogSource, Logging }
 import akka.stream._
-import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, RestartFlow, Sink, Source, Tcp, Unzip, Zip }
+import akka.stream.scaladsl._
 import akka.util.ByteString
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse }
 import monix.eval.Task
@@ -17,14 +17,21 @@ import scala.concurrent.{ Future, Promise }
 
 object RedisConnection {
 
-  implicit val logSource: LogSource[AnyRef] = new LogSource[AnyRef] {
-    def genString(o: AnyRef): String           = o.getClass.getName
-    override def getClazz(o: AnyRef): Class[_] = o.getClass
+  implicit val logSource: LogSource[RedisConnection] = new LogSource[RedisConnection] {
+    override def genString(o: RedisConnection): String  = s"${o.getClass.getName}:${o.id}"
+    override def getClazz(o: RedisConnection): Class[_] = o.getClass
+  }
+
+  final val DEFAULT_DECIDER: Supervision.Decider = {
+    case _: StreamTcpException => Supervision.Restart
+    case _                     => Supervision.Stop
   }
 
 }
 
-class RedisConnection(connectionConfig: ConnectionConfig)(implicit system: ActorSystem) {
+class RedisConnection(connectionConfig: ConnectionConfig, supervisionDecider: Option[Supervision.Decider] = None)(
+    implicit system: ActorSystem
+) {
 
   val id: UUID = UUID.randomUUID()
 
@@ -33,27 +40,31 @@ class RedisConnection(connectionConfig: ConnectionConfig)(implicit system: Actor
 
   private val log = Logging(system, this)
 
-  private implicit val mat = ActorMaterializer()
+  private implicit val mat: ActorMaterializer = ActorMaterializer(
+    ActorMaterializerSettings(system).withSupervisionStrategy(
+      supervisionDecider.getOrElse(RedisConnection.DEFAULT_DECIDER)
+    )
+  )
 
-  private val tcpFlow = RestartFlow.withBackoff(minBackoff, maxBackoff, randomFactor, maxRestarts) { () =>
-    Tcp()
-      .outgoingConnection(remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout)
-  }
+  protected val tcpFlow: Flow[ByteString, ByteString, NotUsed] =
+    RestartFlow.withBackoff(minBackoff, maxBackoff, randomFactor, maxRestarts) { () =>
+      Tcp()
+        .outgoingConnection(remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout)
+    }
 
-  private val connectionFlow: Flow[RequestContext, ResponseContext, NotUsed] =
+  protected val connectionFlow: Flow[RequestContext, ResponseContext, NotUsed] =
     Flow.fromGraph(GraphDSL.create() { implicit b =>
       import GraphDSL.Implicits._
       val requestFlow = b.add(
         Flow[RequestContext]
           .map { rc =>
-            log.debug("request = [{}]", rc.commandRequest.asString)
+            log.debug(s"con_id = {}: request = [{}]", id, rc.commandRequestString)
             (ByteString.fromString(rc.commandRequest.asString + "\r\n"), rc)
           }
       )
       val responseFlow = b.add(Flow[(ByteString, RequestContext)].map {
         case (byteString, requestContext) =>
-          log.debug("response = [{}]", byteString.utf8String)
-          log.debug("response = [{}]", byteString)
+          log.debug(s"con_id = {}: response = [{}]", id, byteString.utf8String)
           ResponseContext(byteString, requestContext, ZonedDateTime.now())
       })
       val unzip = b.add(Unzip[ByteString, RequestContext]())
@@ -65,16 +76,16 @@ class RedisConnection(connectionConfig: ConnectionConfig)(implicit system: Actor
       FlowShape(requestFlow.in, responseFlow.out)
     })
 
-  private val (requestQueue, killSwitch) = Source
-    .queue[RequestContext](requestBufferSize, OverflowStrategy.dropNew)
+  protected val (requestQueue: SourceQueueWithComplete[RequestContext], killSwitch: UniqueKillSwitch) = Source
+    .queue[RequestContext](requestBufferSize, overflowStrategy)
     .via(connectionFlow)
     .map { responseContext =>
-      // TODO: 通常のリクエストの場合
-      log.debug("start parse")
+      log.debug(s"con_id = {}, req_id = {}, command = {}: parse",
+                id,
+                responseContext.commandRequestId,
+                responseContext.commandRequestString)
       val result = responseContext.parseResponse
-      log.debug("complete parse")
       responseContext.completePromise(result.toTry)
-      log.debug("complete promise")
     }
     .viaMat(KillSwitches.single)(Keep.both)
     .toMat(Sink.ignore)(Keep.left)

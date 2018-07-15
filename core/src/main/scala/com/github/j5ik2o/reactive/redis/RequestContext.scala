@@ -7,5 +7,6 @@ import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandRespons
 import scala.concurrent.Promise
 
 case class RequestContext(commandRequest: CommandRequest, promise: Promise[CommandResponse], requestAt: ZonedDateTime) {
-  val id = commandRequest.id
+  val id                   = commandRequest.id
+  val commandRequestString = commandRequest.asString
 }

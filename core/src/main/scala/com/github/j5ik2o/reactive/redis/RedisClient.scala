@@ -9,7 +9,6 @@ import cats.data.{ NonEmptyList, ReaderT }
 import com.github.j5ik2o.reactive.redis.command._
 import com.github.j5ik2o.reactive.redis.command.keys._
 import com.github.j5ik2o.reactive.redis.command.strings._
-import monix.eval.Task
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -80,10 +79,15 @@ trait KeysClient { this: RedisClient =>
     case PersistFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
   }
 
+  def pExpire(key: String, milliseconds: FiniteDuration): ReaderTTaskRedisConnection[Boolean] =
+    send(PExpireRequest(UUID.randomUUID(), key, milliseconds)).flatMap {
+      case PExpireSucceeded(_, _, result) => ReaderTTask.pure(result)
+      case PExpireFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+    }
+
+  def pExpireAt = ???
+
   /**
-  * OBJECT
-  * PERSIST
-  * PEXPIRE
   * PEXPIREAT
   * PTTL
   * RANDOMKEY

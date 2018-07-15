@@ -3,6 +3,7 @@ package com.github.j5ik2o.reactive.redis
 import java.net.InetSocketAddress
 
 import akka.io.Inet.SocketOption
+import akka.stream.OverflowStrategy
 
 import scala.collection.immutable
 import scala.concurrent.duration._
@@ -19,4 +20,5 @@ case class ConnectionConfig(remoteAddress: InetSocketAddress,
                             connectTimeout: Duration = Duration.Inf,
                             idleTimeout: Duration = Duration.Inf,
                             backoffConfig: BackoffConfig = BackoffConfig(),
-                            requestBufferSize: Int = 1024)
+                            requestBufferSize: Int = 1024,
+                            overflowStrategy: OverflowStrategy = OverflowStrategy.dropNew)

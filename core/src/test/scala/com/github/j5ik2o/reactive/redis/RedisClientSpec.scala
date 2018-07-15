@@ -3,12 +3,10 @@ package com.github.j5ik2o.reactive.redis
 import java.net.InetSocketAddress
 
 import akka.actor.ActorSystem
-import cats.data.ReaderT
+import cats.implicits._
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.{ Gen, Shrink }
-
-import cats.implicits._
 
 class RedisClientSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
   var connectionPool: RedisConnectionPool[Task] = _
@@ -38,10 +36,8 @@ class RedisClientSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
         } yield v
 
         val result = connectionPool
-          .withConnection {
-            ReaderT { con =>
-              program.run(con)
-            }
+          .withConnectionF { con =>
+            program.run(con)
           }
           .runAsync
           .futureValue

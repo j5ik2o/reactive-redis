@@ -1,15 +1,29 @@
 package com.github.j5ik2o.reactive.redis
 
-case class ConnectionPoolConfig(maxActive: Int = 8,
-                                blockWhenExhausted: Boolean = true,
-                                maxWait: Long = -1L,
-                                maxIdle: Int = 8,
-                                minIdle: Int = 0,
-                                testOnBorrow: Boolean = false,
-                                testOnReturn: Boolean = false,
-                                timeBetweenEvictionRunsMillis: Long = -1L,
-                                numTestsPerEvictionRun: Int = 3,
-                                minEvictableIdleTimeMillis: Long = 1800000L,
-                                testWhileIdle: Boolean = false,
-                                softMinEvictableIdleTimeMillis: Long = 1800000L,
-                                lifo: Boolean = true)
+import org.apache.commons.pool2.impl.EvictionPolicy
+
+import scala.concurrent.duration.Duration
+
+case class ConnectionPoolConfig(
+    lifo: Option[Boolean] = None,
+    fairness: Option[Boolean] = None,
+    maxWaitMillis: Option[Duration] = None,
+    minEvictableIdleTimeMillis: Option[Duration] = None,
+    evictorShutdownTimeoutMillis: Option[Duration] = None,
+    softMinEvictableIdleTimeMillis: Option[Duration] = None,
+    blockWhenExhausted: Option[Boolean] = None,
+    evictionPolicy: Option[EvictionPolicy[RedisConnection]] = None,
+    evictionPolicyClassName: Option[String] = None,
+    testOnCreate: Option[Boolean] = None,
+    testOnBorrow: Option[Boolean] = None,
+    testOnReturn: Option[Boolean] = None,
+    testWhileIdle: Option[Boolean] = None,
+    numTestsPerEvictionRun: Option[Int] = None,
+    timeBetweenEvictionRunsMillis: Option[Duration] = None,
+    jmxEnabled: Option[Boolean] = None,
+    jmxNamePrefix: Option[String] = None,
+    jmxNameBase: Option[String] = None,
+    maxTotal: Option[Int] = None,
+    maxIdle: Option[Int] = None,
+    minIdle: Option[Int] = None
+)

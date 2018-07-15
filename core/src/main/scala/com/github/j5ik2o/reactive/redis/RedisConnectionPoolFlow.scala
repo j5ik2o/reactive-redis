@@ -24,7 +24,7 @@ class RedisConnectionPoolFlow(redisConnectionPool: RedisConnectionPool[Task], pa
 
   private def toFlow(implicit scheduler: Scheduler): Flow[CommandRequest, CommandResponse, NotUsed] =
     Flow[CommandRequest].mapAsync(parallelism) { cmd =>
-      redisConnectionPool.withConnection(ReaderT { _.send(cmd) }).runAsync
+      redisConnectionPool.withConnectionM(ReaderT(_.send(cmd))).runAsync
     }
 
 }

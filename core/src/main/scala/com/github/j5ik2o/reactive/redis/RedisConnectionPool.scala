@@ -6,7 +6,12 @@ import cats.implicits._
 import cats.{ Monad, MonadError }
 import com.github.j5ik2o.reactive.redis.RedisConnectionPool.RP
 import monix.eval.Task
-import org.apache.commons.pool2.impl.{ DefaultPooledObject, GenericObjectPool, GenericObjectPoolConfig }
+import org.apache.commons.pool2.impl.{
+  AbandonedConfig,
+  DefaultPooledObject,
+  GenericObjectPool,
+  GenericObjectPoolConfig
+}
 import org.apache.commons.pool2.{ BasePooledObjectFactory, ObjectPool, PooledObject }
 
 import scala.concurrent.duration.Duration
@@ -55,24 +60,73 @@ class RedisConnectionPool[M[_]](connectionPoolConfig: ConnectionPoolConfig, conn
     ME: MonadError[M, Throwable]
 ) {
 
-  private val config: GenericObjectPoolConfig[RedisConnection] = new GenericObjectPoolConfig[RedisConnection]()
+  private val abandonedConfig: AbandonedConfig = new AbandonedConfig()
+  abandonedConfig.setLogAbandoned(true)
+  abandonedConfig.setRemoveAbandonedOnBorrow(true)
+  abandonedConfig.setRemoveAbandonedOnMaintenance(true)
+  abandonedConfig.setUseUsageTracking(true)
+  abandonedConfig.setRequireFullStackTrace(true)
 
-  config.setMaxTotal(connectionPoolConfig.maxActive)
-  config.setMaxIdle(connectionPoolConfig.maxIdle)
-  config.setMinIdle(connectionPoolConfig.minIdle)
-  config.setTestOnBorrow(connectionPoolConfig.testOnBorrow)
-  config.setTestOnReturn(connectionPoolConfig.testOnReturn)
-  config.setBlockWhenExhausted(connectionPoolConfig.blockWhenExhausted)
-  config.setSoftMinEvictableIdleTimeMillis(connectionPoolConfig.softMinEvictableIdleTimeMillis)
-  config.setMinEvictableIdleTimeMillis(connectionPoolConfig.minEvictableIdleTimeMillis)
-  config.setNumTestsPerEvictionRun(connectionPoolConfig.numTestsPerEvictionRun)
-  config.setTestWhileIdle(connectionPoolConfig.testWhileIdle)
-  config.setLifo(connectionPoolConfig.lifo)
+  private val underlyingPoolConfig: GenericObjectPoolConfig[RedisConnection] =
+    new GenericObjectPoolConfig[RedisConnection]()
 
-  private val connectionPool: ObjectPool[RedisConnection] =
-    new GenericObjectPool[RedisConnection](new RedisConnectionPoolFactory(connectionConfig), config)
+  connectionPoolConfig.lifo.foreach(underlyingPoolConfig.setLifo)
+  connectionPoolConfig.fairness.foreach(underlyingPoolConfig.setFairness)
+  connectionPoolConfig.maxWaitMillis.foreach { v =>
+    if (v.isFinite())
+      underlyingPoolConfig.setMaxWaitMillis(v.toMillis)
+    else
+      underlyingPoolConfig.setMaxWaitMillis(-1L)
+  }
+  connectionPoolConfig.minEvictableIdleTimeMillis.foreach { v =>
+    if (v.isFinite())
+      underlyingPoolConfig.setMinEvictableIdleTimeMillis(v.toMillis)
+    else
+      underlyingPoolConfig.setMinEvictableIdleTimeMillis(-1L)
+  }
+  connectionPoolConfig.evictorShutdownTimeoutMillis.foreach { v =>
+    if (v.isFinite())
+      underlyingPoolConfig.setEvictorShutdownTimeoutMillis(v.toMillis)
+    else
+      underlyingPoolConfig.setEvictorShutdownTimeoutMillis(-1L)
+  }
+  connectionPoolConfig.softMinEvictableIdleTimeMillis.foreach { v =>
+    if (v.isFinite())
+      underlyingPoolConfig.setSoftMinEvictableIdleTimeMillis(v.toMillis)
+    else
+      underlyingPoolConfig.setSoftMinEvictableIdleTimeMillis(-1L)
+  }
 
-  def withConnection[T](reader: RP[M, T]): M[T] = {
+  connectionPoolConfig.numTestsPerEvictionRun.foreach(underlyingPoolConfig.setNumTestsPerEvictionRun)
+  connectionPoolConfig.evictionPolicy.foreach(underlyingPoolConfig.setEvictionPolicy)
+  connectionPoolConfig.evictionPolicyClassName.foreach(underlyingPoolConfig.setEvictionPolicyClassName)
+
+  connectionPoolConfig.testOnCreate.foreach(underlyingPoolConfig.setTestOnCreate)
+  connectionPoolConfig.testOnBorrow.foreach(underlyingPoolConfig.setTestOnBorrow)
+  connectionPoolConfig.testOnReturn.foreach(underlyingPoolConfig.setTestOnReturn)
+  connectionPoolConfig.testWhileIdle.foreach(underlyingPoolConfig.setTestWhileIdle)
+  connectionPoolConfig.timeBetweenEvictionRunsMillis.foreach { v =>
+    if (v.isFinite())
+      underlyingPoolConfig.setTimeBetweenEvictionRunsMillis(v.toMillis)
+    else
+      underlyingPoolConfig.setTimeBetweenEvictionRunsMillis(-1L)
+  }
+  connectionPoolConfig.blockWhenExhausted.foreach(underlyingPoolConfig.setBlockWhenExhausted)
+  connectionPoolConfig.jmxEnabled.foreach(underlyingPoolConfig.setJmxEnabled)
+  connectionPoolConfig.jmxNamePrefix.foreach(underlyingPoolConfig.setJmxNamePrefix)
+  connectionPoolConfig.jmxNameBase.foreach(underlyingPoolConfig.setJmxNameBase)
+  connectionPoolConfig.maxTotal.foreach(underlyingPoolConfig.setMaxTotal)
+  connectionPoolConfig.maxIdle.foreach(underlyingPoolConfig.setMaxIdle)
+  connectionPoolConfig.minIdle.foreach(underlyingPoolConfig.setMinIdle)
+
+  private val underlyingConnectionPool: ObjectPool[RedisConnection] =
+    new GenericObjectPool[RedisConnection](new RedisConnectionPoolFactory(connectionConfig),
+                                           underlyingPoolConfig,
+                                           abandonedConfig)
+
+  def withConnectionF[T](f: RedisConnection => M[T]): M[T] = withConnectionM(ReaderT(f))
+
+  def withConnectionM[T](reader: RP[M, T]): M[T] = {
     for {
       connection <- borrowConnection
       result <- reader
@@ -88,20 +142,20 @@ class RedisConnectionPool[M[_]](connectionPoolConfig: ConnectionPoolConfig, conn
   }
 
   def borrowConnection: M[RedisConnection] =
-    ME.pure(connectionPool.borrowObject())
+    ME.pure(underlyingConnectionPool.borrowObject())
 
   def returnConnection(redisClient: RedisConnection): M[Unit] =
-    ME.pure(connectionPool.returnObject(redisClient))
+    ME.pure(underlyingConnectionPool.returnObject(redisClient))
 
   def invalidateConnection(redisClient: RedisConnection): M[Unit] =
-    ME.pure(connectionPool.invalidateObject(redisClient))
+    ME.pure(underlyingConnectionPool.invalidateObject(redisClient))
 
-  def numActive: Int = connectionPool.getNumActive
+  def numActive: Int = underlyingConnectionPool.getNumActive
 
-  def numIdle: Int = connectionPool.getNumIdle
+  def numIdle: Int = underlyingConnectionPool.getNumIdle
 
-  def clear(): Unit = connectionPool.clear()
+  def clear(): Unit = underlyingConnectionPool.clear()
 
-  def dispose(): Unit = connectionPool.close()
+  def dispose(): Unit = underlyingConnectionPool.close()
 
 }

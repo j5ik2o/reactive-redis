@@ -20,7 +20,7 @@ class RedisConnectionPoolSpec extends ActorSpec(ActorSystem("RedisClientPoolSpec
     super.beforeAll()
     pool = RedisConnectionPool[Task](
       ConnectionPoolConfig(),
-      ConnectionConfig(new InetSocketAddress("127.0.0.1", redisServer.ports().get(0)))
+      ConnectionConfig(remoteAddress = new InetSocketAddress("127.0.0.1", redisServer.ports().get(0)))
     )
   }
 
@@ -29,14 +29,13 @@ class RedisConnectionPoolSpec extends ActorSpec(ActorSystem("RedisClientPoolSpec
       val futures: Seq[Future[CommandResponse]] = for (i <- 1 to 100)
         yield {
           pool
-            .withConnection(
-              ReaderT { con =>
-                for {
-                  _ <- con.send(SetRequest(UUID.randomUUID(), "a", ZonedDateTime.now().toString))
-                  r <- con.send(GetRequest(UUID.randomUUID(), "a"))
-                } yield r
-              }
-            )
+            .withConnectionF { con =>
+              for {
+                _ <- con.send(SetRequest(UUID.randomUUID(), "a", ZonedDateTime.now().toString))
+                _ <- Task.pure(Thread.sleep(100 * 5))
+                r <- con.send(GetRequest(UUID.randomUUID(), "a"))
+              } yield r
+            }
             .runAsync
             .map { v =>
               println(v)
