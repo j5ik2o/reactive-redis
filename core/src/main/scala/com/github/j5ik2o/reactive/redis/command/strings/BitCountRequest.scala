@@ -15,12 +15,12 @@ case class BitCountRequest(id: UUID, key: String, startAndEnd: Option[StartAndEn
 
   override def asString: String = s"BITCOUNT $key" + startAndEnd.fold("")(e => " " + e.start + " " + e.end)
 
-  override protected def responseParser: P[Expr] = P(StringParsers.integerReply | StringParsers.simpleStringReply)
+  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (BitCountSucceeded(UUID.randomUUID(), id, n), next)
-    case (SimpleExpr("QUEUED"), next) =>
+    case (SimpleExpr(QUEUED), next) =>
       (BitCountSuspended(UUID.randomUUID(), id), next)
     case (ErrorExpr(msg), next) =>
       (BitCountFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
