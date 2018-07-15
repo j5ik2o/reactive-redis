@@ -3,6 +3,7 @@ package com.github.j5ik2o.reactive.redis
 import java.util.UUID
 
 import akka.actor.ActorSystem
+import akka.event.{ LogSource, Logging }
 import akka.stream.Supervision
 import cats.data.ReaderT
 import cats.implicits._
@@ -22,6 +23,13 @@ private class RedisConnectionPoolFactory(connectionConfig: ConnectionConfig,
     scheduler: Scheduler
 ) extends BasePooledObjectFactory[RedisConnection] {
 
+  implicit val logSource: LogSource[RedisConnectionPoolFactory] = new LogSource[RedisConnectionPoolFactory] {
+    override def genString(o: RedisConnectionPoolFactory): String  = o.getClass.getName
+    override def getClazz(o: RedisConnectionPoolFactory): Class[_] = o.getClass
+  }
+
+  val log = Logging(system, this)
+
   private val redisClient = RedisClient()
 
   override def create(): RedisConnection = RedisConnection(connectionConfig, supervisionDecider)
@@ -34,7 +42,17 @@ private class RedisConnectionPoolFactory(connectionConfig: ConnectionConfig,
   override def validateObject(p: PooledObject[RedisConnection]): Boolean = {
     val connection = p.getObject
     val id         = UUID.randomUUID().toString
-    Await.result(redisClient.ping(Some(id)).run(connection).runAsync, validationTimeout) == id
+    try {
+      if (Await.result(redisClient.ping(Some(id)).run(connection).runAsync, validationTimeout).contains(id))
+        true
+      else {
+        log.warning("Failed to ping")
+        true
+      }
+    } catch {
+      case _: Throwable =>
+        false
+    }
   }
 
 }

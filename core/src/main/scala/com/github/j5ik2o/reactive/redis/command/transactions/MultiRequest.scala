@@ -1,4 +1,4 @@
-package com.github.j5ik2o.reactive.redis.command.transaction
+package com.github.j5ik2o.reactive.redis.command.transactions
 
 import java.util.UUID
 

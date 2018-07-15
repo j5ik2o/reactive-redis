@@ -9,7 +9,12 @@ import com.github.j5ik2o.reactive.redis.command.strings._
 import monix.execution.Scheduler.Implicits.global
 import cats.implicits._
 import com.github.j5ik2o.reactive.redis.command.keys.{ KeysRequest, KeysSucceeded }
-import com.github.j5ik2o.reactive.redis.command.transaction.{ ExecRequest, ExecSucceeded, MultiRequest, MultiSucceeded }
+import com.github.j5ik2o.reactive.redis.command.transactions.{
+  ExecRequest,
+  ExecSucceeded,
+  MultiRequest,
+  MultiSucceeded
+}
 
 class RedisConnectionSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
 

@@ -4,7 +4,7 @@ import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command.{ CommandResponse, SimpleCommandRequest, StringParsersSupport }
-import com.github.j5ik2o.reactive.redis.parser.StringParsers
+import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr, StringOptExpr }
 import fastparse.all._
 case class GetRequest(id: UUID, key: String) extends SimpleCommandRequest with StringParsersSupport {
@@ -12,12 +12,12 @@ case class GetRequest(id: UUID, key: String) extends SimpleCommandRequest with S
 
   override def asString: String = s"GET $key"
 
-  override protected def responseParser: P[Expr] = P(StringParsers.bulkStringWithCrLf | StringParsers.simpleStringReply)
+  override protected def responseParser: P[Expr] = P(bulkStringWithCrLf | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (StringOptExpr(s), next) =>
       (GetSucceeded(UUID.randomUUID(), id, s), next)
-    case (SimpleExpr("QUEUED"), next) =>
+    case (SimpleExpr(QUEUED), next) =>
       (GetSuspended(UUID.randomUUID(), id), next)
     case (ErrorExpr(msg), next) =>
       (GetFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)

@@ -9,7 +9,10 @@ import akka.event.{ LogSource, Logging }
 import akka.stream._
 import akka.stream.scaladsl._
 import akka.util.ByteString
-import com.github.j5ik2o.reactive.redis.command.transaction.TxStage
+import com.github.j5ik2o.reactive.redis.command.transactions.{
+  InTxRequestsAggregationFlow,
+  InTxRequestsAggregationStage
+}
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse }
 import monix.eval.Task
 import monix.execution.Scheduler
@@ -84,7 +87,7 @@ class RedisConnection(connectionConfig: ConnectionConfig, supervisionDecider: Op
   protected val (requestQueue: SourceQueueWithComplete[RequestContext], killSwitch: UniqueKillSwitch) = Source
     .queue[RequestContext](requestBufferSize, overflowStrategy)
     .via(connectionFlow)
-    .via(new TxStage)
+    .via(InTxRequestsAggregationFlow())
     .map { responseContext =>
       log.debug(s"req_id = {}, command = {}: parse",
                 responseContext.commandRequestId,

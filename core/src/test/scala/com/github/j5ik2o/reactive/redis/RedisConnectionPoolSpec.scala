@@ -5,6 +5,7 @@ import java.util.UUID
 
 import akka.actor.ActorSystem
 import com.github.j5ik2o.reactive.redis.command.strings.{ GetRequest, GetSucceeded, SetRequest }
+import com.github.j5ik2o.reactive.redis.command.transactions.{ ExecRequest, ExecResponse, MultiRequest }
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 
@@ -21,11 +22,11 @@ class RedisConnectionPoolSpec extends ActorSpec(ActorSystem("RedisClientPoolSpec
         maxTotal = Some(30),
         maxIdle = Some(10),
         minIdle = Some(5),
-        //timeBetweenEvictionRuns = Some(3 seconds),
-        //testOnCreate = Some(true),
-        //testOnBorrow = Some(true),
+        timeBetweenEvictionRuns = Some(3 seconds),
+        // testOnCreate = Some(true),
+        // testOnBorrow = Some(true),
         //testOnReturn = Some(true),
-        //testWhileIdle = Some(true),
+        testWhileIdle = Some(true),
         abandonedConfig = Some(
           AbandonedConfig(
             logAbandoned = Some(true),
@@ -42,14 +43,16 @@ class RedisConnectionPoolSpec extends ActorSpec(ActorSystem("RedisClientPoolSpec
 
   "RedisClientPool" - {
     "set & get" in {
-      val tasks: Seq[Task[(Int, GetSucceeded)]] = for (i <- 1 to 30)
+      val tasks: Seq[Task[(Int, ExecResponse)]] = for (i <- 1 to 30)
         yield {
           pool
             .withConnectionF { con =>
               for {
+                _ <- con.send(MultiRequest(UUID.randomUUID()))
                 _ <- con.send(SetRequest(UUID.randomUUID(), "a", i.toString))
                 _ <- Task.pure(Thread.sleep(10 * 5))
-                r <- con.send(GetRequest(UUID.randomUUID(), "a")).map(_.asInstanceOf[GetSucceeded])
+                _ <- con.send(GetRequest(UUID.randomUUID(), "a"))
+                r <- con.send(ExecRequest(UUID.randomUUID()))
               } yield (i, r)
             }
         }

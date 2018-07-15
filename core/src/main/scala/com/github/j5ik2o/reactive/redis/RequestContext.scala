@@ -2,7 +2,7 @@ package com.github.j5ik2o.reactive.redis
 
 import java.time.ZonedDateTime
 
-import com.github.j5ik2o.reactive.redis.command.transaction.{ ExecRequest, MultiRequest }
+import com.github.j5ik2o.reactive.redis.command.transactions.{ ExecRequest, MultiRequest }
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse }
 
 import scala.concurrent.Promise

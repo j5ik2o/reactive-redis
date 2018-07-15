@@ -7,10 +7,9 @@ import akka.actor.ActorSystem
 import cats.Show
 import cats.data.{ NonEmptyList, ReaderT }
 import com.github.j5ik2o.reactive.redis.command._
-import com.github.j5ik2o.reactive.redis.command.connection.{ PingFailed, PingRequest, PingSucceeded }
+import com.github.j5ik2o.reactive.redis.command.connection.{ PingFailed, PingRequest, PingSucceeded, PingSuspended }
 import com.github.j5ik2o.reactive.redis.command.keys._
 import com.github.j5ik2o.reactive.redis.command.strings._
-import monix.eval.Task
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -22,9 +21,10 @@ object RedisClient {
 
 trait ConnectionClient { this: RedisClient =>
 
-  def ping(message: Option[String] = None): ReaderTTaskRedisConnection[String] =
+  def ping(message: Option[String] = None): ReaderTTaskRedisConnection[Option[String]] =
     send(PingRequest(UUID.randomUUID(), message)).flatMap {
-      case PingSucceeded(_, _, result) => ReaderTTask.pure(result)
+      case PingSuspended(_, _)         => ReaderTTask.pure(None)
+      case PingSucceeded(_, _, result) => ReaderTTask.pure(Some(result))
       case PingFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
