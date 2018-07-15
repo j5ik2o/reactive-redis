@@ -4,12 +4,11 @@ import java.util.UUID
 
 import cats.Show
 import com.github.j5ik2o.reactive.redis.RedisIOException
-import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
+import com.github.j5ik2o.reactive.redis.command.{ CommandResponse, SimpleCommandRequest, StringParsersSupport }
 import com.github.j5ik2o.reactive.redis.parser.StringParsers
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
-import fastparse.byte.all._
 
-case class SetRequest(id: UUID, key: String, value: String) extends CommandRequest with StringParsersSupport {
+case class SetRequest(id: UUID, key: String, value: String) extends SimpleCommandRequest with StringParsersSupport {
   override type Response = SetResponse
 
   override def asString: String = s"""SET $key "$value""""
@@ -17,10 +16,12 @@ case class SetRequest(id: UUID, key: String, value: String) extends CommandReque
   override protected def responseParser: P[Expr] = StringParsers.simpleStringReply
 
   override def parseResponse: Handler = {
-    case SimpleExpr("OK") =>
-      SetSucceeded(UUID.randomUUID(), id)
-    case ErrorExpr(msg) =>
-      SetFailed(UUID.randomUUID(), id, RedisIOException(Some(msg)))
+    case (SimpleExpr("OK"), next) =>
+      (SetSucceeded(UUID.randomUUID(), id), next)
+    case (SimpleExpr("QUEUED"), next) =>
+      (SetSuspended(UUID.randomUUID(), id), next)
+    case (ErrorExpr(msg), next) =>
+      (SetFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
 }
@@ -33,5 +34,6 @@ object SetRequest {
 }
 
 sealed trait SetResponse                                              extends CommandResponse
+case class SetSuspended(id: UUID, requestId: UUID)                    extends SetResponse
 case class SetSucceeded(id: UUID, requestId: UUID)                    extends SetResponse
 case class SetFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends SetResponse

@@ -3,12 +3,12 @@ package com.github.j5ik2o.reactive.redis.command.keys
 import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
-import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse }
+import com.github.j5ik2o.reactive.redis.command.{ CommandResponse, SimpleCommandRequest }
 import com.github.j5ik2o.reactive.redis.parser.ByteParsers
 import com.github.j5ik2o.reactive.redis.parser.model.{ BytesOptExpr, ErrorExpr, Expr }
 import fastparse.byte.all._
 
-case class DumpRequest(id: UUID, key: String) extends CommandRequest {
+case class DumpRequest(id: UUID, key: String) extends SimpleCommandRequest {
   type Elem              = Byte
   type Repr              = Bytes
   override type Response = DumpResponse
@@ -19,10 +19,10 @@ case class DumpRequest(id: UUID, key: String) extends CommandRequest {
   override protected def convertToParseSource(s: Bytes): Bytes = s
 
   override protected def parseResponse: Handler = {
-    case BytesOptExpr(b) =>
-      DumpSucceeded(UUID.randomUUID(), id, b)
-    case ErrorExpr(msg) =>
-      DumpFailed(UUID.randomUUID(), id, RedisIOException(Some(msg)))
+    case (BytesOptExpr(b), next) =>
+      (DumpSucceeded(UUID.randomUUID(), id, b), next)
+    case (ErrorExpr(msg), next) =>
+      (DumpFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
 }

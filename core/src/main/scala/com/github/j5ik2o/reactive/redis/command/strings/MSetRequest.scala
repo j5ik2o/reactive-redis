@@ -3,11 +3,11 @@ package com.github.j5ik2o.reactive.redis.command.strings
 import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
-import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
+import com.github.j5ik2o.reactive.redis.command.{ CommandResponse, SimpleCommandRequest, StringParsersSupport }
 import com.github.j5ik2o.reactive.redis.parser.StringParsers
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 
-case class MSetRequest(id: UUID, values: Map[String, Any]) extends CommandRequest with StringParsersSupport {
+case class MSetRequest(id: UUID, values: Map[String, Any]) extends SimpleCommandRequest with StringParsersSupport {
   override type Response = MSetResponse
 
   override def asString: String = {
@@ -21,10 +21,10 @@ case class MSetRequest(id: UUID, values: Map[String, Any]) extends CommandReques
   override protected def responseParser: P[Expr] = StringParsers.simpleStringReply
 
   override protected def parseResponse: Handler = {
-    case SimpleExpr("OK") =>
-      MSetSucceeded(UUID.randomUUID(), id)
-    case ErrorExpr(msg) =>
-      MSetFailed(UUID.randomUUID(), id, RedisIOException(Some(msg)))
+    case (SimpleExpr("OK"), next) =>
+      (MSetSucceeded(UUID.randomUUID(), id), next)
+    case (ErrorExpr(msg), next) =>
+      (MSetFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
 }

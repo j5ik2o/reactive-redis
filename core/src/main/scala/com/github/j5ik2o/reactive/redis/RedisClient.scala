@@ -7,14 +7,26 @@ import akka.actor.ActorSystem
 import cats.Show
 import cats.data.{ NonEmptyList, ReaderT }
 import com.github.j5ik2o.reactive.redis.command._
+import com.github.j5ik2o.reactive.redis.command.connection.{ PingFailed, PingRequest, PingSucceeded }
 import com.github.j5ik2o.reactive.redis.command.keys._
 import com.github.j5ik2o.reactive.redis.command.strings._
+import monix.eval.Task
 
 import scala.concurrent.duration.FiniteDuration
 
 object RedisClient {
 
   def apply()(implicit system: ActorSystem): RedisClient = new RedisClient()
+
+}
+
+trait ConnectionClient { this: RedisClient =>
+
+  def ping(message: Option[String] = None): ReaderTTaskRedisConnection[String] =
+    send(PingRequest(UUID.randomUUID(), message)).flatMap {
+      case PingSucceeded(_, _, result) => ReaderTTask.pure(result)
+      case PingFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+    }
 
 }
 
@@ -152,6 +164,7 @@ trait StringsClient { this: RedisClient =>
 
   def get(key: String): ReaderTTaskRedisConnection[Option[String]] =
     send(GetRequest(UUID.randomUUID(), key)).flatMap {
+      case GetSuspended(_, _)         => ReaderTTask.pure(None)
       case GetSucceeded(_, _, result) => ReaderTTask.pure(result)
       case GetFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
@@ -217,6 +230,7 @@ trait StringsClient { this: RedisClient =>
 
   def set[A: Show](key: String, value: A): ReaderTTaskRedisConnection[Unit] =
     send(SetRequest(UUID.randomUUID(), key, value)).flatMap {
+      case SetSuspended(_, _)  => ReaderTTask.pure(())
       case SetSucceeded(_, _)  => ReaderTTask.pure(())
       case SetFailed(_, _, ex) => ReaderTTask.raiseError(ex)
     }
@@ -246,7 +260,7 @@ trait StringsClient { this: RedisClient =>
 
 }
 
-class RedisClient(implicit system: ActorSystem) extends StringsClient with KeysClient {
+class RedisClient(implicit system: ActorSystem) extends StringsClient with KeysClient with ConnectionClient {
 
   def send[C <: CommandRequest](cmd: C): ReaderTTaskRedisConnection[cmd.Response] = ReaderT(_.send(cmd))
 

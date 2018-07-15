@@ -4,12 +4,12 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
-import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
+import com.github.j5ik2o.reactive.redis.command.{ CommandResponse, SimpleCommandRequest, StringParsersSupport }
 import com.github.j5ik2o.reactive.redis.parser.StringParsers
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr }
 
 case class ExpireAtRequest(id: UUID, key: String, expiresAt: ZonedDateTime)
-    extends CommandRequest
+    extends SimpleCommandRequest
     with StringParsersSupport {
   override type Response = ExpireAtResponse
 
@@ -18,10 +18,10 @@ case class ExpireAtRequest(id: UUID, key: String, expiresAt: ZonedDateTime)
   override protected def responseParser: P[Expr] = StringParsers.integerReply
 
   override protected def parseResponse: Handler = {
-    case NumberExpr(n) =>
-      ExpireAtSucceeded(UUID.randomUUID(), id, n == 1)
-    case ErrorExpr(msg) =>
-      ExpireAtFailed(UUID.randomUUID(), id, RedisIOException(Some(msg)))
+    case (NumberExpr(n), next) =>
+      (ExpireAtSucceeded(UUID.randomUUID(), id, n == 1), next)
+    case (ErrorExpr(msg), next) =>
+      (ExpireAtFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 }
 

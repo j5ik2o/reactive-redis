@@ -4,6 +4,7 @@ import cats.data.ReaderT
 import monix.eval.Task
 
 package object redis {
-  type ReaderTTask[C, A]             = ReaderT[Task, C, A]
-  type ReaderTTaskRedisConnection[A] = ReaderTTask[RedisConnection, A]
+  type ReaderTTask[C, A]              = ReaderT[Task, C, A]
+  type ReaderTTaskRedisConnection[A]  = ReaderTTask[RedisConnection, A]
+  type ReaderRedisConnection[M[_], A] = ReaderT[M, RedisConnection, A]
 }

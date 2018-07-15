@@ -3,6 +3,7 @@ package com.github.j5ik2o.reactive.redis
 import java.net.InetSocketAddress
 
 import akka.actor.ActorSystem
+import akka.stream.scaladsl.Source
 import cats.implicits._
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
@@ -16,7 +17,7 @@ class RedisClientSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
     super.beforeAll()
     val connectionPoolConfig = ConnectionPoolConfig()
     val connectionConfig     = ConnectionConfig(new InetSocketAddress("127.0.0.1", redisServer.ports.get(0)))
-    connectionPool = RedisConnectionPool[Task](connectionPoolConfig, connectionConfig)
+    connectionPool = RedisConnectionPool.ofCommons[Task](connectionPoolConfig, connectionConfig)
     redisClient = RedisClient()
   }
 
@@ -28,6 +29,11 @@ class RedisClientSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
   } yield (key, value)
 
   "RedisClient" - {
+    "batch" in {
+      Source(List("s", "1", "2", "3", "e")).batch(Int.MaxValue, { v =>
+        Seq(v)
+      }) { case (r, e) => r :+ e }
+    }
     "set & get" in forAll(gen) {
       case (key, value) =>
         val program = for {

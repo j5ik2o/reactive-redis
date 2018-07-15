@@ -9,6 +9,7 @@ import akka.event.{ LogSource, Logging }
 import akka.stream._
 import akka.stream.scaladsl._
 import akka.util.ByteString
+import com.github.j5ik2o.reactive.redis.command.transaction.TxStage
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse }
 import monix.eval.Task
 import monix.execution.Scheduler
@@ -18,7 +19,7 @@ import scala.concurrent.{ Future, Promise }
 object RedisConnection {
 
   implicit val logSource: LogSource[RedisConnection] = new LogSource[RedisConnection] {
-    override def genString(o: RedisConnection): String  = s"${o.getClass.getName}:${o.id}"
+    override def genString(o: RedisConnection): String  = s"connection:${o.id}"
     override def getClazz(o: RedisConnection): Class[_] = o.getClass
   }
 
@@ -27,9 +28,13 @@ object RedisConnection {
     case _                     => Supervision.Stop
   }
 
+  def apply(connectionConfig: ConnectionConfig,
+            supervisionDecider: Option[Supervision.Decider] = None)(implicit system: ActorSystem): RedisConnection =
+    new RedisConnection(connectionConfig, supervisionDecider)
+
 }
 
-class RedisConnection(connectionConfig: ConnectionConfig, supervisionDecider: Option[Supervision.Decider] = None)(
+class RedisConnection(connectionConfig: ConnectionConfig, supervisionDecider: Option[Supervision.Decider])(
     implicit system: ActorSystem
 ) {
 
@@ -58,14 +63,14 @@ class RedisConnection(connectionConfig: ConnectionConfig, supervisionDecider: Op
       val requestFlow = b.add(
         Flow[RequestContext]
           .map { rc =>
-            log.debug(s"con_id = {}: request = [{}]", id, rc.commandRequestString)
+            log.debug(s"request = [{}]", rc.commandRequestString)
             (ByteString.fromString(rc.commandRequest.asString + "\r\n"), rc)
           }
       )
       val responseFlow = b.add(Flow[(ByteString, RequestContext)].map {
         case (byteString, requestContext) =>
-          log.debug(s"con_id = {}: response = [{}]", id, byteString.utf8String)
-          ResponseContext(byteString, requestContext, ZonedDateTime.now())
+          log.debug(s"response = [{}]", byteString.utf8String)
+          ResponseContext(byteString, requestContext)
       })
       val unzip = b.add(Unzip[ByteString, RequestContext]())
       val zip   = b.add(Zip[ByteString, RequestContext]())
@@ -79,9 +84,9 @@ class RedisConnection(connectionConfig: ConnectionConfig, supervisionDecider: Op
   protected val (requestQueue: SourceQueueWithComplete[RequestContext], killSwitch: UniqueKillSwitch) = Source
     .queue[RequestContext](requestBufferSize, overflowStrategy)
     .via(connectionFlow)
+    .via(new TxStage)
     .map { responseContext =>
-      log.debug(s"con_id = {}, req_id = {}, command = {}: parse",
-                id,
+      log.debug(s"req_id = {}, command = {}: parse",
                 responseContext.commandRequestId,
                 responseContext.commandRequestString)
       val result = responseContext.parseResponse
@@ -93,7 +98,9 @@ class RedisConnection(connectionConfig: ConnectionConfig, supervisionDecider: Op
 
   def shutdown(): Unit = killSwitch.shutdown()
 
-  def toFlow[C <: CommandRequest](parallelism: Int = 1)(implicit scheduler: Scheduler): Flow[C, C#Response, NotUsed] =
+  def toFlow[C <: CommandRequest](
+      parallelism: Int = 1
+  )(implicit scheduler: Scheduler): Flow[C, C#Response, NotUsed] =
     Flow[C].mapAsync(parallelism) { cmd =>
       send(cmd).runAsync
     }

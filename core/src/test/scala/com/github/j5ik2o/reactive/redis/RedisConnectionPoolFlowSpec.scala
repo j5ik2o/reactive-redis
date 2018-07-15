@@ -19,7 +19,7 @@ class RedisConnectionPoolFlowSpec extends ActorSpec(ActorSystem("RedisConnection
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    pool = RedisConnectionPool[Task](
+    pool = RedisConnectionPool.ofCommons[Task](
       ConnectionPoolConfig(),
       ConnectionConfig(new InetSocketAddress("127.0.0.1", redisServer.ports().get(0)))
     )

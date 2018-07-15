@@ -4,6 +4,8 @@ import com.github.j5ik2o.reactive.redis.parser.model._
 
 object StringParsers {
   import fastparse.all._
+  val QUEUED         = "QUEUED"
+  val OK             = "OK"
   val digit: P0      = P(CharIn('0' to '9'))
   val lowerAlpha: P0 = P(CharIn('a' to 'z'))
   val upperAlpha: P0 = P(CharIn('A' to 'Z'))
@@ -28,10 +30,10 @@ object StringParsers {
   val errorWithCrLf: P[ErrorExpr]           = P(error ~ crlf)
   val simpleWithCrLf: P[SimpleExpr]         = P(simple ~ crlf)
   val integerWithCrLf: P[NumberExpr]        = P(number ~ crlf)
-  val arrayPrefixWithCrlf: P[ArraySizeExpr] = P(arrayPrefix ~ crlf).map(ArraySizeExpr)
+  val arrayPrefixWithCrLf: P[ArraySizeExpr] = P(arrayPrefix ~ crlf).map(ArraySizeExpr)
 
   def array[A <: Expr](elementExpr: P[A]): P[ArrayExpr[A]] =
-    P(arrayPrefixWithCrlf ~ elementExpr.rep(sep = crlf)).map {
+    P(arrayPrefixWithCrLf ~ elementExpr.rep(sep = crlf)).map {
       case (size, values) =>
         require(size.n == values.size)
         ArrayExpr(values)
@@ -55,6 +57,8 @@ object StringParsers {
       P(string ~ crlf).map(v => StringOptExpr(Some(v.v)))
     }
   }
+
+  val arrayPrefixWithCrLfOrErrorWithCrLf: P[Expr] = P(arrayPrefixWithCrLf | errorWithCrLf)
 
   val bulkStringWithCrLf: P[StringOptExpr] = P((length ~ crlf).flatMap(l => bulkStringRest(l.n)))
 

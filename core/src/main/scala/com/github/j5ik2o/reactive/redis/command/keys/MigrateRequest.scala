@@ -3,14 +3,14 @@ package com.github.j5ik2o.reactive.redis.command.keys
 import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
-import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
+import com.github.j5ik2o.reactive.redis.command.{ CommandResponse, SimpleCommandRequest, StringParsersSupport }
 import com.github.j5ik2o.reactive.redis.parser.StringParsers
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 
 import scala.concurrent.duration.FiniteDuration
 
 case class MigrateRequest(id: UUID, host: String, port: Int, key: String, toDbNo: Int, timeout: FiniteDuration)
-    extends CommandRequest
+    extends SimpleCommandRequest
     with StringParsersSupport {
   override type Response = MigrateResponse
 
@@ -19,10 +19,10 @@ case class MigrateRequest(id: UUID, host: String, port: Int, key: String, toDbNo
   override protected def responseParser: P[Expr] = StringParsers.simpleStringReply
 
   override protected def parseResponse: Handler = {
-    case SimpleExpr("OK") =>
-      MigrateSucceeded(UUID.randomUUID(), id)
-    case ErrorExpr(msg) =>
-      MigrateFailed(UUID.randomUUID(), id, RedisIOException(Some(msg)))
+    case (SimpleExpr("OK"), next) =>
+      (MigrateSucceeded(UUID.randomUUID(), id), next)
+    case (ErrorExpr(msg), next) =>
+      (MigrateFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
 }

@@ -9,6 +9,7 @@ import com.github.j5ik2o.reactive.redis.command.strings._
 import monix.execution.Scheduler.Implicits.global
 import cats.implicits._
 import com.github.j5ik2o.reactive.redis.command.keys.{ KeysRequest, KeysSucceeded }
+import com.github.j5ik2o.reactive.redis.command.transaction.{ ExecRequest, ExecSucceeded, MultiRequest, MultiSucceeded }
 
 class RedisConnectionSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
 
@@ -17,7 +18,7 @@ class RedisConnectionSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    connection = new RedisConnection(ConnectionConfig(new InetSocketAddress("127.0.0.1", redisServer.ports.get(0))))
+    connection = RedisConnection(ConnectionConfig(new InetSocketAddress("127.0.0.1", redisServer.ports.get(0))))
 
   }
 
@@ -159,6 +160,15 @@ class RedisConnectionSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
       val result =
         connection.send(KeysRequest(UUID.randomUUID(), "tst-*")).runAsync.futureValue.asInstanceOf[KeysSucceeded]
       println(result.values)
+    }
+    "tx" in {
+      val resultStart =
+        connection.send(MultiRequest(UUID.randomUUID())).runAsync.futureValue.asInstanceOf[MultiSucceeded]
+      redisClient.set("test-1", UUID.randomUUID().toString).run(connection).runAsync.futureValue
+      redisClient.get("test-1").run(connection).runAsync.futureValue
+      val resultFinish =
+        connection.send(ExecRequest(UUID.randomUUID())).runAsync.futureValue.asInstanceOf[ExecSucceeded]
+      println(resultFinish)
     }
   }
 }

@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr }
 
 case class BitPosRequest(id: UUID, key: String, bit: Int, startAndEnd: Option[StartAndEnd] = None)
-    extends CommandRequest
+    extends SimpleCommandRequest
     with StringParsersSupport {
   override type Response = BitPosResponse
 
@@ -17,10 +17,10 @@ case class BitPosRequest(id: UUID, key: String, bit: Int, startAndEnd: Option[St
   override protected def responseParser: P[Expr] = StringParsers.integerReply
 
   override protected def parseResponse: Handler = {
-    case NumberExpr(n) =>
-      BitPosSucceeded(UUID.randomUUID, id, n)
-    case ErrorExpr(msg) =>
-      BitPosFailed(UUID.randomUUID, id, RedisIOException(Some(msg)))
+    case (NumberExpr(n), next) =>
+      (BitPosSucceeded(UUID.randomUUID, id, n), next)
+    case (ErrorExpr(msg), next) =>
+      (BitPosFailed(UUID.randomUUID, id, RedisIOException(Some(msg))), next)
   }
 }
 

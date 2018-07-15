@@ -12,7 +12,7 @@ case class BitOpRequest(id: UUID,
                         outputKey: String,
                         inputKey1: String,
                         inputKey2: String)
-    extends CommandRequest
+    extends SimpleCommandRequest
     with StringParsersSupport {
   override type Response = BitOpResponse
 
@@ -21,10 +21,10 @@ case class BitOpRequest(id: UUID,
   override protected def responseParser: P[Expr] = StringParsers.integerReply
 
   override protected def parseResponse: Handler = {
-    case NumberExpr(n) =>
-      BitOpSucceeded(UUID.randomUUID(), id, n)
-    case ErrorExpr(msg) =>
-      BitOpFailed(UUID.randomUUID(), id, RedisIOException(Some(msg)))
+    case (NumberExpr(n), next) =>
+      (BitOpSucceeded(UUID.randomUUID(), id, n), next)
+    case (ErrorExpr(msg), next) =>
+      (BitOpFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 }
 

@@ -20,7 +20,7 @@ abstract class ActorSpec(_system: ActorSystem)
     with PropertyChecks
     with RedisSpecSupport {
 
-  implicit override val patienceConfig: PatienceConfig = PatienceConfig(15 * timeFactor seconds)
+  implicit override val patienceConfig: PatienceConfig = PatienceConfig(30 * timeFactor seconds)
 
   implicit val materializer = ActorMaterializer()
 

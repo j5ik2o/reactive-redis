@@ -3,11 +3,11 @@ package com.github.j5ik2o.reactive.redis.command.keys
 import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
-import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
+import com.github.j5ik2o.reactive.redis.command.{ CommandResponse, SimpleCommandRequest, StringParsersSupport }
 import com.github.j5ik2o.reactive.redis.parser.StringParsers
 import com.github.j5ik2o.reactive.redis.parser.model.{ ArrayExpr, ErrorExpr, Expr, StringOptExpr }
 
-case class KeysRequest(id: UUID, pattern: String) extends CommandRequest with StringParsersSupport {
+case class KeysRequest(id: UUID, pattern: String) extends SimpleCommandRequest with StringParsersSupport {
   override type Response = KeysResponse
 
   override def asString: String = s"KEYS $pattern"
@@ -15,11 +15,11 @@ case class KeysRequest(id: UUID, pattern: String) extends CommandRequest with St
   override protected def responseParser: P[Expr] = StringParsers.stringOptArrayReply
 
   override protected def parseResponse: Handler = {
-    case ArrayExpr(values) =>
+    case (ArrayExpr(values), next) =>
       val _values = values.asInstanceOf[Seq[StringOptExpr]]
-      KeysSucceeded(UUID.randomUUID(), id, _values.map(_.vOp))
-    case ErrorExpr(msg) =>
-      KeysFailed(UUID.randomUUID(), id, RedisIOException(Some(msg)))
+      (KeysSucceeded(UUID.randomUUID(), id, _values.map(_.vOp)), next)
+    case (ErrorExpr(msg), next) =>
+      (KeysFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 }
 

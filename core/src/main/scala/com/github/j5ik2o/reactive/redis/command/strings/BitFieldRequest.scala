@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers
 import com.github.j5ik2o.reactive.redis.parser.model.{ ArrayExpr, ErrorExpr, Expr, NumberExpr }
 
 case class BitFieldRequest(id: UUID, key: String, options: BitFieldRequest.SubOption*)
-    extends CommandRequest
+    extends SimpleCommandRequest
     with StringParsersSupport {
   override type Response = BitFieldResponse
 
@@ -17,11 +17,11 @@ case class BitFieldRequest(id: UUID, key: String, options: BitFieldRequest.SubOp
   override protected def responseParser: P[Expr] = StringParsers.integerArrayReply
 
   override protected def parseResponse: Handler = {
-    case ArrayExpr(values) =>
+    case (ArrayExpr(values), next) =>
       val _values = values.asInstanceOf[Seq[NumberExpr]]
-      BitFieldSucceeded(UUID.randomUUID(), id, _values.map(_.n))
-    case ErrorExpr(msg) =>
-      BitFieldFailed(UUID.randomUUID(), id, RedisIOException(Some(msg)))
+      (BitFieldSucceeded(UUID.randomUUID(), id, _values.map(_.n)), next)
+    case (ErrorExpr(msg), next) =>
+      (BitFieldFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
 }

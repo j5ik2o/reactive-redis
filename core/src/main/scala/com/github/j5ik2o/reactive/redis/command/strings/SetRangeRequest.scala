@@ -4,12 +4,12 @@ import java.util.UUID
 
 import cats.Show
 import com.github.j5ik2o.reactive.redis.RedisIOException
-import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
+import com.github.j5ik2o.reactive.redis.command.{ CommandResponse, SimpleCommandRequest, StringParsersSupport }
 import com.github.j5ik2o.reactive.redis.parser.StringParsers
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr }
 
 case class SetRangeRequest(id: UUID, key: String, range: Int, value: String)
-    extends CommandRequest
+    extends SimpleCommandRequest
     with StringParsersSupport {
   override type Response = SetRangeResponse
 
@@ -18,10 +18,10 @@ case class SetRangeRequest(id: UUID, key: String, range: Int, value: String)
   override protected def responseParser: P[Expr] = StringParsers.integerReply
 
   override protected def parseResponse: Handler = {
-    case NumberExpr(n) =>
-      SetRangeSucceeded(UUID.randomUUID(), id, n)
-    case ErrorExpr(msg) =>
-      SetRangeFailed(UUID.randomUUID(), id, RedisIOException(Some(msg)))
+    case (NumberExpr(n), next) =>
+      (SetRangeSucceeded(UUID.randomUUID(), id, n), next)
+    case (ErrorExpr(msg), next) =>
+      (SetRangeFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
 }

@@ -1,48 +1,66 @@
 package com.github.j5ik2o.reactive.redis
 
 import java.net.InetSocketAddress
-import java.time.ZonedDateTime
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import com.github.j5ik2o.reactive.redis.command.CommandResponse
-import com.github.j5ik2o.reactive.redis.command.strings.{ GetRequest, SetRequest }
+import com.github.j5ik2o.reactive.redis.command.strings.{ GetRequest, GetSucceeded, SetRequest }
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 
-import scala.concurrent.Future
-import cats.data.ReaderT
+import scala.concurrent.duration._
+
 class RedisConnectionPoolSpec extends ActorSpec(ActorSystem("RedisClientPoolSpec")) {
 
   var pool: RedisConnectionPool[Task] = _
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    pool = RedisConnectionPool[Task](
-      ConnectionPoolConfig(),
+    pool = RedisConnectionPool.ofCommons[Task](
+      ConnectionPoolConfig(
+        maxTotal = Some(30),
+        maxIdle = Some(10),
+        minIdle = Some(5),
+        //timeBetweenEvictionRuns = Some(3 seconds),
+        //testOnCreate = Some(true),
+        //testOnBorrow = Some(true),
+        //testOnReturn = Some(true),
+        //testWhileIdle = Some(true),
+        abandonedConfig = Some(
+          AbandonedConfig(
+            logAbandoned = Some(true),
+            removeAbandonedOnBorrow = Some(true),
+            removeAbandonedOnMaintenance = Some(true),
+            removeAbandonedTimeout = Some(1 seconds),
+            requireFullStackTrace = Some(true)
+          )
+        )
+      ),
       ConnectionConfig(remoteAddress = new InetSocketAddress("127.0.0.1", redisServer.ports().get(0)))
     )
   }
 
   "RedisClientPool" - {
     "set & get" in {
-      val futures: Seq[Future[CommandResponse]] = for (i <- 1 to 100)
+      val tasks: Seq[Task[(Int, GetSucceeded)]] = for (i <- 1 to 30)
         yield {
           pool
             .withConnectionF { con =>
               for {
-                _ <- con.send(SetRequest(UUID.randomUUID(), "a", ZonedDateTime.now().toString))
-                _ <- Task.pure(Thread.sleep(100 * 5))
-                r <- con.send(GetRequest(UUID.randomUUID(), "a"))
-              } yield r
-            }
-            .runAsync
-            .map { v =>
-              println(v)
-              v
+                _ <- con.send(SetRequest(UUID.randomUUID(), "a", i.toString))
+                _ <- Task.pure(Thread.sleep(10 * 5))
+                r <- con.send(GetRequest(UUID.randomUUID(), "a")).map(_.asInstanceOf[GetSucceeded])
+              } yield (i, r)
             }
         }
-      Future.sequence(futures).futureValue
+
+      Task
+        .sequence(tasks)
+        .map { e =>
+          println(e); e
+        }
+        .runAsync
+        .futureValue
       pool.dispose()
     }
   }
