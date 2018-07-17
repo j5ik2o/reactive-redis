@@ -74,21 +74,64 @@ lazy val core = (project in file("core")).settings(
   coreSettings ++ Seq(
     name := "reactive-redis-core",
     libraryDependencies ++= Seq(
-      "com.typesafe.akka"  %% "akka-actor"     % akkaVersion,
-      "com.typesafe.akka"  %% "akka-testkit"   % akkaVersion % Test,
-      "com.typesafe.akka"  %% "akka-stream"    % akkaVersion,
-      "com.typesafe.akka"  %% "akka-slf4j"     % akkaVersion,
-      "com.lihaoyi"        %% "fastparse"      % "1.0.0",
-      "com.lihaoyi"        %% "fastparse-byte" % "1.0.0",
-      "org.apache.commons" % "commons-pool2"   % "2.6.0",
-      "com.github.kstyrc"  % "embedded-redis"  % "0.6" % Test
+      "com.typesafe.akka" %% "akka-actor"     % akkaVersion,
+      "com.typesafe.akka" %% "akka-testkit"   % akkaVersion % Test,
+      "com.typesafe.akka" %% "akka-stream"    % akkaVersion,
+      "com.typesafe.akka" %% "akka-slf4j"     % akkaVersion,
+      "com.lihaoyi"       %% "fastparse"      % "1.0.0",
+      "com.lihaoyi"       %% "fastparse-byte" % "1.0.0",
+      "com.github.kstyrc" % "embedded-redis"  % "0.6" % Test
     )
   )
 )
+
+lazy val `pool-commons` = (project in file("pool-commons"))
+  .settings(
+    coreSettings ++ Seq(
+      name := "reactive-redis-pool-commons",
+      libraryDependencies ++= Seq(
+        "org.apache.commons" % "commons-pool2" % "2.6.0"
+      )
+    )
+  )
+  .dependsOn(core % "compile;test->test")
+
+lazy val `pool-fop` = (project in file("pool-fop"))
+  .settings(
+    coreSettings ++ Seq(
+      name := "reactive-redis-pool-fop",
+      libraryDependencies ++= Seq(
+        "cn.danielw" % "fast-object-pool" % "2.1.0"
+      )
+    )
+  )
+  .dependsOn(core % "compile;test->test")
+
+lazy val `pool-stormpot` = (project in file("pool-stormpot"))
+  .settings(
+    coreSettings ++ Seq(
+      name := "reactive-redis-pool-stormpot",
+      libraryDependencies ++= Seq(
+        "com.github.chrisvest" % "stormpot" % "2.4"
+      )
+    )
+  )
+  .dependsOn(core % "compile;test->test")
+
+lazy val `pool-scala` = (project in file("pool-scala"))
+  .settings(
+    coreSettings ++ Seq(
+      name := "reactive-redis-pool-scala",
+      libraryDependencies ++= Seq(
+        "io.github.andrebeat" %% "scala-pool" % "0.4.1"
+      )
+    )
+  )
+  .dependsOn(core % "compile;test->test")
 
 lazy val `root` = (project in file("."))
   .settings(coreSettings)
   .settings(
     name := "reactive-redis-project"
   )
-  .aggregate(core)
+  .aggregate(core, `pool-commons`, `pool-fop`, `pool-scala`, `pool-stormpot`)

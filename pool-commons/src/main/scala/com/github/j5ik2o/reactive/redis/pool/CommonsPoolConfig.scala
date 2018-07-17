@@ -1,7 +1,8 @@
-package com.github.j5ik2o.reactive.redis
+package com.github.j5ik2o.reactive.redis.pool
 
 import java.io.PrintWriter
 
+import com.github.j5ik2o.reactive.redis.RedisConnection
 import org.apache.commons.pool2.impl.EvictionPolicy
 
 import scala.concurrent.duration.Duration
@@ -16,13 +17,13 @@ import scala.concurrent.duration.Duration
   * @param logWriter
   * @param useUsageTracking
   */
-case class AbandonedConfig(removeAbandonedOnBorrow: Option[Boolean] = None,
-                           removeAbandonedOnMaintenance: Option[Boolean] = None,
-                           removeAbandonedTimeout: Option[Duration] = None,
-                           logAbandoned: Option[Boolean] = None,
-                           requireFullStackTrace: Option[Boolean] = None,
-                           logWriter: Option[PrintWriter] = None,
-                           useUsageTracking: Option[Boolean] = None)
+case class CommonsAbandonedConfig(removeAbandonedOnBorrow: Option[Boolean] = None,
+                                  removeAbandonedOnMaintenance: Option[Boolean] = None,
+                                  removeAbandonedTimeout: Option[Duration] = None,
+                                  logAbandoned: Option[Boolean] = None,
+                                  requireFullStackTrace: Option[Boolean] = None,
+                                  logWriter: Option[PrintWriter] = None,
+                                  useUsageTracking: Option[Boolean] = None)
 
 /**
   *
@@ -49,7 +50,7 @@ case class AbandonedConfig(removeAbandonedOnBorrow: Option[Boolean] = None,
   * @param minIdle number of min idle connections
   * @param abandonedConfig
   */
-case class ConnectionPoolConfig(
+case class CommonsPoolConfig(
     lifo: Option[Boolean] = None,
     fairness: Option[Boolean] = None,
     maxWaitMillis: Option[Duration] = None,
@@ -57,7 +58,7 @@ case class ConnectionPoolConfig(
     evictorShutdownTimeout: Option[Duration] = None,
     softMinEvictableIdleTime: Option[Duration] = None,
     blockWhenExhausted: Option[Boolean] = None,
-    evictionPolicy: Option[EvictionPolicy[RedisConnection]] = None,
+    evictionPolicy: Option[EvictionPolicy[RedisConnectionPoolable]] = None,
     evictionPolicyClassName: Option[String] = None,
     testOnCreate: Option[Boolean] = None,
     testOnBorrow: Option[Boolean] = None,
@@ -71,5 +72,5 @@ case class ConnectionPoolConfig(
     maxTotal: Option[Int] = None,
     maxIdle: Option[Int] = None,
     minIdle: Option[Int] = None,
-    abandonedConfig: Option[AbandonedConfig] = None
+    abandonedConfig: Option[CommonsAbandonedConfig] = None
 )

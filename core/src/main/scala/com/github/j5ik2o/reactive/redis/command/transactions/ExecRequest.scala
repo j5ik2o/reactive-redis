@@ -9,13 +9,14 @@ import com.github.j5ik2o.reactive.redis.parser.model.{ ArraySizeExpr, ErrorExpr,
 import scodec.bits.ByteVector
 
 case class ExecRequest(id: UUID) extends TransactionalCommandRequest with StringParsersSupport {
+
   override type Response = ExecResponse
 
   override def asString: String = "EXEC"
 
   override protected def responseParser: P[Expr] = StringParsers.arrayPrefixWithCrLfOrErrorWithCrLf
 
-  protected def parseResponse(text: ByteVector, requests: Seq[SimpleCommandRequest]): Handler = {
+  protected def parseResponse(text: ByteVector, requests: Seq[CommandRequest]): Handler = {
     case (ArraySizeExpr(size), next) =>
       val result =
         if (size == -1)
@@ -31,6 +32,7 @@ case class ExecRequest(id: UUID) extends TransactionalCommandRequest with String
       (ExecFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
+  override val isMasterOnly: Boolean = true
 }
 
 sealed trait ExecResponse                                                           extends CommandResponse

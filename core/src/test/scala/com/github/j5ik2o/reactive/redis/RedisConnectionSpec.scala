@@ -16,14 +16,14 @@ import com.github.j5ik2o.reactive.redis.command.transactions.{
   MultiSucceeded
 }
 
-class RedisConnectionSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
+class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisClientSpec")) {
 
   var connection: RedisConnection = _
   val redisClient: RedisClient    = RedisClient()
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    connection = RedisConnection(ConnectionConfig(new InetSocketAddress("127.0.0.1", redisServer.ports.get(0))))
+    connection = RedisConnection(PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.ports.get(0))))
 
   }
 
@@ -50,7 +50,7 @@ class RedisConnectionSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
         .value shouldBe 3
       val result =
         redisClient.get(key).run(connection).runAsync.futureValue
-      result shouldBe Some("123")
+      result.value shouldBe Some("123")
     }
     "bitcount" in {
       val key   = UUID.randomUUID().toString
@@ -82,7 +82,7 @@ class RedisConnectionSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
         .asInstanceOf[BitOpSucceeded]
       val value = redisClient.get(key3).run(connection).runAsync.futureValue
       result.value shouldBe 6
-      value shouldBe Some("`bc`ab")
+      value.value shouldBe Some("`bc`ab")
     }
     "bitpos" in {
       val key = UUID.randomUUID().toString
@@ -137,7 +137,7 @@ class RedisConnectionSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
         connection.send(GetSetRequest(UUID.randomUUID(), key, "b")).runAsync.futureValue.asInstanceOf[GetSetSucceeded]
       result.value shouldBe Some("a")
       val result2 = redisClient.get(key).run(connection).runAsync.futureValue
-      result2 shouldBe Some("b")
+      result2.value shouldBe Some("b")
     }
     "incr" in {}
     "incrby" in {}

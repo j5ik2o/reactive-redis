@@ -4,12 +4,15 @@ import java.util.UUID
 
 import cats.Show
 import com.github.j5ik2o.reactive.redis.RedisIOException
-import com.github.j5ik2o.reactive.redis.command.{ CommandResponse, SimpleCommandRequest, StringParsersSupport }
+import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 
-case class SetRequest(id: UUID, key: String, value: String) extends SimpleCommandRequest with StringParsersSupport {
+case class SetRequest(id: UUID, key: String, value: String) extends CommandRequest with StringParsersSupport {
+
   override type Response = SetResponse
+
+  override val isMasterOnly: Boolean = true
 
   override def asString: String = s"""SET $key "$value""""
 

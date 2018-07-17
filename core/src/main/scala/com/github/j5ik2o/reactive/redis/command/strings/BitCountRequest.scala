@@ -9,9 +9,11 @@ import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberEx
 import fastparse.all._
 
 case class BitCountRequest(id: UUID, key: String, startAndEnd: Option[StartAndEnd] = None)
-    extends SimpleCommandRequest
+    extends CommandRequest
     with StringParsersSupport {
   override type Response = BitCountResponse
+
+  override val isMasterOnly: Boolean = false
 
   override def asString: String = s"BITCOUNT $key" + startAndEnd.fold("")(e => " " + e.start + " " + e.end)
 
@@ -25,6 +27,7 @@ case class BitCountRequest(id: UUID, key: String, startAndEnd: Option[StartAndEn
     case (ErrorExpr(msg), next) =>
       (BitCountFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
 }
 
 sealed trait BitCountResponse                                              extends CommandResponse

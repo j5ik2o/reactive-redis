@@ -3,12 +3,15 @@ package com.github.j5ik2o.reactive.redis.command.transactions
 import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
-import com.github.j5ik2o.reactive.redis.command.{ CommandResponse, SimpleCommandRequest, StringParsersSupport }
+import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
 import com.github.j5ik2o.reactive.redis.parser.StringParsers
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 
-case class MultiRequest(id: UUID) extends SimpleCommandRequest with StringParsersSupport {
+case class MultiRequest(id: UUID) extends CommandRequest with StringParsersSupport {
+
   override type Response = MultiResponse
+
+  override val isMasterOnly: Boolean = true
 
   override def asString: String = "MULTI"
 
@@ -20,6 +23,7 @@ case class MultiRequest(id: UUID) extends SimpleCommandRequest with StringParser
     case (ErrorExpr(msg), next) =>
       (MultiFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
 }
 
 sealed trait MultiResponse                                              extends CommandResponse

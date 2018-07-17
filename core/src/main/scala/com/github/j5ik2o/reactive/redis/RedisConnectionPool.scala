@@ -1,61 +1,16 @@
 package com.github.j5ik2o.reactive.redis
-
-import java.util.UUID
-
-import akka.actor.ActorSystem
-import akka.event.{ LogSource, Logging }
-import akka.stream.Supervision
+import akka.actor.{ ActorSystem, PoisonPill }
+import akka.pattern.ask
+import akka.routing._
+import akka.util.Timeout
 import cats.data.ReaderT
-import cats.implicits._
 import cats.{ Monad, MonadError }
+import com.github.j5ik2o.reactive.redis.pool.RedisConnectionActor.{ BorrowConnection, ConnectionGotten }
+import com.github.j5ik2o.reactive.redis.pool.{ RedisConnectionActor, RedisConnectionPoolActor }
 import monix.eval.Task
 import monix.execution.Scheduler
-import org.apache.commons.pool2.impl.{ DefaultPooledObject, GenericObjectPool, GenericObjectPoolConfig }
-import org.apache.commons.pool2.{ BasePooledObjectFactory, PooledObject }
 
-import scala.concurrent.Await
 import scala.concurrent.duration._
-
-private class RedisConnectionPoolFactory(connectionConfig: ConnectionConfig,
-                                         supervisionDecider: Option[Supervision.Decider],
-                                         validationTimeout: FiniteDuration)(
-    implicit system: ActorSystem,
-    scheduler: Scheduler
-) extends BasePooledObjectFactory[RedisConnection] {
-
-  implicit val logSource: LogSource[RedisConnectionPoolFactory] = new LogSource[RedisConnectionPoolFactory] {
-    override def genString(o: RedisConnectionPoolFactory): String  = o.getClass.getName
-    override def getClazz(o: RedisConnectionPoolFactory): Class[_] = o.getClass
-  }
-
-  val log = Logging(system, this)
-
-  private val redisClient = RedisClient()
-
-  override def create(): RedisConnection = RedisConnection(connectionConfig, supervisionDecider)
-
-  override def destroyObject(p: PooledObject[RedisConnection]): Unit =
-    p.getObject.shutdown()
-
-  override def wrap(t: RedisConnection): PooledObject[RedisConnection] = new DefaultPooledObject(t)
-
-  override def validateObject(p: PooledObject[RedisConnection]): Boolean = {
-    val connection = p.getObject
-    val id         = UUID.randomUUID().toString
-    try {
-      if (Await.result(redisClient.ping(Some(id)).run(connection).runAsync, validationTimeout).contains(id))
-        true
-      else {
-        log.warning("Failed to ping")
-        true
-      }
-    } catch {
-      case _: Throwable =>
-        false
-    }
-  }
-
-}
 
 object RedisConnectionPool {
 
@@ -75,15 +30,42 @@ object RedisConnectionPool {
     }
   }
 
-  def ofCommons[M[_]](connectionPoolConfig: ConnectionPoolConfig,
-                      connectionConfig: ConnectionConfig,
-                      supervisionDecider: Option[Supervision.Decider] = None,
-                      validationTimeout: FiniteDuration = 3 seconds)(
+  def ofRoundRobin(
+      sizePerPeer: Int,
+      peerConfigs: Seq[PeerConfig],
+      newConnection: PeerConfig => RedisConnection,
+      resizer: Option[Resizer] = None,
+      passingTimeout: FiniteDuration = 3 seconds
+  )(implicit system: ActorSystem, scheduler: Scheduler, ME: MonadError[Task, Throwable]): RedisConnectionPool[Task] =
+    apply(RoundRobinPool(sizePerPeer, resizer), peerConfigs, newConnection, passingTimeout)(
+      system,
+      scheduler,
+      ME
+    )
+
+  def ofBalancing(sizePerPeer: Int,
+                  peerConfigs: Seq[PeerConfig],
+                  newConnection: PeerConfig => RedisConnection,
+                  passingTimeout: FiniteDuration = 3 seconds)(
       implicit system: ActorSystem,
       scheduler: Scheduler,
-      ME: MonadError[M, Throwable]
-  ): RedisConnectionPool[M] =
-    new RedisConnectionPoolCommons[M](connectionPoolConfig, connectionConfig, supervisionDecider, validationTimeout)
+      ME: MonadError[Task, Throwable]
+  ): RedisConnectionPool[Task] =
+    apply(BalancingPool(sizePerPeer), peerConfigs, newConnection, passingTimeout)(
+      system,
+      scheduler,
+      ME
+    )
+
+  def apply(pool: Pool,
+            peerConfigs: Seq[PeerConfig],
+            newConnection: PeerConfig => RedisConnection,
+            passingTimeout: FiniteDuration = 3 seconds)(
+      implicit system: ActorSystem,
+      scheduler: Scheduler,
+      ME: MonadError[Task, Throwable]
+  ): RedisConnectionPool[Task] =
+    new DefaultPool(pool, peerConfigs, newConnection, passingTimeout)(system, scheduler, ME)
 
 }
 
@@ -91,148 +73,55 @@ abstract class RedisConnectionPool[M[_]](implicit ME: MonadError[M, Throwable]) 
 
   def withConnectionF[T](f: RedisConnection => M[T]): M[T] = withConnectionM(ReaderT(f))
 
-  def withConnectionM[T](reader: ReaderRedisConnection[M, T]): M[T] = {
-    for {
-      connection <- borrowConnection
-      result <- reader
-        .run(connection)
-        .flatMap { result =>
-          returnConnection(connection).map(_ => result)
-        }
-        .recoverWith {
-          case error =>
-            invalidateConnection(connection).flatMap(_ => ME.raiseError(error))
-        }
-    } yield result
-  }
+  def withConnectionM[T](reader: ReaderRedisConnection[M, T]): M[T]
 
   def borrowConnection: M[RedisConnection]
 
-  def returnConnection(redisClient: RedisConnection): M[Unit]
-
-  def invalidateConnection(redisClient: RedisConnection): M[Unit]
+  def returnConnection(redisConnection: RedisConnection): M[Unit]
 
   def numActive: Int
-
-  def numIdle: Int
 
   def clear(): Unit
 
   def dispose(): Unit
+
 }
 
-class RedisConnectionPoolCommons[M[_]](connectionPoolConfig: ConnectionPoolConfig,
-                                       connectionConfig: ConnectionConfig,
-                                       supervisionDecider: Option[Supervision.Decider],
-                                       validationTimeout: FiniteDuration)(
-    implicit system: ActorSystem,
-    scheduler: Scheduler,
-    ME: MonadError[M, Throwable]
-) extends RedisConnectionPool[M] {
+private class DefaultPool(
+    pool: Pool,
+    peerConfigs: Seq[PeerConfig],
+    newConnection: PeerConfig => RedisConnection,
+    passingTimeout: FiniteDuration = 3 seconds
+)(implicit system: ActorSystem, scheduler: Scheduler, ME: MonadError[Task, Throwable])
+    extends RedisConnectionPool[Task]() {
 
-  private val abandonedConfig: org.apache.commons.pool2.impl.AbandonedConfig =
-    new org.apache.commons.pool2.impl.AbandonedConfig()
-
-  connectionPoolConfig.abandonedConfig.foreach { v =>
-    v.logAbandoned.foreach(abandonedConfig.setLogAbandoned)
-    v.removeAbandonedOnBorrow.foreach(abandonedConfig.setRemoveAbandonedOnBorrow)
-    v.removeAbandonedOnMaintenance.foreach(abandonedConfig.setRemoveAbandonedOnMaintenance)
-    v.logWriter.foreach(abandonedConfig.setLogWriter)
-    v.removeAbandonedTimeout.foreach(v => abandonedConfig.setRemoveAbandonedTimeout(v.toSeconds.toInt))
-    v.requireFullStackTrace.foreach(abandonedConfig.setRequireFullStackTrace)
-    v.useUsageTracking.foreach(abandonedConfig.setUseUsageTracking)
-  }
-
-  private val underlyingPoolConfig: GenericObjectPoolConfig[RedisConnection] =
-    new GenericObjectPoolConfig[RedisConnection]()
-
-  connectionPoolConfig.lifo.foreach(underlyingPoolConfig.setLifo)
-  connectionPoolConfig.fairness.foreach(underlyingPoolConfig.setFairness)
-  connectionPoolConfig.maxWaitMillis.foreach { v =>
-    if (v.isFinite())
-      underlyingPoolConfig.setMaxWaitMillis(v.toMillis)
-    else
-      underlyingPoolConfig.setMaxWaitMillis(-1L)
-  }
-  connectionPoolConfig.minEvictableIdleTime.foreach { v =>
-    if (v.isFinite())
-      underlyingPoolConfig.setMinEvictableIdleTimeMillis(v.toMillis)
-    else
-      underlyingPoolConfig.setMinEvictableIdleTimeMillis(-1L)
-  }
-  connectionPoolConfig.evictorShutdownTimeout.foreach { v =>
-    if (v.isFinite())
-      underlyingPoolConfig.setEvictorShutdownTimeoutMillis(v.toMillis)
-    else
-      underlyingPoolConfig.setEvictorShutdownTimeoutMillis(-1L)
-  }
-  connectionPoolConfig.softMinEvictableIdleTime.foreach { v =>
-    if (v.isFinite())
-      underlyingPoolConfig.setSoftMinEvictableIdleTimeMillis(v.toMillis)
-    else
-      underlyingPoolConfig.setSoftMinEvictableIdleTimeMillis(-1L)
-  }
-
-  connectionPoolConfig.numTestsPerEvictionRun.foreach(underlyingPoolConfig.setNumTestsPerEvictionRun)
-  connectionPoolConfig.evictionPolicy.foreach(underlyingPoolConfig.setEvictionPolicy)
-  connectionPoolConfig.evictionPolicyClassName.foreach(underlyingPoolConfig.setEvictionPolicyClassName)
-
-  connectionPoolConfig.testOnCreate.foreach(underlyingPoolConfig.setTestOnCreate)
-  connectionPoolConfig.testOnBorrow.foreach(underlyingPoolConfig.setTestOnBorrow)
-  connectionPoolConfig.testOnReturn.foreach(underlyingPoolConfig.setTestOnReturn)
-  connectionPoolConfig.testWhileIdle.foreach(underlyingPoolConfig.setTestWhileIdle)
-  connectionPoolConfig.timeBetweenEvictionRuns.foreach { v =>
-    if (v.isFinite())
-      underlyingPoolConfig.setTimeBetweenEvictionRunsMillis(v.toMillis)
-    else
-      underlyingPoolConfig.setTimeBetweenEvictionRunsMillis(-1L)
-  }
-  connectionPoolConfig.blockWhenExhausted.foreach(underlyingPoolConfig.setBlockWhenExhausted)
-  connectionPoolConfig.jmxEnabled.foreach(underlyingPoolConfig.setJmxEnabled)
-  connectionPoolConfig.jmxNamePrefix.foreach(underlyingPoolConfig.setJmxNamePrefix)
-  connectionPoolConfig.jmxNameBase.foreach(underlyingPoolConfig.setJmxNameBase)
-  connectionPoolConfig.maxTotal.foreach(underlyingPoolConfig.setMaxTotal)
-  connectionPoolConfig.maxIdle.foreach(underlyingPoolConfig.setMaxIdle)
-  connectionPoolConfig.minIdle.foreach(underlyingPoolConfig.setMinIdle)
-
-  private val underlyingConnectionPool: GenericObjectPool[RedisConnection] =
-    new GenericObjectPool[RedisConnection](
-      new RedisConnectionPoolFactory(connectionConfig, supervisionDecider, validationTimeout),
-      underlyingPoolConfig
+  private val connectionPoolActor =
+    system.actorOf(
+      RedisConnectionPoolActor.props(
+        pool,
+        peerConfigs.map(v => RedisConnectionActor.props(v, passingTimeout, newConnection))
+      )
     )
-  if (connectionPoolConfig.abandonedConfig.nonEmpty)
-    underlyingConnectionPool.setAbandonedConfig(abandonedConfig)
 
-  override def borrowConnection: M[RedisConnection] =
-    try {
-      ME.pure(underlyingConnectionPool.borrowObject())
-    } catch {
-      case t: Throwable =>
-        ME.raiseError(t)
-    }
+  implicit val to: Timeout = passingTimeout
 
-  override def returnConnection(redisClient: RedisConnection): M[Unit] =
-    try {
-      ME.pure(underlyingConnectionPool.returnObject(redisClient))
-    } catch {
-      case t: Throwable =>
-        ME.raiseError(t)
-    }
+  override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = {
+    for {
+      con    <- borrowConnection
+      result <- reader.run(con)
+      _      <- returnConnection(con)
+    } yield result
+  }
 
-  override def invalidateConnection(redisClient: RedisConnection): M[Unit] =
-    try {
-      ME.pure(underlyingConnectionPool.invalidateObject(redisClient))
-    } catch {
-      case t: Throwable =>
-        ME.raiseError(t)
-    }
+  override def borrowConnection: Task[RedisConnection] = Task.deferFutureAction { implicit ec =>
+    (connectionPoolActor ? BorrowConnection).mapTo[ConnectionGotten].map(_.redisConnection)(ec)
+  }
 
-  override def numActive: Int = underlyingConnectionPool.getNumActive
+  override def returnConnection(redisConnection: RedisConnection): Task[Unit] = Task.pure(())
 
-  override def numIdle: Int = underlyingConnectionPool.getNumIdle
+  override def numActive: Int = pool.nrOfInstances(system) * peerConfigs.size
 
-  override def clear(): Unit = underlyingConnectionPool.clear()
+  override def clear(): Unit = {}
 
-  override def dispose(): Unit = underlyingConnectionPool.close()
-
+  override def dispose(): Unit = { connectionPoolActor ! PoisonPill }
 }

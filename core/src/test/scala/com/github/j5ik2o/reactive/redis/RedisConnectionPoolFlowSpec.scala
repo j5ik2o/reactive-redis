@@ -13,16 +13,14 @@ import monix.execution.Scheduler.Implicits.global
 
 import scala.collection.immutable
 
-class RedisConnectionPoolFlowSpec extends ActorSpec(ActorSystem("RedisConnectionPoolFlowSpec")) {
+class RedisConnectionPoolFlowSpec extends AbstractActorSpec(ActorSystem("RedisConnectionPoolFlowSpec")) {
 
   var pool: RedisConnectionPool[Task] = _
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    pool = RedisConnectionPool.ofCommons[Task](
-      ConnectionPoolConfig(),
-      ConnectionConfig(new InetSocketAddress("127.0.0.1", redisServer.ports().get(0)))
-    )
+    val peerConfig = Seq(PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.ports().get(0))))
+    pool = createConnectionPool(peerConfig)
   }
 
   "RedisConnectionPoolFlow" - {

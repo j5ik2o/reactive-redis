@@ -4,22 +4,28 @@ import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command._
-import com.github.j5ik2o.reactive.redis.parser.StringParsers
-import com.github.j5ik2o.reactive.redis.parser.model.{ ArrayExpr, ErrorExpr, Expr, NumberExpr }
+import com.github.j5ik2o.reactive.redis.parser.StringParsers._
+import com.github.j5ik2o.reactive.redis.parser.model._
+import fastparse.all._
 
 case class BitFieldRequest(id: UUID, key: String, options: BitFieldRequest.SubOption*)
-    extends SimpleCommandRequest
+    extends CommandRequest
     with StringParsersSupport {
+
   override type Response = BitFieldResponse
+
+  override val isMasterOnly: Boolean = false
 
   override def asString: String = s"BITFIELD $key ${options.map(_.asString).mkString(" ")}"
 
-  override protected def responseParser: P[Expr] = StringParsers.integerArrayReply
+  override protected def responseParser: P[Expr] = P(integerArrayReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (ArrayExpr(values), next) =>
       val _values = values.asInstanceOf[Seq[NumberExpr]]
-      (BitFieldSucceeded(UUID.randomUUID(), id, _values.map(_.n)), next)
+      (BitFieldSucceeded(UUID.randomUUID(), id, _values.map(_.value)), next)
+    case (SimpleExpr(QUEUED), next) =>
+      (BitFieldSuspended(UUID.randomUUID(), id), next)
     case (ErrorExpr(msg), next) =>
       (BitFieldFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
@@ -79,5 +85,6 @@ object BitFieldRequest {
 }
 
 sealed trait BitFieldResponse                                             extends CommandResponse
+case class BitFieldSuspended(id: UUID, requestId: UUID)                   extends BitFieldResponse
 case class BitFieldSucceeded(id: UUID, requestId: UUID, values: Seq[Int]) extends BitFieldResponse
 case class BitFieldFailed(id: UUID, requestId: UUID, ex: Exception)       extends BitFieldResponse

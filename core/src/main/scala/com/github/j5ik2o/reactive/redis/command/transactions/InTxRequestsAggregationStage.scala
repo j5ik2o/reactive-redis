@@ -5,7 +5,7 @@ import akka.stream.scaladsl.Flow
 import akka.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import akka.stream.stage._
 import com.github.j5ik2o.reactive.redis.ResponseContext
-import com.github.j5ik2o.reactive.redis.command.SimpleCommandRequest
+import com.github.j5ik2o.reactive.redis.command.CommandRequest
 
 import scala.collection.mutable.ListBuffer
 
@@ -21,8 +21,8 @@ case class InTxRequestsAggregationStage() extends GraphStage[FlowShape[ResponseC
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
     new GraphStageLogic(shape) with StageLogging {
-      private var inTx: Boolean                                  = false
-      private val inTxRequests: ListBuffer[SimpleCommandRequest] = ListBuffer[SimpleCommandRequest]()
+      private var inTx: Boolean                            = false
+      private val inTxRequests: ListBuffer[CommandRequest] = ListBuffer[CommandRequest]()
 
       override def preStart(): Unit = {
         inTx = false
@@ -34,22 +34,27 @@ case class InTxRequestsAggregationStage() extends GraphStage[FlowShape[ResponseC
         new InHandler {
           override def onPush(): Unit = {
             val responseContext = grab(in)
-            responseContext.requestContext.commandRequest match {
-              case _: MultiRequest =>
+            responseContext.commandRequest match {
+              case mr: MultiRequest =>
                 inTx = true
-                log.debug("start tx")
+                log.debug(s"$mr")
                 push(out, responseContext)
-              case _: ExecRequest if inTx =>
-                log.debug("finish tx")
+              case er: ExecRequest if inTx =>
+                log.debug(s"$er")
                 inTx = false
                 push(out, responseContext.withRequestsInTx(inTxRequests.result))
                 inTxRequests.clear()
-              case cmdReq: SimpleCommandRequest if inTx =>
-                log.debug(s"in tx: $cmdReq")
+              case dr: DiscardRequest if inTx =>
+                log.debug(s"$dr")
+                inTx = false
+                push(out, responseContext)
+                inTxRequests.clear()
+              case cmdReq: CommandRequest if inTx =>
+                log.debug(s"InTxRequest = $cmdReq")
                 inTxRequests.append(cmdReq)
                 push(out, responseContext)
               case cmdReq =>
-                log.debug(s"single command request: $cmdReq")
+                log.debug(s"SingleCommandRequest: $cmdReq")
                 push(out, responseContext)
             }
           }

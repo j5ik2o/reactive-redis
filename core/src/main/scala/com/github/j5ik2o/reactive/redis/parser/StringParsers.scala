@@ -35,15 +35,15 @@ object StringParsers {
   def array[A <: Expr](elementExpr: P[A]): P[ArrayExpr[A]] =
     P(arrayPrefixWithCrLf ~ elementExpr.rep(sep = crlf)).map {
       case (size, values) =>
-        require(size.n == values.size)
+        require(size.value == values.size)
         ArrayExpr(values)
     }
 
   val stringOptArrayElement: P[StringOptExpr] = P(length ~ crlf ~ string.?).map {
-    case (size, _) if size.n == -1 =>
+    case (size, _) if size.value == -1 =>
       StringOptExpr(None)
     case (size, value) =>
-      StringOptExpr(value.map(_.v))
+      StringOptExpr(value.map(_.value))
   }
 
   val integerArrayElement: P[NumberExpr] = P(number)
@@ -54,13 +54,13 @@ object StringParsers {
     if (l == -1) {
       P(End).!.map(_ => StringOptExpr(None))
     } else {
-      P(string ~ crlf).map(v => StringOptExpr(Some(v.v)))
+      P(string ~ crlf).map(v => StringOptExpr(Some(v.value)))
     }
   }
 
   val arrayPrefixWithCrLfOrErrorWithCrLf: P[Expr] = P(arrayPrefixWithCrLf | errorWithCrLf)
 
-  val bulkStringWithCrLf: P[StringOptExpr] = P((length ~ crlf).flatMap(l => bulkStringRest(l.n)))
+  private val bulkStringWithCrLf: P[StringOptExpr] = P((length ~ crlf).flatMap(l => bulkStringRest(l.value)))
 
   val simpleStringReply: P[Expr]   = P(simpleWithCrLf | errorWithCrLf)
   val integerReply: P[Expr]        = P(integerWithCrLf | errorWithCrLf)

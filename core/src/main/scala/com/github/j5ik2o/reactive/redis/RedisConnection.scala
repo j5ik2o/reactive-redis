@@ -2,6 +2,7 @@ package com.github.j5ik2o.reactive.redis
 
 import java.time.ZonedDateTime
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicReference
 
 import akka.NotUsed
 import akka.actor.ActorSystem
@@ -9,11 +10,8 @@ import akka.event.{ LogSource, Logging }
 import akka.stream._
 import akka.stream.scaladsl._
 import akka.util.ByteString
-import com.github.j5ik2o.reactive.redis.command.transactions.{
-  InTxRequestsAggregationFlow,
-  InTxRequestsAggregationStage
-}
-import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse }
+import com.github.j5ik2o.reactive.redis.command.transactions.InTxRequestsAggregationFlow
+import com.github.j5ik2o.reactive.redis.command.{ CommandRequestBase, CommandResponse }
 import monix.eval.Task
 import monix.execution.Scheduler
 
@@ -31,20 +29,54 @@ object RedisConnection {
     case _                     => Supervision.Stop
   }
 
-  def apply(connectionConfig: ConnectionConfig,
+  def apply(peerConfig: PeerConfig,
             supervisionDecider: Option[Supervision.Decider] = None)(implicit system: ActorSystem): RedisConnection =
-    new RedisConnection(connectionConfig, supervisionDecider)
+    new RedisConnectionImpl(peerConfig, supervisionDecider)
 
 }
 
-class RedisConnection(connectionConfig: ConnectionConfig, supervisionDecider: Option[Supervision.Decider])(
+trait RedisConnection {
+  def id: UUID
+  def shutdown(): Unit
+  def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response]
+
+  def toFlow[C <: CommandRequestBase](
+      parallelism: Int = 1
+  )(implicit scheduler: Scheduler): Flow[C, C#Response, NotUsed] =
+    Flow[C].mapAsync(parallelism) { cmd =>
+      send(cmd).runAsync
+    }
+}
+
+case class ResettableRedisConnection(newRedisConnection: () => RedisConnection) extends RedisConnection {
+  private val underlying: AtomicReference[RedisConnection] = new AtomicReference[RedisConnection](newRedisConnection())
+
+  override def id: UUID = underlying.get.id
+
+  def reset(): Unit = {
+    underlying.set(newRedisConnection())
+    // shutdown()
+  }
+
+  override def shutdown(): Unit = {
+    underlying.get.shutdown()
+  }
+
+  override def toFlow[C <: CommandRequestBase](parallelism: Int)(
+      implicit scheduler: Scheduler
+  ): Flow[C, C#Response, NotUsed] = underlying.get.toFlow(parallelism)
+
+  override def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = underlying.get.send(cmd)
+}
+
+private[redis] class RedisConnectionImpl(peerConfig: PeerConfig, supervisionDecider: Option[Supervision.Decider])(
     implicit system: ActorSystem
-) {
+) extends RedisConnection {
 
   val id: UUID = UUID.randomUUID()
 
-  import connectionConfig._
-  import connectionConfig.backoffConfig._
+  import peerConfig._
+  import peerConfig.backoffConfig._
 
   private val log = Logging(system, this)
 
@@ -101,14 +133,7 @@ class RedisConnection(connectionConfig: ConnectionConfig, supervisionDecider: Op
 
   def shutdown(): Unit = killSwitch.shutdown()
 
-  def toFlow[C <: CommandRequest](
-      parallelism: Int = 1
-  )(implicit scheduler: Scheduler): Flow[C, C#Response, NotUsed] =
-    Flow[C].mapAsync(parallelism) { cmd =>
-      send(cmd).runAsync
-    }
-
-  def send[C <: CommandRequest](cmd: C): Task[cmd.Response] = Task.deferFutureAction { implicit ec =>
+  def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = Task.deferFutureAction { implicit ec =>
     val promise = Promise[CommandResponse]()
     requestQueue
       .offer(RequestContext(cmd, promise, ZonedDateTime.now()))
