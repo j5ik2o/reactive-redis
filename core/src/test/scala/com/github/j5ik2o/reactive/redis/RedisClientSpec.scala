@@ -48,7 +48,7 @@ class RedisClientSpec extends ActorSpec(ActorSystem("RedisClientSpec")) {
           .runAsync
           .futureValue
 
-        result should not be empty
+        result.value should not be empty
 
     }
   }

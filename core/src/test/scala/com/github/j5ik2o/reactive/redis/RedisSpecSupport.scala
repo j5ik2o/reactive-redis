@@ -12,7 +12,10 @@ trait RedisSpecSupport extends RandomPortSupport with Suite with BeforeAndAfterA
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     _redisServer = new RedisServer(
-      RedisExecProvider.defaultProvider().`override`(OS.MAC_OS_X, Architecture.x86_64, "redis-server-4.0.app"),
+      RedisExecProvider
+        .defaultProvider()
+        .`override`(OS.MAC_OS_X, Architecture.x86_64, "redis-server-4.0.app")
+        .`override`(OS.UNIX, Architecture.x86_64, "redis-server-4.0.elf"),
       temporaryServerPort()
     )
     redisServer.start()
