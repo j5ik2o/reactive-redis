@@ -1,7 +1,7 @@
 package redis.embedded
 
-import java.io.File
 import java.net.InetSocketAddress
+
 import scala.collection.JavaConverters._
 
 object RedisServerEx {

@@ -8,6 +8,7 @@ import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandRespons
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 import fastparse.all._
+
 import scala.concurrent.duration.FiniteDuration
 
 case class PSetExRequest(id: UUID, key: String, millis: FiniteDuration, value: String)

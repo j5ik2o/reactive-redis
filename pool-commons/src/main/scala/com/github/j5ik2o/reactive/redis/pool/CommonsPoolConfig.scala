@@ -2,7 +2,6 @@ package com.github.j5ik2o.reactive.redis.pool
 
 import java.io.PrintWriter
 
-import com.github.j5ik2o.reactive.redis.RedisConnection
 import org.apache.commons.pool2.impl.EvictionPolicy
 
 import scala.concurrent.duration.Duration

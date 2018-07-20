@@ -4,13 +4,13 @@ import java.util.UUID
 
 import akka.actor.ActorSystem
 import cats.data.{ Reader, ReaderT }
-import com.github.j5ik2o.reactive.redis.feature._
+import cats.implicits._
 import com.github.j5ik2o.reactive.redis.command._
+import com.github.j5ik2o.reactive.redis.feature._
+import monix.execution.Scheduler
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import cats.implicits._
-import monix.execution.Scheduler
 
 object RedisClient {
 
