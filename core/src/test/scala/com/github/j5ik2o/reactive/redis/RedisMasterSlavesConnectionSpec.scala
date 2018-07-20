@@ -41,7 +41,7 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
       val value = UUID.randomUUID().toString
       val result = (for {
         _      <- redisClient.set(key, value)
-        _      <- ReaderTTask.pure(Thread.sleep(1000))
+        _      <- ReaderTTask.pure(Thread.sleep((1000 * timeFactor).toInt))
         result <- redisClient.get(key)
       } yield result).run(connection).runAsync.futureValue
       result.value shouldBe Some(value)
