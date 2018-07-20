@@ -8,7 +8,7 @@ before_cache:
   - find $HOME/.sbt -name "*.lock" -delete
 
 language: scala
-scala: 2.12.
+scala: 2.12.4
 jdk: oraclejdk8
 
 sbt_args: -no-colors -J-Xss2m -J-Xms1g -J-Xmx3g -J-XX:ReservedCodeCacheSize=256M -Dfile.encoding=UTF8
