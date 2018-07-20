@@ -34,7 +34,7 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
   }
 
   "RedisMasterSlavesConnection" - {
-    "set & get" in {
+    "set & get" ignore {
       val key   = UUID.randomUUID().toString
       val value = UUID.randomUUID().toString
       val result = (for {
