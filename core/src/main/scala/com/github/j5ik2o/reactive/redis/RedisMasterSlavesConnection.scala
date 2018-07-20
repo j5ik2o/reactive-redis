@@ -6,7 +6,7 @@ import com.github.j5ik2o.reactive.redis.command.CommandRequestBase
 import monix.eval.Task
 import org.slf4j.LoggerFactory
 
-class RedisMasterSlavesConnection(masterConnectionFactory: => RedisConnection,
+class RedisMasterSlavesConnection(masterConnectionPoolFactory: => RedisConnectionPool[Task],
                                   slaveConnectionPoolFactory: => RedisConnectionPool[Task])
     extends RedisConnection {
 
@@ -14,19 +14,20 @@ class RedisMasterSlavesConnection(masterConnectionFactory: => RedisConnection,
 
   override def id: UUID = UUID.randomUUID()
 
-  private lazy val masterConnection: RedisConnection              = masterConnectionFactory
-  private lazy val slaveConnectionPool: RedisConnectionPool[Task] = slaveConnectionPoolFactory
+  private lazy val masterConnectionPool: RedisConnectionPool[Task] = masterConnectionPoolFactory
+  private lazy val slaveConnectionPool: RedisConnectionPool[Task]  = slaveConnectionPoolFactory
 
   override def shutdown(): Unit = {
-    masterConnection.shutdown()
+    masterConnectionPool.dispose()
     slaveConnectionPool.dispose()
   }
 
   def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] =
-    if (cmd.isMasterOnly) {
-      logger.debug(s"execute master command: $cmd")
-      masterConnection.send(cmd)
-    } else
+    if (cmd.isMasterOnly)
+      masterConnectionPool.withConnectionF { con =>
+        logger.debug(s"execute master command: $cmd")
+        con.send(cmd)
+      } else
       slaveConnectionPool.withConnectionF { con =>
         logger.debug(s"execute slave command: $cmd")
         con.send(cmd)
