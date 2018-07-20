@@ -14,4 +14,10 @@ trait ScalaCheckSupport {
     values <- Gen.listOf(Gen.listOf(Gen.alphaNumChar).map(_.mkString).suchThat(_.nonEmpty)).suchThat(_.nonEmpty)
   } yield (key, values)
 
+  val keyFieldValueGen: Gen[(String, String, String)] = for {
+    key   <- Gen.listOf(Gen.alphaNumChar).map(_.mkString).suchThat(_.nonEmpty)
+    field <- Gen.listOf(Gen.alphaNumChar).map(_.mkString).suchThat(_.nonEmpty)
+    value <- Gen.listOf(Gen.alphaNumChar).map(_.mkString).suchThat(_.nonEmpty)
+  } yield (key, field, value)
+
 }

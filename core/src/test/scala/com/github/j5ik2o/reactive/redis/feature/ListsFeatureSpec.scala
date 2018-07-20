@@ -8,6 +8,7 @@ import org.scalacheck.Shrink
 
 class ListsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("ListsFeatureSpec")) {
   implicit val noShrink: Shrink[String] = Shrink.shrinkAny
+
   "ListsFeature" - {
     "lpush & lpop" in forAll(keyValuesGen) {
       case (k, values) =>
@@ -18,4 +19,5 @@ class ListsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("ListsFeature
         result.value.get shouldBe values.last
     }
   }
+
 }

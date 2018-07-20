@@ -15,7 +15,7 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    startSlaveServers
+    startSlaveServers()
     val masterPeerConfig = PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.ports.get(0)))
     val slavePeerConfigs =
       redisSlaveServers.map(
@@ -29,7 +29,7 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
 
   override protected def afterAll(): Unit = {
     connection.shutdown()
-    stopSlaveServers
+    stopSlaveServers()
     super.afterAll()
   }
 
@@ -38,7 +38,10 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
       val key   = UUID.randomUUID().toString
       val value = UUID.randomUUID().toString
       val result = (for {
-        _      <- redisClient.set(key, value)
+        _ <- redisClient.set(key, value).map { v =>
+          Thread.sleep(1 * 1000)
+          v
+        }
         result <- redisClient.get(key)
       } yield result).run(connection).runAsync.futureValue
       result.value shouldBe Some(value)
