@@ -50,7 +50,7 @@ abstract class AbstractActorSpec(_system: ActorSystem)
 
   implicit val materializer = ActorMaterializer()
 
- //  implicit val timeout = Timeout(15 seconds)
+  //  implicit val timeout = Timeout(15 seconds)
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
