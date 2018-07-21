@@ -46,11 +46,11 @@ abstract class AbstractActorSpec(_system: ActorSystem)
     with RedisSpecSupport
     with ScalaCheckSupport {
 
-  implicit override val patienceConfig: PatienceConfig = PatienceConfig(60 * timeFactor seconds)
+  implicit override val patienceConfig: PatienceConfig = PatienceConfig(60 * timeFactor seconds, 1 * timeFactor seconds)
 
   implicit val materializer = ActorMaterializer()
 
-  implicit val timeout = Timeout(15 seconds)
+ //  implicit val timeout = Timeout(15 seconds)
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
