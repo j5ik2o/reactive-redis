@@ -1,13 +1,21 @@
 package com.github.j5ik2o.reactive.redis.feature
 
 import akka.actor.ActorSystem
+import akka.routing.DefaultResizer
 import cats.data.NonEmptyList
 import cats.implicits._
-import com.github.j5ik2o.reactive.redis.AbstractRedisClientSpec
+import com.github.j5ik2o.reactive.redis.{ AbstractRedisClientSpec, PeerConfig, RedisConnection, RedisConnectionPool }
+import monix.eval.Task
 import org.scalacheck.Shrink
+import monix.execution.Scheduler.Implicits.global
 
 class ListsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("ListsFeatureSpec")) {
   implicit val noShrink: Shrink[String] = Shrink.shrinkAny
+
+  override protected def createConnectionPool(peerConfigs: Seq[PeerConfig]): RedisConnectionPool[Task] =
+    RedisConnectionPool.ofRoundRobin(sizePerPeer = 10, peerConfigs, newConnection = {
+      RedisConnection(_)
+    }, resizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
 
   "ListsFeature" - {
     "lpush & lpop" in forAll(keyValuesGen) {

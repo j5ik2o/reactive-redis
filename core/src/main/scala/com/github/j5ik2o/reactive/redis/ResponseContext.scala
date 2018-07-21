@@ -7,12 +7,15 @@ import java.util.UUID
 import akka.util.ByteString
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, TransactionalCommandRequest }
 import scodec.bits.ByteVector
+import cats.implicits._
 
 import scala.util.Try
 
 trait ResponseBase {
   val requestContext: RequestContext
-  def commandRequestId: UUID       = requestContext.commandRequest.id
+
+  def commandRequestId: UUID = requestContext.commandRequest.id
+
   def commandRequestString: String = requestContext.commandRequest.asString
 
   def completePromise(result: Try[CommandResponse]): requestContext.promise.type =

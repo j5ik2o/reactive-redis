@@ -1,7 +1,8 @@
 val coreSettings = Seq(
   sonatypeProfileName := "com.github.j5ik2o",
   organization := "com.github.j5ik2o",
-  scalaVersion := "2.12.6",
+  scalaVersion := "2.11.11",
+  crossScalaVersions ++= Seq("2.11.11", "2.12.6"),
   scalacOptions ++= {
     Seq(
       "-feature",
@@ -69,7 +70,9 @@ val coreSettings = Seq(
     "org.scalatest"  %% "scalatest"      % "3.0.5" % Test,
     "org.scalacheck" %% "scalacheck"     % "1.14.0" % Test,
     "ch.qos.logback" % "logback-classic" % "1.2.3" % Test
-  )
+  ),
+  Global / concurrentRestrictions += Tags.limit(Tags.Test, 1),
+  parallelExecution in Test := false
 )
 
 val akkaVersion = "2.5.11"
@@ -84,9 +87,9 @@ lazy val core = (project in file("core")).settings(
       "com.typesafe.akka" %% "akka-slf4j"     % akkaVersion,
       "com.lihaoyi"       %% "fastparse"      % "1.0.0",
       "com.lihaoyi"       %% "fastparse-byte" % "1.0.0",
-      "com.github.kstyrc" % "embedded-redis"  % "0.6" % Test
-    ),
-    parallelExecution in Test := false
+      "com.google.guava"  % "guava"           % "25.1-jre" % Test,
+      "commons-io"        % "commons-io"      % "2.6" % Test
+    )
   )
 )
 

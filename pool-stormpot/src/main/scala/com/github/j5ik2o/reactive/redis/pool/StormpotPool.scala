@@ -47,7 +47,7 @@ object PoolType extends Enum[PoolType] {
 }
 
 case class StormpotConfig(poolType: PoolType = Queue,
-                          size: Option[Int] = None,
+                          sizePerPeer: Option[Int] = None,
                           claimTimeout: Option[FiniteDuration] = None,
                           backgroundExpirationEnabled: Option[Boolean] = None,
                           preciseLeakDetectionEnabled: Option[Boolean] = None,
@@ -58,6 +58,8 @@ case class StormpotConnection(redisConnectionPoolable: RedisConnectionPoolable) 
 
   override def id: UUID = underlyingCon.id
 
+  override def peerConfig: PeerConfig = underlyingCon.peerConfig
+
   override def shutdown(): Unit = underlyingCon.shutdown()
 
   override def toFlow[C <: CommandRequestBase](parallelism: Int)(
@@ -65,6 +67,7 @@ case class StormpotConnection(redisConnectionPoolable: RedisConnectionPoolable) 
   ): Flow[C, C#Response, NotUsed] = underlyingCon.toFlow(parallelism)
 
   override def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = underlyingCon.send(cmd)
+
 }
 
 case class RedisConnectionExpiration(validationTimeout: Duration)(implicit system: ActorSystem, scheduler: Scheduler)
@@ -75,19 +78,20 @@ case class RedisConnectionExpiration(validationTimeout: Duration)(implicit syste
   }
 }
 
-case class StormpotPool[M[_]](connectionPoolConfig: StormpotConfig, connectionConfigs: Seq[PeerConfig])(
+case class StormpotPool[M[_]](connectionPoolConfig: StormpotConfig, peerConfigs: Seq[PeerConfig])(
     implicit system: ActorSystem,
     scheduler: Scheduler,
     ME: MonadError[M, Throwable]
 ) extends RedisConnectionPool[M] {
 
-  final val DEFAULT_SIZE = 8
+  final val DEFAULT_SIZE                     = 8
+  final val DEFAULT_CLAIM_TIMEOUT_IN_SECONDS = 10
 
   private def newConfig(peerConfig: PeerConfig): Config[RedisConnectionPoolable] =
     new Config[RedisConnectionPoolable]
       .setAllocator(RedisConnectionAllocator(peerConfig))
       .setExpiration(RedisConnectionExpiration(connectionPoolConfig.validationTimeout.getOrElse(3 seconds)))
-      .setSize(connectionPoolConfig.size.getOrElse(DEFAULT_SIZE) / connectionConfigs.size)
+      .setSize(connectionPoolConfig.sizePerPeer.getOrElse(DEFAULT_SIZE))
       .setBackgroundExpirationEnabled(connectionPoolConfig.backgroundExpirationEnabled.getOrElse(false))
       .setPreciseLeakDetectionEnabled(connectionPoolConfig.preciseLeakDetectionEnabled.getOrElse(false))
 
@@ -101,8 +105,8 @@ case class StormpotPool[M[_]](connectionPoolConfig: StormpotConfig, connectionCo
         new QueuePool[RedisConnectionPoolable](config)
     }
 
-  private val pools = connectionConfigs.map { connectionConfig =>
-    val config = newConfig(connectionConfig)
+  private val pools = peerConfigs.map { peerConfig =>
+    val config = newConfig(peerConfig)
     newPool(config)
   }
 
@@ -112,7 +116,7 @@ case class StormpotPool[M[_]](connectionPoolConfig: StormpotConfig, connectionCo
 
   private val claimTieout = connectionPoolConfig.claimTimeout
     .map(v => new stormpot.Timeout(v.length, v.unit))
-    .getOrElse(new stormpot.Timeout(3, TimeUnit.SECONDS))
+    .getOrElse(new stormpot.Timeout(DEFAULT_CLAIM_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS))
 
   override def withConnectionM[T](reader: ReaderRedisConnection[M, T]): M[T] = {
     var poolable: RedisConnectionPoolable = null
@@ -157,7 +161,7 @@ case class StormpotPool[M[_]](connectionPoolConfig: StormpotConfig, connectionCo
 
   override def clear(): Unit = {
     pools.foreach(_.setTargetSize(0))
-    pools.foreach(_.setTargetSize(connectionPoolConfig.size.getOrElse(DEFAULT_SIZE)))
+    pools.foreach(_.setTargetSize(connectionPoolConfig.sizePerPeer.getOrElse(DEFAULT_SIZE)))
   }
 
   override def dispose(): Unit = pools.foreach(_.shutdown())

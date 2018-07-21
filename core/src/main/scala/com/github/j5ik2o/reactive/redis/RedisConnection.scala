@@ -16,6 +16,8 @@ import monix.eval.Task
 import monix.execution.Scheduler
 
 import scala.concurrent.{ Future, Promise }
+import scala.util.{ Failure, Success, Try }
+import cats.implicits._
 
 object RedisConnection {
 
@@ -37,6 +39,7 @@ object RedisConnection {
 
 trait RedisConnection {
   def id: UUID
+  def peerConfig: PeerConfig
   def shutdown(): Unit
   def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response]
 
@@ -53,6 +56,8 @@ case class ResettableRedisConnection(newRedisConnection: () => RedisConnection) 
 
   override def id: UUID = underlying.get.id
 
+  override def peerConfig: PeerConfig = underlying.get.peerConfig
+
   def reset(): Unit = {
     underlying.set(newRedisConnection())
     // shutdown()
@@ -67,9 +72,10 @@ case class ResettableRedisConnection(newRedisConnection: () => RedisConnection) 
   ): Flow[C, C#Response, NotUsed] = underlying.get.toFlow(parallelism)
 
   override def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = underlying.get.send(cmd)
+
 }
 
-private[redis] class RedisConnectionImpl(peerConfig: PeerConfig, supervisionDecider: Option[Supervision.Decider])(
+private[redis] class RedisConnectionImpl(val peerConfig: PeerConfig, supervisionDecider: Option[Supervision.Decider])(
     implicit system: ActorSystem
 ) extends RedisConnection {
 

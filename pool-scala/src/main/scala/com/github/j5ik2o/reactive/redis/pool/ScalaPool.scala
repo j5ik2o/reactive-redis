@@ -16,24 +16,26 @@ case class ScalaPool[M[_]](connectionPoolConfig: ScalaPoolConfig, peerConfigs: S
     ME: MonadError[M, Throwable]
 ) extends RedisConnectionPool[M] {
 
-  final val MAX_TOTAL = 8
+  final val DEFAULT_MAX_TOTAL          = 8
+  final val DEFAULT_MAX_IDLE_TIME      = 5 seconds
+  final val DEFAULT_VALIDATION_TIMEOUT = 3 seconds
 
   private val redisClient = RedisClient()
 
   private def newPool(peerConfig: PeerConfig): Pool[ResettableRedisConnection] =
     Pool[ResettableRedisConnection](
-      connectionPoolConfig.maxTotal.getOrElse(MAX_TOTAL) / peerConfigs.size,
+      connectionPoolConfig.sizePerPeer.getOrElse(DEFAULT_MAX_TOTAL),
       factory = { () =>
         ResettableRedisConnection(() => RedisConnection(peerConfig))
       },
       referenceType = ReferenceType.Strong,
-      maxIdleTime = connectionPoolConfig.maxIdleTime.getOrElse(3 seconds),
+      maxIdleTime = connectionPoolConfig.maxIdleTime.getOrElse(DEFAULT_MAX_IDLE_TIME),
       reset = { _ =>
         ()
       },
       dispose = { _.shutdown() },
       healthCheck = { con =>
-        redisClient.validate(connectionPoolConfig.validationTimeout.getOrElse(3 seconds)).run(con)
+        redisClient.validate(connectionPoolConfig.validationTimeout.getOrElse(DEFAULT_VALIDATION_TIMEOUT)).run(con)
       }
     )
 
@@ -70,7 +72,7 @@ case class ScalaPool[M[_]](connectionPoolConfig: ScalaPoolConfig, peerConfigs: S
             ME.raiseError(t)
         }
       case _ =>
-        throw new IllegalArgumentException("Invalid connection")
+        throw new IllegalArgumentException("Invalid connection class")
     }
   }
 
@@ -84,7 +86,7 @@ case class ScalaPool[M[_]](connectionPoolConfig: ScalaPoolConfig, peerConfigs: S
             ME.raiseError(t)
         }
       case _ =>
-        throw new IllegalArgumentException("Invalid connection")
+        throw new IllegalArgumentException("Invalid connection class")
     }
   }
 

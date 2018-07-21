@@ -36,7 +36,7 @@ object RedisConnectionPool {
       peerConfigs: Seq[PeerConfig],
       newConnection: PeerConfig => RedisConnection,
       resizer: Option[Resizer] = None,
-      passingTimeout: FiniteDuration = 3 seconds
+      passingTimeout: FiniteDuration = 5 seconds
   )(implicit system: ActorSystem, scheduler: Scheduler, ME: MonadError[Task, Throwable]): RedisConnectionPool[Task] =
     apply(RoundRobinPool(sizePerPeer, resizer), peerConfigs, newConnection, passingTimeout)(
       system,
@@ -46,7 +46,7 @@ object RedisConnectionPool {
   def ofBalancing(sizePerPeer: Int,
                   peerConfigs: Seq[PeerConfig],
                   newConnection: PeerConfig => RedisConnection,
-                  passingTimeout: FiniteDuration = 3 seconds)(
+                  passingTimeout: FiniteDuration = 5 seconds)(
       implicit system: ActorSystem,
       scheduler: Scheduler,
       ME: MonadError[Task, Throwable]
@@ -69,6 +69,8 @@ object RedisConnectionPool {
 
 abstract class RedisConnectionPool[M[_]] {
 
+  def peerConfigs: Seq[PeerConfig]
+
   protected val logger = LoggerFactory.getLogger(getClass)
 
   def withConnectionF[T](f: RedisConnection => M[T]): M[T] = withConnectionM(ReaderT(f))
@@ -89,7 +91,7 @@ abstract class RedisConnectionPool[M[_]] {
 
 private class DefaultPool(
     pool: Pool,
-    peerConfigs: Seq[PeerConfig],
+    val peerConfigs: Seq[PeerConfig],
     newConnection: PeerConfig => RedisConnection,
     passingTimeout: FiniteDuration = 3 seconds
 )(implicit system: ActorSystem, scheduler: Scheduler)

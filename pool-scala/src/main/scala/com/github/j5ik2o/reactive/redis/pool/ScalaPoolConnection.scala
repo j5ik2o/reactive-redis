@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import com.github.j5ik2o.reactive.redis.command.CommandRequestBase
-import com.github.j5ik2o.reactive.redis.{ RedisConnection, ResettableRedisConnection }
+import com.github.j5ik2o.reactive.redis.{ PeerConfig, RedisConnection, ResettableRedisConnection }
 import io.github.andrebeat.pool.Lease
 import monix.eval.Task
 import monix.execution.Scheduler
@@ -15,6 +15,8 @@ private[redis] case class ScalaPoolConnection(underlying: Lease[ResettableRedisC
   private val underlyingCon = underlying.get()
 
   override def id: UUID = underlyingCon.id
+
+  override def peerConfig: PeerConfig = underlyingCon.peerConfig
 
   override def shutdown(): Unit = underlyingCon.shutdown()
 

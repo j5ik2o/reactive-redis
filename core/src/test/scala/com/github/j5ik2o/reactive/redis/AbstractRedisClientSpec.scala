@@ -15,9 +15,14 @@ abstract class AbstractRedisClientSpec(system: ActorSystem) extends AbstractActo
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    val peerConfigs = Seq(PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.ports.get(0))))
+    val peerConfigs = Seq(PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.getPort)))
     _connectionPool = createConnectionPool(peerConfigs)
     _redisClient = RedisClient()(system)
+  }
+
+  override protected def afterAll(): Unit = {
+    _connectionPool.dispose()
+    super.afterAll()
   }
 
   protected def runProgram[A](program: ReaderTTaskRedisConnection[A]): A = {
