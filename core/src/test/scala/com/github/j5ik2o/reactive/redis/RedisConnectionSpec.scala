@@ -18,7 +18,7 @@ import com.github.j5ik2o.reactive.redis.command.transactions.{
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 
-class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisClientSpec")) {
+class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnectionSpec")) {
 
   var connection: RedisConnection = _
   val redisClient: RedisClient    = RedisClient()

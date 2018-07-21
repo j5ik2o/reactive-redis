@@ -46,8 +46,8 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
 
   private[this] def assertRedisBinaryPresent()(implicit ec: ExecutionContext): Unit = {
     val p = new ProcessBuilder(path, "--help").start()
-    //printlnStreamFuture(new BufferedReader(new InputStreamReader(p.getInputStream)))
-    //printlnStreamFuture(new BufferedReader(new InputStreamReader(p.getErrorStream)))
+    printlnStreamFuture(new BufferedReader(new InputStreamReader(p.getInputStream)))
+    printlnStreamFuture(new BufferedReader(new InputStreamReader(p.getErrorStream)))
     p.waitFor()
     val exitValue = p.exitValue()
     require(exitValue == 0 || exitValue == 1, "redis-server binary must be present.")

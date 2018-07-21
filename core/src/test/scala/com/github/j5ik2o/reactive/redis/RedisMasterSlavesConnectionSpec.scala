@@ -34,7 +34,6 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
       masterConnectionPoolFactory = RedisConnectionPool.ofRoundRobin(3, Seq(masterPeerConfig), RedisConnection(_)),
       slaveConnectionPoolFactory = RedisConnectionPool.ofRoundRobin(5, slavePeerConfigs, RedisConnection(_))
     )
-    Thread.sleep((1000 * timeFactor).toInt)
   }
 
   override protected def afterAll(): Unit = {
@@ -49,7 +48,7 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
       val value = UUID.randomUUID().toString
       val result = (for {
         _      <- redisClient.set(key, value)
-        _      <- ReaderTTask.pure(Thread.sleep((1000 * timeFactor).toInt))
+        _      <- ReaderTTask.pure(waitFor())
         result <- redisClient.get(key)
       } yield result).run(connection).runAsync.futureValue
       result.value shouldBe Some(value)

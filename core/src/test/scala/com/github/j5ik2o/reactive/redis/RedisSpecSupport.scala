@@ -7,6 +7,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 trait RedisSpecSupport extends RandomPortSupport with Suite with BeforeAndAfterAll {
 
+  def waitFor(): Unit
+
   private var _redisMasterServer: TestServer = _
 
   private val _redisSalveServers: ArrayBuffer[TestServer] = ArrayBuffer.empty
@@ -24,7 +26,6 @@ trait RedisSpecSupport extends RandomPortSupport with Suite with BeforeAndAfterA
   def startMasterServer(): Unit = {
     _redisMasterServer = new TestServer()
     _redisMasterServer.start()
-    Thread.sleep(1 * 1000)
   }
 
   def stopMasterServer(): Unit = {
@@ -36,7 +37,6 @@ trait RedisSpecSupport extends RandomPortSupport with Suite with BeforeAndAfterA
     _redisSalveServers.append(newSalveServers(_redisMasterServer.getPort)(1): _*)
     _redisSalveServers.foreach { slaveServer =>
       slaveServer.start()
-      Thread.sleep(1 * 1000)
     }
   }
 

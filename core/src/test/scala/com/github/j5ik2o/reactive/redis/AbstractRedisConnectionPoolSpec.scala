@@ -36,7 +36,7 @@ abstract class AbstractRedisConnectionPoolSpec(systemName: String) extends Abstr
           Task.pure {
             println("connection.peerConfig = " + con.peerConfig.remoteAddress)
             println(s"pool.numActive = ${pool.numActive}")
-            Thread.sleep(1 * 1000)
+            waitFor()
           }
         }
         r <- ConnectionAutoClose(pool)(_.send(GetRequest(UUID.randomUUID(), "a")))

@@ -1,39 +1,15 @@
 package com.github.j5ik2o.reactive.redis
 
 import akka.actor.ActorSystem
-import akka.routing.DefaultResizer
 import akka.stream.ActorMaterializer
 import akka.testkit.TestKit
-import akka.util.Timeout
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.prop.PropertyChecks
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
-
-case class SingleConnectionPool(peerConfig: PeerConfig)(implicit system: ActorSystem)
-    extends RedisConnectionPool[Task]() {
-  val conn = RedisConnection(peerConfig)
-
-  override def peerConfigs: Seq[PeerConfig] = Seq(peerConfig)
-
-  override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = reader(conn)
-
-  override def borrowConnection: Task[RedisConnection] = Task.pure(conn)
-
-  override def returnConnection(redisConnection: RedisConnection): Task[Unit] = Task.pure(())
-
-  def invalidateConnection(redisConnection: RedisConnection): Task[Unit] = Task.pure(())
-
-  override def numActive: Int = 1
-
-  override def clear(): Unit = {}
-
-  override def dispose(): Unit = conn.shutdown()
-
-}
 
 abstract class AbstractActorSpec(_system: ActorSystem)
     extends TestKit(_system)
@@ -46,11 +22,13 @@ abstract class AbstractActorSpec(_system: ActorSystem)
     with RedisSpecSupport
     with ScalaCheckSupport {
 
-  implicit override val patienceConfig: PatienceConfig = PatienceConfig(60 * timeFactor seconds, 1 * timeFactor seconds)
+  val logger = LoggerFactory.getLogger(getClass)
+
+  def waitFor(): Unit = () // Thread.sleep((1000 * timeFactor).toInt)
+
+  implicit override val patienceConfig: PatienceConfig = PatienceConfig(3 * timeFactor seconds)
 
   implicit val materializer = ActorMaterializer()
-
-  //  implicit val timeout = Timeout(15 seconds)
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
@@ -60,9 +38,6 @@ abstract class AbstractActorSpec(_system: ActorSystem)
     shutdown()
     super.afterAll()
   }
-
-//  protected def createConnectionPool(peerConfig: ConnectionConfig): RedisConnectionPool[Task] =
-//    MockConnectionPool(connectionConfig)
 
   protected def createConnectionPool(peerConfigs: Seq[PeerConfig]): RedisConnectionPool[Task]
 

@@ -71,7 +71,7 @@ val coreSettings = Seq(
     "org.scalacheck" %% "scalacheck"     % "1.14.0" % Test,
     "ch.qos.logback" % "logback-classic" % "1.2.3" % Test
   ),
-  Global / concurrentRestrictions += Tags.limit(Tags.Test, 1),
+//  Global / concurrentRestrictions += Tags.limit(Tags.Test, 1),
   parallelExecution in Test := false
 )
 
