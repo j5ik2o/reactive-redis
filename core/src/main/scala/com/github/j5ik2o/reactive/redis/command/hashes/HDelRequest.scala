@@ -4,12 +4,14 @@ import java.util.UUID
 
 import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis.RedisIOException
-import com.github.j5ik2o.reactive.redis.command.{CommandRequest, CommandResponse, StringParsersSupport}
+import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
-import com.github.j5ik2o.reactive.redis.parser.model.{ErrorExpr, Expr, NumberExpr, SimpleExpr}
+import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-case class HDelRequest(id: UUID, key: String, fields: NonEmptyList[String]) extends CommandRequest with StringParsersSupport {
+case class HDelRequest(id: UUID, key: String, fields: NonEmptyList[String])
+    extends CommandRequest
+    with StringParsersSupport {
 
   override type Response = HDelResponse
   override val isMasterOnly: Boolean = true
@@ -29,7 +31,7 @@ case class HDelRequest(id: UUID, key: String, fields: NonEmptyList[String]) exte
 
 }
 
-sealed trait HDelResponse extends CommandResponse
-case class HDelSuspended(id: UUID, requestId: UUID) extends HDelResponse
+sealed trait HDelResponse                                               extends CommandResponse
+case class HDelSuspended(id: UUID, requestId: UUID)                     extends HDelResponse
 case class HDelSucceeded(id: UUID, requestId: UUID, numberDeleted: Int) extends HDelResponse
-case class HDelFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends HDelResponse
+case class HDelFailed(id: UUID, requestId: UUID, ex: RedisIOException)  extends HDelResponse
