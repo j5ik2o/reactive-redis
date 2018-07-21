@@ -94,8 +94,8 @@ val slavePeerConfigs = Seq(
 )
 
 val connection = new RedisMasterSlavesConnection(
-  masterConnectionFactory = RedisConnection(masterPeerConfig),
-  slaveConnectionPoolFactory = RedisConnectionPool.ofRoundRobin(5, slavePeerConfigs, RedisConnection(_))
+  masterConnectionPoolFactory = RedisConnectionPool.ofRoundRobin(sizePerPeer = 2, Seq(masterPeerConfig), RedisConnection(_)),
+  slaveConnectionPoolFactory = RedisConnectionPool.ofRoundRobin(sizePerPeer = 2, slavePeerConfigs, RedisConnection(_))
 )
 
 val client = RedisClient()
