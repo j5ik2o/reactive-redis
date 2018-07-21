@@ -1,5 +1,7 @@
 # reactive-redis
 
+[![CircleCI](https://circleci.com/gh/j5ik2o/reactive-redis/tree/master.svg?style=svg)](https://circleci.com/gh/j5ik2o/reactive-redis/tree/master)
+
 [![Build Status](https://travis-ci.org/j5ik2o/reactive-redis.svg?branch=master)](https://travis-ci.org/j5ik2o/reactive-redis)
 
 Akka-Stream based Redis Client for Scala
