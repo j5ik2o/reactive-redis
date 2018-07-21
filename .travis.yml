@@ -1,3 +1,5 @@
+sudo: required
+
 cache:
   directories:
     - $HOME/.ivy2/cache
@@ -8,13 +10,19 @@ before_cache:
   - find $HOME/.sbt -name "*.lock" -delete
 
 language: scala
-scala: 2.12.4
+scala:
+  - 2.12.4
+  - 2.11.11
 jdk: oraclejdk8
 
 sbt_args: -no-colors -J-Xss2m -J-Xms1g -J-Xmx3g -J-XX:ReservedCodeCacheSize=256M -Dfile.encoding=UTF8
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION test
+  - sbt ++$TRAVIS_SCALA_VERSION core/test
+  - sbt ++$TRAVIS_SCALA_VERSION pool-commons/test
+  - sbt ++$TRAVIS_SCALA_VERSION pool-scala/test
+  - sbt ++$TRAVIS_SCALA_VERSION pool-fop/test
+  - sbt ++$TRAVIS_SCALA_VERSION pool-stormpot/test
 
 branches:
   only:

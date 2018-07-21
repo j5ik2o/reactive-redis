@@ -13,9 +13,11 @@ import org.scalatest.prop.PropertyChecks
 
 import scala.concurrent.duration._
 
-case class MockConnectionPool(peerConfig: PeerConfig)(implicit system: ActorSystem)
+case class SingleConnectionPool(peerConfig: PeerConfig)(implicit system: ActorSystem)
     extends RedisConnectionPool[Task]() {
   val conn = RedisConnection(peerConfig)
+
+  override def peerConfigs: Seq[PeerConfig] = Seq(peerConfig)
 
   override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = reader(conn)
 
@@ -30,6 +32,7 @@ case class MockConnectionPool(peerConfig: PeerConfig)(implicit system: ActorSyst
   override def clear(): Unit = {}
 
   override def dispose(): Unit = conn.shutdown()
+
 }
 
 abstract class AbstractActorSpec(_system: ActorSystem)
@@ -43,11 +46,11 @@ abstract class AbstractActorSpec(_system: ActorSystem)
     with RedisSpecSupport
     with ScalaCheckSupport {
 
-  implicit override val patienceConfig: PatienceConfig = PatienceConfig(60 * timeFactor seconds)
+  implicit override val patienceConfig: PatienceConfig = PatienceConfig(60 * timeFactor seconds, 1 * timeFactor seconds)
 
   implicit val materializer = ActorMaterializer()
 
-  implicit val timeout = Timeout(15 seconds)
+  //  implicit val timeout = Timeout(15 seconds)
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
@@ -61,9 +64,6 @@ abstract class AbstractActorSpec(_system: ActorSystem)
 //  protected def createConnectionPool(peerConfig: ConnectionConfig): RedisConnectionPool[Task] =
 //    MockConnectionPool(connectionConfig)
 
-  protected def createConnectionPool(peerConfigs: Seq[PeerConfig]): RedisConnectionPool[Task] =
-    RedisConnectionPool.ofRoundRobin(sizePerPeer = 10, peerConfigs, newConnection = {
-      RedisConnection(_)
-    }, resizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
+  protected def createConnectionPool(peerConfigs: Seq[PeerConfig]): RedisConnectionPool[Task]
 
 }

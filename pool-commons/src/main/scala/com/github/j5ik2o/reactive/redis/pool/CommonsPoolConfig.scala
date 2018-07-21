@@ -44,9 +44,9 @@ case class CommonsAbandonedConfig(removeAbandonedOnBorrow: Option[Boolean] = Non
   * @param jmxEnabled default is true
   * @param jmxNamePrefix default is "pool"
   * @param jmxNameBase default is null
-  * @param maxTotal number of max total connections
-  * @param maxIdle number of max idle connections
-  * @param minIdle number of min idle connections
+  * @param sizePerPeer number of max total connections
+  * @param maxIdlePerPeer number of max idle connections
+  * @param minIdlePerPeer number of min idle connections
   * @param abandonedConfig
   */
 case class CommonsPoolConfig(
@@ -68,8 +68,8 @@ case class CommonsPoolConfig(
     jmxEnabled: Option[Boolean] = None,
     jmxNamePrefix: Option[String] = None,
     jmxNameBase: Option[String] = None,
-    maxTotal: Option[Int] = None,
-    maxIdle: Option[Int] = None,
-    minIdle: Option[Int] = None,
+    sizePerPeer: Option[Int] = None,
+    maxIdlePerPeer: Option[Int] = None,
+    minIdlePerPeer: Option[Int] = None,
     abandonedConfig: Option[CommonsAbandonedConfig] = None
 )

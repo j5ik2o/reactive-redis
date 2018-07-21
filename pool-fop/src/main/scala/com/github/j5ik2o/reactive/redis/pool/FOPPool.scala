@@ -14,9 +14,11 @@ import monix.execution.Scheduler
 import scala.concurrent.duration._
 
 case class FOPConnectionWithIndex(index: Int, redisConnection: RedisConnection) extends RedisConnection {
-  def id: UUID                                                  = redisConnection.id
-  def shutdown(): Unit                                          = redisConnection.shutdown()
-  def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = redisConnection.send(cmd)
+  override def id: UUID                                                  = redisConnection.id
+  override def peerConfig: PeerConfig                                    = redisConnection.peerConfig
+  override def shutdown(): Unit                                          = redisConnection.shutdown()
+  override def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = redisConnection.send(cmd)
+
 }
 
 object FOPPool {
@@ -41,26 +43,26 @@ object FOPPool {
 
 }
 
-case class FOPPool[M[_]](connectionPoolConfig: FOPConfig, connectionConfigs: Seq[PeerConfig])(
+case class FOPPool[M[_]](connectionPoolConfig: FOPConfig, peerConfigs: Seq[PeerConfig])(
     implicit system: ActorSystem,
     scheduler: Scheduler,
     ME: MonadError[M, Throwable]
 ) extends RedisConnectionPool[M] {
 
   private val poolConfig = new PoolConfig()
-  connectionPoolConfig.maxSize.foreach(v => poolConfig.setMaxSize(v / connectionConfigs.size))
-  connectionPoolConfig.minSize.foreach(v => poolConfig.setMinSize(v / connectionConfigs.size))
+  connectionPoolConfig.maxSizePerPeer.foreach(v => poolConfig.setMaxSize(v))
+  connectionPoolConfig.minSizePerPeer.foreach(v => poolConfig.setMinSize(v))
   connectionPoolConfig.maxWaitDuration.foreach(v => poolConfig.setMaxWaitMilliseconds(v.toMillis.toInt))
   connectionPoolConfig.maxIdleDuration.foreach(v => poolConfig.setMaxIdleMilliseconds(v.toMillis.toInt))
-  connectionPoolConfig.partitionSize.foreach(v => poolConfig.setPartitionSize(_))
-  connectionPoolConfig.scavengeIntervalMilliseconds.foreach(
+  connectionPoolConfig.partitionSizePerPeer.foreach(v => poolConfig.setPartitionSize(v))
+  connectionPoolConfig.scavengeInterval.foreach(
     v => poolConfig.setScavengeIntervalMilliseconds(v.toMillis.toInt)
   )
   connectionPoolConfig.scavengeRatio.foreach(poolConfig.setScavengeRatio)
 
   private val index = new AtomicLong(0L)
 
-  private val objectPools = connectionConfigs.zipWithIndex.map {
+  private val objectPools = peerConfigs.zipWithIndex.map {
     case (e, index) =>
       val factory = FOPPool.createFactory(index, connectionPoolConfig, e)
       new ObjectPool(poolConfig, factory)
@@ -110,4 +112,5 @@ case class FOPPool[M[_]](connectionPoolConfig: FOPConfig, connectionConfigs: Seq
   override def clear(): Unit = {}
 
   override def dispose(): Unit = objectPools.foreach(_.shutdown())
+
 }

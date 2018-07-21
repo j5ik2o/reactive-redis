@@ -4,6 +4,7 @@ import java.net.InetSocketAddress
 import java.util.UUID
 
 import akka.actor.ActorSystem
+import akka.routing.DefaultResizer
 import cats.implicits._
 import com.github.j5ik2o.reactive.redis.command.keys.{ KeysRequest, KeysSucceeded }
 import com.github.j5ik2o.reactive.redis.command.strings.BitFieldRequest.SingedBitType
@@ -14,6 +15,7 @@ import com.github.j5ik2o.reactive.redis.command.transactions.{
   MultiRequest,
   MultiSucceeded
 }
+import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 
 class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisClientSpec")) {
@@ -21,10 +23,22 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisClientSpec
   var connection: RedisConnection = _
   val redisClient: RedisClient    = RedisClient()
 
+  override protected def createConnectionPool(peerConfigs: Seq[PeerConfig]): RedisConnectionPool[Task] =
+    RedisConnectionPool.ofRoundRobin(sizePerPeer = 10, peerConfigs, newConnection = {
+      RedisConnection(_)
+    }, resizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
+
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    connection = RedisConnection(PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.ports.get(0))))
+    connection = RedisConnection(
+      PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.getPort),
+                 backoffConfig = BackoffConfig(maxRestarts = 1))
+    )
+  }
 
+  override protected def afterAll(): Unit = {
+    connection.shutdown()
+    super.afterAll()
   }
 
   "redisclient" - {

@@ -14,6 +14,8 @@ class RedisMasterSlavesConnection(masterConnectionPoolFactory: => RedisConnectio
 
   override def id: UUID = UUID.randomUUID()
 
+  override def peerConfig: PeerConfig = masterConnectionPool.peerConfigs.head
+
   private lazy val masterConnectionPool: RedisConnectionPool[Task] = masterConnectionPoolFactory
   private lazy val slaveConnectionPool: RedisConnectionPool[Task]  = slaveConnectionPoolFactory
 

@@ -18,11 +18,11 @@ import org.apache.commons.pool2.{ BasePooledObjectFactory, PooledObject }
 import scala.concurrent.duration._
 
 case class RedisConnectionPoolable(index: Int, redisConnection: RedisConnection) extends RedisConnection {
-  override def id: UUID = redisConnection.id
-
-  override def shutdown(): Unit = redisConnection.shutdown()
-
+  override def id: UUID                                                  = redisConnection.id
+  override def peerConfig: PeerConfig                                    = redisConnection.peerConfig
+  override def shutdown(): Unit                                          = redisConnection.shutdown()
   override def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = redisConnection.send(cmd)
+
 }
 
 case class CommonsPool[M[_]](connectionPoolConfig: CommonsPoolConfig,
@@ -96,9 +96,9 @@ case class CommonsPool[M[_]](connectionPoolConfig: CommonsPoolConfig,
   connectionPoolConfig.jmxNamePrefix.foreach(underlyingPoolConfig.setJmxNamePrefix)
   connectionPoolConfig.jmxNameBase.foreach(underlyingPoolConfig.setJmxNameBase)
 
-  connectionPoolConfig.maxTotal.foreach(v => underlyingPoolConfig.setMaxTotal(v / peerConfigs.size))
-  connectionPoolConfig.maxIdle.foreach(v => underlyingPoolConfig.setMaxIdle(v / peerConfigs.size))
-  connectionPoolConfig.minIdle.foreach(v => underlyingPoolConfig.setMinIdle(v / peerConfigs.size))
+  connectionPoolConfig.sizePerPeer.foreach(v => underlyingPoolConfig.setMaxTotal(v))
+  connectionPoolConfig.maxIdlePerPeer.foreach(v => underlyingPoolConfig.setMaxIdle(v))
+  connectionPoolConfig.minIdlePerPeer.foreach(v => underlyingPoolConfig.setMinIdle(v))
 
   private def underlyingConnectionPool(index: Int, peerConfig: PeerConfig): GenericObjectPool[RedisConnectionPoolable] =
     new GenericObjectPool[RedisConnectionPoolable](

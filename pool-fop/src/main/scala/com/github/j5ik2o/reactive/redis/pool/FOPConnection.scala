@@ -3,7 +3,7 @@ package com.github.j5ik2o.reactive.redis.pool
 import java.util.UUID
 
 import cn.danielw.fop.Poolable
-import com.github.j5ik2o.reactive.redis.RedisConnection
+import com.github.j5ik2o.reactive.redis.{ PeerConfig, RedisConnection }
 import com.github.j5ik2o.reactive.redis.command.CommandRequestBase
 import monix.eval.Task
 
@@ -12,7 +12,10 @@ case class FOPConnection(underlying: Poolable[RedisConnection]) extends RedisCon
 
   override def id: UUID = underlyingCon.id
 
+  override def peerConfig: PeerConfig = underlyingCon.peerConfig
+
   override def shutdown(): Unit = underlyingCon.shutdown()
 
   override def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = underlyingCon.send(cmd)
+
 }
