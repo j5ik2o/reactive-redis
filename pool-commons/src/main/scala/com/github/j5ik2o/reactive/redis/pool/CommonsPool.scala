@@ -25,14 +25,13 @@ case class RedisConnectionPoolable(index: Int, redisConnection: RedisConnection)
 
 }
 
-case class CommonsPool[M[_]](connectionPoolConfig: CommonsPoolConfig,
-                             peerConfigs: Seq[PeerConfig],
-                             supervisionDecider: Option[Supervision.Decider] = None,
-                             validationTimeout: FiniteDuration = 3 seconds)(
+case class CommonsPool(connectionPoolConfig: CommonsPoolConfig,
+                       peerConfigs: Seq[PeerConfig],
+                       supervisionDecider: Option[Supervision.Decider] = None,
+                       validationTimeout: FiniteDuration = 3 seconds)(
     implicit system: ActorSystem,
-    scheduler: Scheduler,
-    ME: MonadError[M, Throwable]
-) extends RedisConnectionPool[M] {
+    scheduler: Scheduler
+) extends RedisConnectionPool[Task] {
 
   private val abandonedConfig: org.apache.commons.pool2.impl.AbandonedConfig =
     new org.apache.commons.pool2.impl.AbandonedConfig()
@@ -120,7 +119,7 @@ case class CommonsPool[M[_]](connectionPoolConfig: CommonsPoolConfig,
     underlyingConnectionPools(idx)
   }
 
-  override def withConnectionM[T](reader: ReaderRedisConnection[M, T]): M[T] = {
+  override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = {
     var con: RedisConnectionPoolable = null
     try {
       con = getUnderlyingConnectionPool.borrowObject()
@@ -131,38 +130,38 @@ case class CommonsPool[M[_]](connectionPoolConfig: CommonsPoolConfig,
     }
   }
 
-  override def borrowConnection: M[RedisConnection] =
+  override def borrowConnection: Task[RedisConnection] =
     try {
-      ME.pure(getUnderlyingConnectionPool.borrowObject())
+      Task.pure(getUnderlyingConnectionPool.borrowObject())
     } catch {
       case t: Throwable =>
-        ME.raiseError(t)
+        Task.raiseError(t)
     }
 
-  override def returnConnection(connection: RedisConnection): M[Unit] =
+  override def returnConnection(connection: RedisConnection): Task[Unit] =
     try {
       connection match {
         case c: RedisConnectionPoolable =>
-          ME.pure(underlyingConnectionPools(c.index).returnObject(c))
+          Task.pure(underlyingConnectionPools(c.index).returnObject(c))
         case _ =>
           throw new IllegalArgumentException("Invalid connection class")
       }
     } catch {
       case t: Throwable =>
-        ME.raiseError(t)
+        Task.raiseError(t)
     }
 
-  def invalidateConnection(connection: RedisConnection): M[Unit] =
+  def invalidateConnection(connection: RedisConnection): Task[Unit] =
     try {
       connection match {
         case c: RedisConnectionPoolable =>
-          ME.pure(underlyingConnectionPools(c.index).invalidateObject(c))
+          Task.pure(underlyingConnectionPools(c.index).invalidateObject(c))
         case _ =>
           throw new IllegalArgumentException("Invalid connection class")
       }
     } catch {
       case t: Throwable =>
-        ME.raiseError(t)
+        Task.raiseError(t)
     }
 
   override def numActive: Int = underlyingConnectionPools.foldLeft(0)((r, e) => r + e.getNumActive)

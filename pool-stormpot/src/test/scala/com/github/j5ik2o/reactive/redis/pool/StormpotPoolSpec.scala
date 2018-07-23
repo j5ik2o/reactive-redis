@@ -6,5 +6,5 @@ import monix.execution.Scheduler.Implicits.global
 
 class StormpotPoolSpec extends AbstractRedisConnectionPoolSpec("StormpotPoolSpec") {
   override protected def createConnectionPool(connectionConfigs: Seq[PeerConfig]): RedisConnectionPool[Task] =
-    StormpotPool[Task](StormpotConfig(), connectionConfigs)
+    StormpotPool(StormpotConfig(), connectionConfigs)
 }

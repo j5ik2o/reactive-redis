@@ -6,5 +6,5 @@ import monix.execution.Scheduler.Implicits.global
 
 class ScalaPoolSpec extends AbstractRedisConnectionPoolSpec("ScalaPoolSpec") {
   override protected def createConnectionPool(connectionConfigs: Seq[PeerConfig]): RedisConnectionPool[Task] =
-    ScalaPool[Task](ScalaPoolConfig(), connectionConfigs)
+    ScalaPool(ScalaPoolConfig(), connectionConfigs)
 }

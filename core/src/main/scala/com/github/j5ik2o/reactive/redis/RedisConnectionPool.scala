@@ -84,7 +84,7 @@ object RedisConnectionPool {
         )
       )
 
-    implicit val to: Timeout = passingTimeout
+    private implicit val to: Timeout = passingTimeout
 
     override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = {
       borrowConnection.flatMap { con =>
