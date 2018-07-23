@@ -18,19 +18,6 @@ class HashesFeatureSpec extends AbstractRedisClientSpec(ActorSystem("HashesFeatu
                                      resizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
 
   "HashesFeature" - {
-
-    /**
-      * HINCRBYFLOAT
-      * HKEYS
-      * HLEN
-      * HMGET
-      * HMSET
-      * HSCAN
-      * HSET
-      * HSETNX
-      * HSTRLEN
-      * HVALS
-      */
     "hdel" in forAll(keyFieldValueGen) {
       case (k, f, v) =>
         val result1 = runProgram(for {
