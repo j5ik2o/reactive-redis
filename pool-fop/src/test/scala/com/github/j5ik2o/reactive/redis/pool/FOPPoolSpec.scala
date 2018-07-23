@@ -6,5 +6,5 @@ import monix.execution.Scheduler.Implicits.global
 
 class FOPPoolSpec extends AbstractRedisConnectionPoolSpec("FOPPoolSpec") {
   override protected def createConnectionPool(connectionConfigs: Seq[PeerConfig]): RedisConnectionPool[Task] =
-    FOPPool[Task](FOPConfig(), connectionConfigs)
+    FOPPool(FOPConfig(), connectionConfigs)
 }

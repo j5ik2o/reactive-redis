@@ -43,11 +43,10 @@ object FOPPool {
 
 }
 
-case class FOPPool[M[_]](connectionPoolConfig: FOPConfig, peerConfigs: Seq[PeerConfig])(
+case class FOPPool(connectionPoolConfig: FOPConfig, peerConfigs: Seq[PeerConfig])(
     implicit system: ActorSystem,
-    scheduler: Scheduler,
-    ME: MonadError[M, Throwable]
-) extends RedisConnectionPool[M] {
+    scheduler: Scheduler
+) extends RedisConnectionPool[Task] {
 
   private val poolConfig = new PoolConfig()
   connectionPoolConfig.maxSizePerPeer.foreach(v => poolConfig.setMaxSize(v))
@@ -70,7 +69,7 @@ case class FOPPool[M[_]](connectionPoolConfig: FOPConfig, peerConfigs: Seq[PeerC
 
   private def getObjectPool = objectPools(index.getAndIncrement().toInt % objectPools.size)
 
-  override def withConnectionM[T](reader: ReaderRedisConnection[M, T]): M[T] = {
+  override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = {
     var p: Poolable[RedisConnection] = null
     try {
       p = getObjectPool.borrowObject()
@@ -81,24 +80,24 @@ case class FOPPool[M[_]](connectionPoolConfig: FOPConfig, peerConfigs: Seq[PeerC
     }
   }
 
-  override def borrowConnection: M[RedisConnection] = {
+  override def borrowConnection: Task[RedisConnection] = {
     try {
       val obj = getObjectPool.borrowObject()
-      ME.pure(FOPConnection(obj))
+      Task.pure(FOPConnection(obj))
     } catch {
       case t: Throwable =>
-        ME.raiseError(t)
+        Task.raiseError(t)
     }
   }
 
-  override def returnConnection(redisConnection: RedisConnection): M[Unit] = {
+  override def returnConnection(redisConnection: RedisConnection): Task[Unit] = {
     redisConnection match {
       case con: FOPConnection =>
         try {
-          ME.pure(con.underlying.returnObject())
+          Task.pure(con.underlying.returnObject())
         } catch {
           case t: Throwable =>
-            ME.raiseError(t)
+            Task.raiseError(t)
         }
       case _ =>
         throw new IllegalArgumentException("Invalid connection class")

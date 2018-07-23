@@ -78,11 +78,10 @@ case class RedisConnectionExpiration(validationTimeout: Duration)(implicit syste
   }
 }
 
-case class StormpotPool[M[_]](connectionPoolConfig: StormpotConfig, peerConfigs: Seq[PeerConfig])(
+case class StormpotPool(connectionPoolConfig: StormpotConfig, peerConfigs: Seq[PeerConfig])(
     implicit system: ActorSystem,
-    scheduler: Scheduler,
-    ME: MonadError[M, Throwable]
-) extends RedisConnectionPool[M] {
+    scheduler: Scheduler
+) extends RedisConnectionPool[Task] {
 
   final val DEFAULT_SIZE                     = 8
   final val DEFAULT_CLAIM_TIMEOUT_IN_SECONDS = 10
@@ -118,7 +117,7 @@ case class StormpotPool[M[_]](connectionPoolConfig: StormpotConfig, peerConfigs:
     .map(v => new stormpot.Timeout(v.length, v.unit))
     .getOrElse(new stormpot.Timeout(DEFAULT_CLAIM_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS))
 
-  override def withConnectionM[T](reader: ReaderRedisConnection[M, T]): M[T] = {
+  override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = {
     var poolable: RedisConnectionPoolable = null
     try {
       logger.debug("---- start")
@@ -132,25 +131,25 @@ case class StormpotPool[M[_]](connectionPoolConfig: StormpotConfig, peerConfigs:
     }
   }
 
-  override def borrowConnection: M[RedisConnection] = {
+  override def borrowConnection: Task[RedisConnection] = {
     try {
       val c = getPool.claim(claimTieout)
-      ME.pure(StormpotConnection(c))
+      Task.pure(StormpotConnection(c))
     } catch {
       case t: Throwable =>
-        ME.raiseError(t)
+        Task.raiseError(t)
     }
 
   }
 
-  override def returnConnection(redisConnection: RedisConnection): M[Unit] = {
+  override def returnConnection(redisConnection: RedisConnection): Task[Unit] = {
     redisConnection match {
       case con: StormpotConnection =>
         try {
-          ME.pure(con.redisConnectionPoolable.release())
+          Task.pure(con.redisConnectionPoolable.release())
         } catch {
           case t: Throwable =>
-            ME.raiseError(t)
+            Task.raiseError(t)
         }
       case _ =>
         throw new IllegalArgumentException("Invalid connection class")
