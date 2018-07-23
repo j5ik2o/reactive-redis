@@ -1,5 +1,6 @@
 # reactive-redis
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/aa2a714180064d6f8c6fb2293a1b7548)](https://app.codacy.com/app/j5ik2o/reactive-redis?utm_source=github.com&utm_medium=referral&utm_content=j5ik2o/reactive-redis&utm_campaign=badger)
 [![CircleCI](https://circleci.com/gh/j5ik2o/reactive-redis/tree/master.svg?style=svg)](https://circleci.com/gh/j5ik2o/reactive-redis/tree/master)
 
 Akka-Stream based Redis Client for Scala
