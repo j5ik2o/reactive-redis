@@ -40,6 +40,19 @@ class HashesFeatureSpec extends AbstractRedisClientSpec(ActorSystem("HashesFeatu
         } yield r)
         result.value shouldBe Some(v)
     }
+    "hsetnx & hget" in forAll(keyFieldValueGen) {
+      case (k, f, v) =>
+        val result = runProgram(for {
+          r1 <- redisClient.hsetNx(k, f, v)
+          v1 <- redisClient.hget(k, f)
+          r2 <- redisClient.hsetNx(k, f, "(" + v + ")")
+          v2 <- redisClient.hget(k, f)
+        } yield (r1, r2, v1, v2))
+        result._1.value shouldBe true
+        result._2.value shouldBe false
+        result._3.value shouldBe Some(v)
+        result._4.value shouldBe Some(v)
+    }
     "hgetall" in forAll(keyFieldValueGen) {
       case (k, f, v) =>
         val result = runProgram(for {

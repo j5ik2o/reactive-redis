@@ -54,8 +54,15 @@ trait HashesFeature {
       case HSetSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
       case HSetFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
+
+  def hsetNx(key: String, field: String, value: String): ReaderTTaskRedisConnection[Result[Boolean]] =
+    send(HSetNxRequest(UUID.randomUUID(), key, field, value)).flatMap {
+      case HSetNxSuspended(_, _)         => ReaderTTask.pure(Suspended)
+      case HSetNxSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case HSetNxFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+    }
+
   /*
- * HSETNX
  * HSTRLEN
  * HVALS
  */
