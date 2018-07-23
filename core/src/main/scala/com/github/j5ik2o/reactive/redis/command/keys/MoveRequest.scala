@@ -5,7 +5,7 @@ import java.util.UUID
 import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
-import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr }
+import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
 case class MoveRequest(id: UUID, key: String, db: Int) extends CommandRequest with StringParsersSupport {
@@ -21,6 +21,8 @@ case class MoveRequest(id: UUID, key: String, db: Int) extends CommandRequest wi
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (MoveSucceeded(UUID.randomUUID(), id, n == 1), next)
+    case (SimpleExpr(QUEUED), next) =>
+      (MoveSuspended(UUID.randomUUID(), id), next)
     case (ErrorExpr(msg), next) =>
       (MoveFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
