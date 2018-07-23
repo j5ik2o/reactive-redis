@@ -10,14 +10,13 @@ import akka.event.{ LogSource, Logging }
 import akka.stream._
 import akka.stream.scaladsl._
 import akka.util.ByteString
+import cats.implicits._
 import com.github.j5ik2o.reactive.redis.command.transactions.InTxRequestsAggregationFlow
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequestBase, CommandResponse }
 import monix.eval.Task
 import monix.execution.Scheduler
 
 import scala.concurrent.{ Future, Promise }
-import scala.util.{ Failure, Success, Try }
-import cats.implicits._
 
 object RedisConnection {
 
@@ -32,7 +31,7 @@ object RedisConnection {
   }
 
   def apply(peerConfig: PeerConfig,
-            supervisionDecider: Option[Supervision.Decider] = None)(implicit system: ActorSystem): RedisConnection =
+            supervisionDecider: Option[Supervision.Decider])(implicit system: ActorSystem): RedisConnection =
     new RedisConnectionImpl(peerConfig, supervisionDecider)
 
 }

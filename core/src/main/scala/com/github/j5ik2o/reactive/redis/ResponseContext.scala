@@ -5,9 +5,9 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 import akka.util.ByteString
+import cats.implicits._
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, TransactionalCommandRequest }
 import scodec.bits.ByteVector
-import cats.implicits._
 
 import scala.util.Try
 

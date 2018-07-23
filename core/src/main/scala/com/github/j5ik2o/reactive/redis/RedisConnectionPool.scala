@@ -2,6 +2,7 @@ package com.github.j5ik2o.reactive.redis
 import akka.actor.{ ActorSystem, PoisonPill }
 import akka.pattern.ask
 import akka.routing._
+import akka.stream.Supervision
 import akka.util.Timeout
 import cats.data.ReaderT
 import cats.{ Monad, MonadError }
@@ -37,41 +38,45 @@ object RedisConnectionPool {
   def ofRoundRobin(
       sizePerPeer: Int,
       peerConfigs: Seq[PeerConfig],
-      newConnection: PeerConfig => RedisConnection,
+      newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
       resizer: Option[Resizer] = None,
+      supervisionDecider: Option[Supervision.Decider] = None,
       passingTimeout: FiniteDuration = 5 seconds
   )(implicit system: ActorSystem, scheduler: Scheduler, ME: MonadError[Task, Throwable]): RedisConnectionPool[Task] =
-    apply(RoundRobinPool(sizePerPeer, resizer), peerConfigs, newConnection, passingTimeout)(
+    apply(RoundRobinPool(sizePerPeer, resizer), peerConfigs, newConnection, supervisionDecider, passingTimeout)(
       system,
       scheduler
     )
 
   def ofBalancing(sizePerPeer: Int,
                   peerConfigs: Seq[PeerConfig],
-                  newConnection: PeerConfig => RedisConnection,
+                  newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                  supervisionDecider: Option[Supervision.Decider] = None,
                   passingTimeout: FiniteDuration = 5 seconds)(
       implicit system: ActorSystem,
       scheduler: Scheduler,
       ME: MonadError[Task, Throwable]
   ): RedisConnectionPool[Task] =
-    apply(BalancingPool(sizePerPeer), peerConfigs, newConnection, passingTimeout)(
+    apply(BalancingPool(sizePerPeer), peerConfigs, newConnection, supervisionDecider, passingTimeout)(
       system,
       scheduler
     )
 
   def apply(pool: Pool,
             peerConfigs: Seq[PeerConfig],
-            newConnection: PeerConfig => RedisConnection,
+            newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+            supervisionDecider: Option[Supervision.Decider] = None,
             passingTimeout: FiniteDuration = 3 seconds)(
       implicit system: ActorSystem,
       scheduler: Scheduler
   ): RedisConnectionPool[Task] =
-    new AkkaPool(pool, peerConfigs, newConnection, passingTimeout)(system, scheduler)
+    new AkkaPool(pool, peerConfigs, newConnection, supervisionDecider, passingTimeout)(system, scheduler)
 
   private class AkkaPool(
       pool: Pool,
       val peerConfigs: Seq[PeerConfig],
-      newConnection: PeerConfig => RedisConnection,
+      newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+      supervisionDecider: Option[Supervision.Decider] = None,
       passingTimeout: FiniteDuration = 3 seconds
   )(implicit system: ActorSystem, scheduler: Scheduler)
       extends RedisConnectionPool[Task]() {
@@ -80,7 +85,7 @@ object RedisConnectionPool {
       system.actorOf(
         RedisConnectionPoolActor.props(
           pool,
-          peerConfigs.map(v => RedisConnectionActor.props(v, passingTimeout, newConnection))
+          peerConfigs.map(v => RedisConnectionActor.props(v, newConnection, supervisionDecider, passingTimeout))
         )
       )
 

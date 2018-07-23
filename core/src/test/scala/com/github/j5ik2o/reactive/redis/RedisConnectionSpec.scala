@@ -24,15 +24,17 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnection
   val redisClient: RedisClient    = RedisClient()
 
   override protected def createConnectionPool(peerConfigs: Seq[PeerConfig]): RedisConnectionPool[Task] =
-    RedisConnectionPool.ofRoundRobin(sizePerPeer = 10, peerConfigs, newConnection = {
-      RedisConnection(_)
-    }, resizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
+    RedisConnectionPool.ofRoundRobin(sizePerPeer = 10,
+                                     peerConfigs,
+                                     RedisConnection(_, _),
+                                     resizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     connection = RedisConnection(
       PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.getPort),
-                 backoffConfig = BackoffConfig(maxRestarts = 1))
+                 backoffConfig = BackoffConfig(maxRestarts = 1)),
+      None
     )
   }
 

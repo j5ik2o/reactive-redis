@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicLong
 import akka.actor.ActorSystem
 import akka.event.{ LogSource, Logging }
 import akka.stream.Supervision
-import cats.MonadError
 import com.github.j5ik2o.reactive.redis._
 import com.github.j5ik2o.reactive.redis.command.CommandRequestBase
 import com.github.j5ik2o.reactive.redis.pool.CommonsPool.RedisConnectionPoolFactory
@@ -27,6 +26,7 @@ case class RedisConnectionPoolable(index: Int, redisConnection: RedisConnection)
 
 case class CommonsPool(connectionPoolConfig: CommonsPoolConfig,
                        peerConfigs: Seq[PeerConfig],
+                       newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
                        supervisionDecider: Option[Supervision.Decider] = None,
                        validationTimeout: FiniteDuration = 3 seconds)(
     implicit system: ActorSystem,
@@ -101,7 +101,7 @@ case class CommonsPool(connectionPoolConfig: CommonsPoolConfig,
 
   private def underlyingConnectionPool(index: Int, peerConfig: PeerConfig): GenericObjectPool[RedisConnectionPoolable] =
     new GenericObjectPool[RedisConnectionPoolable](
-      new RedisConnectionPoolFactory(index, peerConfig, supervisionDecider, validationTimeout),
+      new RedisConnectionPoolFactory(index, peerConfig, supervisionDecider, newConnection, validationTimeout),
       underlyingPoolConfig
     )
 
@@ -178,6 +178,7 @@ object CommonsPool {
   private class RedisConnectionPoolFactory(index: Int,
                                            peerConfig: PeerConfig,
                                            supervisionDecider: Option[Supervision.Decider],
+                                           newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
                                            validationTimeout: FiniteDuration)(
       implicit system: ActorSystem,
       scheduler: Scheduler
@@ -193,7 +194,7 @@ object CommonsPool {
     private val redisClient = RedisClient()
 
     override def create(): RedisConnectionPoolable =
-      RedisConnectionPoolable(index, RedisConnection(peerConfig, supervisionDecider))
+      RedisConnectionPoolable(index, newConnection(peerConfig, supervisionDecider))
 
     override def destroyObject(p: PooledObject[RedisConnectionPoolable]): Unit =
       p.getObject.shutdown()

@@ -6,8 +6,8 @@ import java.util.concurrent.atomic.AtomicLong
 
 import akka.NotUsed
 import akka.actor.ActorSystem
+import akka.stream.Supervision
 import akka.stream.scaladsl.Flow
-import cats.MonadError
 import com.github.j5ik2o.reactive.redis._
 import com.github.j5ik2o.reactive.redis.command.CommandRequestBase
 import com.github.j5ik2o.reactive.redis.pool.PoolType.{ Blaze, Queue }
@@ -27,11 +27,13 @@ case class RedisConnectionPoolable(slot: Slot, redisConnection: RedisConnection)
   def close()  = redisConnection.shutdown()
 }
 
-case class RedisConnectionAllocator(peerConfig: PeerConfig)(implicit system: ActorSystem)
+case class RedisConnectionAllocator(peerConfig: PeerConfig,
+                                    newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                                    supervisionDecider: Option[Supervision.Decider])(implicit system: ActorSystem)
     extends Allocator[RedisConnectionPoolable] {
 
   override def allocate(slot: Slot): RedisConnectionPoolable = {
-    RedisConnectionPoolable(slot, RedisConnection(peerConfig))
+    RedisConnectionPoolable(slot, newConnection(peerConfig, supervisionDecider))
   }
 
   override def deallocate(t: RedisConnectionPoolable): Unit = {
@@ -78,7 +80,10 @@ case class RedisConnectionExpiration(validationTimeout: Duration)(implicit syste
   }
 }
 
-case class StormpotPool(connectionPoolConfig: StormpotConfig, peerConfigs: Seq[PeerConfig])(
+case class StormpotPool(connectionPoolConfig: StormpotConfig,
+                        peerConfigs: Seq[PeerConfig],
+                        newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                        supervisionDecider: Option[Supervision.Decider] = None)(
     implicit system: ActorSystem,
     scheduler: Scheduler
 ) extends RedisConnectionPool[Task] {
@@ -88,7 +93,7 @@ case class StormpotPool(connectionPoolConfig: StormpotConfig, peerConfigs: Seq[P
 
   private def newConfig(peerConfig: PeerConfig): Config[RedisConnectionPoolable] =
     new Config[RedisConnectionPoolable]
-      .setAllocator(RedisConnectionAllocator(peerConfig))
+      .setAllocator(RedisConnectionAllocator(peerConfig, newConnection, supervisionDecider))
       .setExpiration(RedisConnectionExpiration(connectionPoolConfig.validationTimeout.getOrElse(3 seconds)))
       .setSize(connectionPoolConfig.sizePerPeer.getOrElse(DEFAULT_SIZE))
       .setBackgroundExpirationEnabled(connectionPoolConfig.backgroundExpirationEnabled.getOrElse(false))

@@ -3,6 +3,7 @@ package com.github.j5ik2o.reactive.redis.pool
 import java.util.concurrent.atomic.AtomicLong
 
 import akka.actor.ActorSystem
+import akka.stream.Supervision
 import com.github.j5ik2o.reactive.redis._
 import io.github.andrebeat.pool._
 import monix.eval.Task
@@ -10,7 +11,10 @@ import monix.execution.Scheduler
 
 import scala.concurrent.duration._
 
-case class ScalaPool(connectionPoolConfig: ScalaPoolConfig, peerConfigs: Seq[PeerConfig])(
+case class ScalaPool(connectionPoolConfig: ScalaPoolConfig,
+                     peerConfigs: Seq[PeerConfig],
+                     newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                     supervisionDecider: Option[Supervision.Decider] = None)(
     implicit system: ActorSystem,
     scheduler: Scheduler
 ) extends RedisConnectionPool[Task] {
@@ -25,7 +29,7 @@ case class ScalaPool(connectionPoolConfig: ScalaPoolConfig, peerConfigs: Seq[Pee
     Pool[ResettableRedisConnection](
       connectionPoolConfig.sizePerPeer.getOrElse(DEFAULT_MAX_TOTAL),
       factory = { () =>
-        ResettableRedisConnection(() => RedisConnection(peerConfig))
+        ResettableRedisConnection(() => newConnection(peerConfig, supervisionDecider))
       },
       referenceType = ReferenceType.Strong,
       maxIdleTime = connectionPoolConfig.maxIdleTime.getOrElse(DEFAULT_MAX_IDLE_TIME),
