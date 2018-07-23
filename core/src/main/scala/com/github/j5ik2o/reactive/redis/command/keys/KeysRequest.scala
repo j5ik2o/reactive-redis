@@ -19,8 +19,8 @@ case class KeysRequest(id: UUID, pattern: String) extends CommandRequest with St
   override protected def responseParser: P[Expr] = P(stringArrayReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
-    case (ArrayExpr(values: Seq[StringExpr]), next) =>
-      (KeysSucceeded(UUID.randomUUID(), id, values.map(_.value)), next)
+    case (ArrayExpr(values), next) =>
+      (KeysSucceeded(UUID.randomUUID(), id, values.asInstanceOf[Seq[StringExpr]].map(_.value)), next)
     case (SimpleExpr(QUEUED), next) =>
       (KeysSuspended(UUID.randomUUID(), id), next)
     case (ErrorExpr(msg), next) =>

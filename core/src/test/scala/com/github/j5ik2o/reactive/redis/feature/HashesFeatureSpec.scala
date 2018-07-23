@@ -18,6 +18,19 @@ class HashesFeatureSpec extends AbstractRedisClientSpec(ActorSystem("HashesFeatu
                                      resizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
 
   "HashesFeature" - {
+
+    /**
+      * HINCRBYFLOAT
+      * HKEYS
+      * HLEN
+      * HMGET
+      * HMSET
+      * HSCAN
+      * HSET
+      * HSETNX
+      * HSTRLEN
+      * HVALS
+      */
     "hdel" in forAll(keyFieldValueGen) {
       case (k, f, v) =>
         val result1 = runProgram(for {
@@ -42,7 +55,7 @@ class HashesFeatureSpec extends AbstractRedisClientSpec(ActorSystem("HashesFeatu
         } yield (r1, r2))
         result shouldBe (Provided(true), Provided(false))
     }
-    "hset & hget" in forAll(keyFieldValueGen) {
+    "hget" in forAll(keyFieldValueGen) {
       case (k, f, v) =>
         val result = runProgram(for {
           _ <- redisClient.hset(k, f, v)
@@ -50,7 +63,24 @@ class HashesFeatureSpec extends AbstractRedisClientSpec(ActorSystem("HashesFeatu
         } yield r)
         result.value shouldBe Some(v)
     }
-    "hsetnx & hget" in forAll(keyFieldValueGen) {
+    "hgetall" in forAll(keyFieldValueGen) {
+      case (k, f, v) =>
+        val result = runProgram(for {
+          _ <- redisClient.hset(k, f, v)
+          r <- redisClient.hgetAll(k)
+        } yield r)
+        result.value(0) shouldBe f
+        result.value(1) shouldBe v
+    }
+    "HINCRBY" in {}
+    "HINCRBYFLOAT" in {}
+    "HKEYS" in {}
+    "HLEN" in {}
+    "HMGET" in {}
+    "HMSET" in {}
+    "HSCAN" in {}
+    "HSET" in {}
+    "hsetnx" in forAll(keyFieldValueGen) {
       case (k, f, v) =>
         val result = runProgram(for {
           r1 <- redisClient.hsetNx(k, f, v)
@@ -63,15 +93,7 @@ class HashesFeatureSpec extends AbstractRedisClientSpec(ActorSystem("HashesFeatu
         result._3.value shouldBe Some(v)
         result._4.value shouldBe Some(v)
     }
-    "hgetall" in forAll(keyFieldValueGen) {
-      case (k, f, v) =>
-        val result = runProgram(for {
-          _ <- redisClient.hset(k, f, v)
-          r <- redisClient.hgetAll(k)
-        } yield r)
-        result.value(0) shouldBe f
-        result.value(1) shouldBe v
-    }
+    "HVALS" in {}
   }
 
 }
