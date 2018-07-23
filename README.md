@@ -63,14 +63,23 @@ val pool = RedisConnectionPool.ofRoundRobin(sizePerPeer = 5, Seq(peerConfig), Re
 val connection = RedisConnection(connectionConfig)
 val client = RedisClient()
 
-val result = pool.withConnectionF{ con =>
+// Fucntion style
+val result1 = pool.withConnectionF{ con =>
   (for{
     _ <- client.set("foo", "bar")
     r <- client.get("foo")
   } yield r).run(con) 
 }.runAsync
 
-println(result) // bar
+println(result1) // bar
+
+// Monadic style
+val result2 = (for {
+  _ <- ConnectionAutoClose(pool)(client.set("foo", "bar").run)
+  r <- ConnectionAutoClose(pool)(client.get("foo").run)
+} yield r).run().runAsync
+
+println(result2) // bar
 ```
 
 if you want to use other pooling implementation, please select from the following modules.
@@ -108,9 +117,6 @@ val result = (for{
 
 println(result) // bar
 ```
-
-
-
 
 ## License
 
