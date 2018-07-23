@@ -141,7 +141,7 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
     process.foreach { p =>
       logger.info("redis test server will be stopped")
       p.destroy()
-      // p.waitFor()
+      p.waitFor()
       logger.info("redis test server has stopped")
     }
   }
