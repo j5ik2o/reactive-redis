@@ -16,12 +16,11 @@ case class KeysRequest(id: UUID, pattern: String) extends CommandRequest with St
 
   override def asString: String = s"KEYS $pattern"
 
-  override protected def responseParser: P[Expr] = P(stringOptArrayReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = P(stringArrayReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
-    case (ArrayExpr(values), next) =>
-      val _values = values.asInstanceOf[Seq[StringOptExpr]]
-      (KeysSucceeded(UUID.randomUUID(), id, _values.map(_.value.get)), next)
+    case (ArrayExpr(values: Seq[StringExpr]), next) =>
+      (KeysSucceeded(UUID.randomUUID(), id, values.map(_.value)), next)
     case (SimpleExpr(QUEUED), next) =>
       (KeysSuspended(UUID.randomUUID(), id), next)
     case (ErrorExpr(msg), next) =>

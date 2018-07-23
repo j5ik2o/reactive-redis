@@ -32,7 +32,14 @@ trait HashesFeature {
       case HGetSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
       case HGetFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
-  /* HGETALL
+
+  def hgetAll(key: String): ReaderTTaskRedisConnection[Result[Seq[String]]] =
+    send(HGetAllRequest(UUID.randomUUID(), key)).flatMap {
+      case HGetAllSuspended(_, _)         => ReaderTTask.pure(Suspended)
+      case HGetAllSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case HGetAllFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+    }
+  /*
    * HINCRBY
    * HINCRBYFLOAT
    * HKEYS
