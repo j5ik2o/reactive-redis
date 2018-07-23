@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-case class BitPosRequest(id: UUID, key: String, bit: Int, startAndEnd: Option[StartAndEnd] = None)
+case class BitPosRequest(id: UUID, key: String, bit: Int, startAndEnd: Option[BitPosRequest.StartAndEnd] = None)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -16,7 +16,12 @@ case class BitPosRequest(id: UUID, key: String, bit: Int, startAndEnd: Option[St
 
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = s"BITPOS $key $bit" + startAndEnd.fold("")(e => " " + e.start + " " + e.end)
+  override def asString: String =
+    s"BITPOS $key $bit" + startAndEnd.fold("") { e =>
+      " " + e.start + e.end.fold("") { v =>
+        s" $v"
+      }
+    }
 
   override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
 
@@ -29,6 +34,10 @@ case class BitPosRequest(id: UUID, key: String, bit: Int, startAndEnd: Option[St
       (BitPosFailed(UUID.randomUUID, id, RedisIOException(Some(msg))), next)
   }
 
+}
+
+object BitPosRequest {
+  case class StartAndEnd(start: Int, end: Option[Int] = None)
 }
 
 sealed trait BitPosResponse                                       extends CommandResponse

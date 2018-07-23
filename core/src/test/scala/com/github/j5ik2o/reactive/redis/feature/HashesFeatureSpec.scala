@@ -18,7 +18,7 @@ class HashesFeatureSpec extends AbstractRedisClientSpec(ActorSystem("HashesFeatu
                                      resizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
 
   "HashesFeature" - {
-    "hdel" in forAll(keyFieldValueGen) {
+    "hdel" in forAll(keyFieldStrValueGen) {
       case (k, f, v) =>
         val result1 = runProgram(for {
           _ <- redisClient.hset(k, f, v)
@@ -32,7 +32,7 @@ class HashesFeatureSpec extends AbstractRedisClientSpec(ActorSystem("HashesFeatu
         result2._1.value shouldBe 1
         result2._2.value shouldBe None
     }
-    "hexists" in forAll(keyFieldValueGen) {
+    "hexists" in forAll(keyFieldStrValueGen) {
       case (k, f, v) =>
         val result = runProgram(for {
           _  <- redisClient.hset(k, f, v)
@@ -42,7 +42,7 @@ class HashesFeatureSpec extends AbstractRedisClientSpec(ActorSystem("HashesFeatu
         } yield (r1, r2))
         result shouldBe (Provided(true), Provided(false))
     }
-    "hget" in forAll(keyFieldValueGen) {
+    "hget" in forAll(keyFieldStrValueGen) {
       case (k, f, v) =>
         val result = runProgram(for {
           _ <- redisClient.hset(k, f, v)
@@ -50,7 +50,7 @@ class HashesFeatureSpec extends AbstractRedisClientSpec(ActorSystem("HashesFeatu
         } yield r)
         result.value shouldBe Some(v)
     }
-    "hgetall" in forAll(keyFieldValueGen) {
+    "hgetall" in forAll(keyFieldStrValueGen) {
       case (k, f, v) =>
         val result = runProgram(for {
           _ <- redisClient.hset(k, f, v)
@@ -59,15 +59,15 @@ class HashesFeatureSpec extends AbstractRedisClientSpec(ActorSystem("HashesFeatu
         result.value(0) shouldBe f
         result.value(1) shouldBe v
     }
-    "HINCRBY" in {}
-    "HINCRBYFLOAT" in {}
-    "HKEYS" in {}
-    "HLEN" in {}
-    "HMGET" in {}
-    "HMSET" in {}
-    "HSCAN" in {}
-    "HSET" in {}
-    "hsetnx" in forAll(keyFieldValueGen) {
+    "hincrBy" in {}
+    "hincrByFloat" in {}
+    "hkeys" in {}
+    "hlen" in {}
+    "hmget" in {}
+    "hmset" in {}
+    "hscan" in {}
+    "hset" in {}
+    "hsetnx" in forAll(keyFieldStrValueGen) {
       case (k, f, v) =>
         val result = runProgram(for {
           r1 <- redisClient.hsetNx(k, f, v)
