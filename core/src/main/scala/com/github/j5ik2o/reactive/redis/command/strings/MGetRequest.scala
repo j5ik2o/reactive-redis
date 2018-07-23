@@ -19,8 +19,8 @@ case class MGetRequest(id: UUID, keys: Seq[String]) extends CommandRequest with 
   override protected def responseParser: P[Expr] = P(stringArrayReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
-    case (ArrayExpr(values: Seq[StringExpr]), next) =>
-      (MGetSucceeded(UUID.randomUUID(), id, values.map(_.value)), next)
+    case (ArrayExpr(values), next) =>
+      (MGetSucceeded(UUID.randomUUID(), id, values.asInstanceOf[Seq[StringExpr]].map(_.value)), next)
     case (SimpleExpr(QUEUED), next) =>
       (MGetSuspended(UUID.randomUUID(), id), next)
     case (ErrorExpr(msg), next) =>

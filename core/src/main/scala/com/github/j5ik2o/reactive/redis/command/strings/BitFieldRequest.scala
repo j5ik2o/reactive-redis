@@ -21,8 +21,8 @@ case class BitFieldRequest(id: UUID, key: String, options: BitFieldRequest.SubOp
   override protected def responseParser: P[Expr] = P(integerArrayReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
-    case (ArrayExpr(values: Seq[NumberExpr]), next) =>
-      (BitFieldSucceeded(UUID.randomUUID(), id, values.map(_.value)), next)
+    case (ArrayExpr(values), next) =>
+      (BitFieldSucceeded(UUID.randomUUID(), id, values.asInstanceOf[Seq[NumberExpr]].map(_.value)), next)
     case (SimpleExpr(QUEUED), next) =>
       (BitFieldSuspended(UUID.randomUUID(), id), next)
     case (ErrorExpr(msg), next) =>

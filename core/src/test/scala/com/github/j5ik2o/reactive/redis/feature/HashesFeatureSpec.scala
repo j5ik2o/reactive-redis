@@ -2,7 +2,7 @@ package com.github.j5ik2o.reactive.redis.feature
 
 import akka.actor.ActorSystem
 import akka.routing.DefaultResizer
-import com.github.j5ik2o.reactive.redis.{ AbstractRedisClientSpec, PeerConfig, RedisConnection, RedisConnectionPool }
+import com.github.j5ik2o.reactive.redis._
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Shrink
@@ -32,7 +32,17 @@ class HashesFeatureSpec extends AbstractRedisClientSpec(ActorSystem("HashesFeatu
         result2._1.value shouldBe 1
         result2._2.value shouldBe None
     }
-    "hset & hget" in forAll(keyFieldValueGen) {
+    "hexists" in forAll(keyFieldValueGen) {
+      case (k, f, v) =>
+        val result = runProgram(for {
+          _  <- redisClient.hset(k, f, v)
+          r1 <- redisClient.hexists(k, f)
+          _  <- redisClient.hdel(k, f)
+          r2 <- redisClient.hexists(k, f)
+        } yield (r1, r2))
+        result shouldBe (Provided(true), Provided(false))
+    }
+    "hget" in forAll(keyFieldValueGen) {
       case (k, f, v) =>
         val result = runProgram(for {
           _ <- redisClient.hset(k, f, v)
@@ -40,7 +50,24 @@ class HashesFeatureSpec extends AbstractRedisClientSpec(ActorSystem("HashesFeatu
         } yield r)
         result.value shouldBe Some(v)
     }
-    "hsetnx & hget" in forAll(keyFieldValueGen) {
+    "hgetall" in forAll(keyFieldValueGen) {
+      case (k, f, v) =>
+        val result = runProgram(for {
+          _ <- redisClient.hset(k, f, v)
+          r <- redisClient.hgetAll(k)
+        } yield r)
+        result.value(0) shouldBe f
+        result.value(1) shouldBe v
+    }
+    "HINCRBY" in {}
+    "HINCRBYFLOAT" in {}
+    "HKEYS" in {}
+    "HLEN" in {}
+    "HMGET" in {}
+    "HMSET" in {}
+    "HSCAN" in {}
+    "HSET" in {}
+    "hsetnx" in forAll(keyFieldValueGen) {
       case (k, f, v) =>
         val result = runProgram(for {
           r1 <- redisClient.hsetNx(k, f, v)
@@ -53,15 +80,7 @@ class HashesFeatureSpec extends AbstractRedisClientSpec(ActorSystem("HashesFeatu
         result._3.value shouldBe Some(v)
         result._4.value shouldBe Some(v)
     }
-    "hgetall" in forAll(keyFieldValueGen) {
-      case (k, f, v) =>
-        val result = runProgram(for {
-          _ <- redisClient.hset(k, f, v)
-          r <- redisClient.hgetAll(k)
-        } yield r)
-        result.value(0) shouldBe f
-        result.value(1) shouldBe v
-    }
+    "HVALS" in {}
   }
 
 }
