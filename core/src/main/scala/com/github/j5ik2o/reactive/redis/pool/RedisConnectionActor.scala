@@ -2,6 +2,7 @@ package com.github.j5ik2o.reactive.redis.pool
 
 import akka.actor.{ Actor, ActorLogging, ActorSystem, Props }
 import akka.pattern.pipe
+import akka.stream.Supervision
 import akka.util.Timeout
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequestBase, CommandResponse }
 import com.github.j5ik2o.reactive.redis.pool.RedisConnectionActor.{ BorrowConnection, ConnectionGotten }
@@ -12,10 +13,13 @@ import scala.concurrent.duration._
 
 object RedisConnectionActor {
 
-  def props(peerConfig: PeerConfig, passingTimeout: FiniteDuration, newConnection: PeerConfig => RedisConnection)(
+  def props(peerConfig: PeerConfig,
+            newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+            supervisionDecider: Option[Supervision.Decider],
+            passingTimeout: FiniteDuration)(
       implicit scheduler: Scheduler
   ): Props =
-    Props(new RedisConnectionActor(peerConfig, passingTimeout, newConnection))
+    Props(new RedisConnectionActor(peerConfig, newConnection, supervisionDecider, passingTimeout))
 
   case object BorrowConnection
   case class ConnectionGotten(redisConnection: RedisConnection)
@@ -23,13 +27,14 @@ object RedisConnectionActor {
 }
 
 class RedisConnectionActor(peerConfig: PeerConfig,
-                           passingTimeout: FiniteDuration,
-                           newConnection: PeerConfig => RedisConnection)(
+                           newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                           supervisionDecider: Option[Supervision.Decider],
+                           passingTimeout: FiniteDuration)(
     implicit scheduler: Scheduler
 ) extends Actor
     with ActorLogging {
   private implicit val as: ActorSystem    = context.system
-  private val connection: RedisConnection = newConnection(peerConfig)
+  private val connection: RedisConnection = newConnection(peerConfig, supervisionDecider)
   implicit val to: Timeout                = passingTimeout
 
   override def postStop(): Unit = {

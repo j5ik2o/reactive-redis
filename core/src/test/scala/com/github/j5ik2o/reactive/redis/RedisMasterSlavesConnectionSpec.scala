@@ -16,9 +16,10 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
   val redisClient = RedisClient()
 
   override protected def createConnectionPool(peerConfigs: Seq[PeerConfig]): RedisConnectionPool[Task] =
-    RedisConnectionPool.ofRoundRobin(sizePerPeer = 10, peerConfigs, newConnection = {
-      RedisConnection(_)
-    }, resizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
+    RedisConnectionPool.ofRoundRobin(sizePerPeer = 10,
+                                     peerConfigs,
+                                     RedisConnection(_, _),
+                                     resizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
@@ -31,8 +32,8 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
       )
 
     connection = new RedisMasterSlavesConnection(
-      masterConnectionPoolFactory = RedisConnectionPool.ofRoundRobin(3, Seq(masterPeerConfig), RedisConnection(_)),
-      slaveConnectionPoolFactory = RedisConnectionPool.ofRoundRobin(5, slavePeerConfigs, RedisConnection(_))
+      masterConnectionPoolFactory = RedisConnectionPool.ofRoundRobin(3, Seq(masterPeerConfig), RedisConnection(_, _)),
+      slaveConnectionPoolFactory = RedisConnectionPool.ofRoundRobin(5, slavePeerConfigs, RedisConnection(_, _))
     )
     Thread.sleep((1000 * timeFactor).toInt)
   }

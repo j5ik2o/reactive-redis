@@ -20,7 +20,7 @@ class RedisConnectionPoolFlowSpec extends AbstractActorSpec(ActorSystem("RedisCo
 
   override protected def createConnectionPool(peerConfigs: Seq[PeerConfig]): RedisConnectionPool[Task] =
     RedisConnectionPool.ofRoundRobin(sizePerPeer = 10, peerConfigs, newConnection = {
-      RedisConnection(_)
+      RedisConnection(_, _)
     }, resizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
 
   override protected def beforeAll(): Unit = {

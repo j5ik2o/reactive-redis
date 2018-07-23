@@ -4,7 +4,7 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicLong
 
 import akka.actor.ActorSystem
-import cats.MonadError
+import akka.stream.Supervision
 import cn.danielw.fop.{ ObjectFactory, ObjectPool, PoolConfig, Poolable }
 import com.github.j5ik2o.reactive.redis._
 import com.github.j5ik2o.reactive.redis.command.CommandRequestBase
@@ -26,11 +26,14 @@ object FOPPool {
   private def createFactory(
       index: Int,
       connectionPoolConfig: FOPConfig,
-      peerConfig: PeerConfig
+      peerConfig: PeerConfig,
+      newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+      supervisionDecider: Option[Supervision.Decider]
   )(implicit system: ActorSystem, scheduler: Scheduler): ObjectFactory[RedisConnection] =
     new ObjectFactory[RedisConnection] {
-      val redisClient                        = RedisClient()
-      override def create(): RedisConnection = FOPConnectionWithIndex(index, RedisConnection(peerConfig))
+      val redisClient = RedisClient()
+      override def create(): RedisConnection =
+        FOPConnectionWithIndex(index, newConnection(peerConfig, supervisionDecider))
 
       override def destroy(t: RedisConnection): Unit = {
         t.shutdown()
@@ -43,7 +46,10 @@ object FOPPool {
 
 }
 
-case class FOPPool(connectionPoolConfig: FOPConfig, peerConfigs: Seq[PeerConfig])(
+case class FOPPool(connectionPoolConfig: FOPConfig,
+                   peerConfigs: Seq[PeerConfig],
+                   newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                   supervisionDecider: Option[Supervision.Decider] = None)(
     implicit system: ActorSystem,
     scheduler: Scheduler
 ) extends RedisConnectionPool[Task] {
@@ -63,7 +69,7 @@ case class FOPPool(connectionPoolConfig: FOPConfig, peerConfigs: Seq[PeerConfig]
 
   private val objectPools = peerConfigs.zipWithIndex.map {
     case (e, index) =>
-      val factory = FOPPool.createFactory(index, connectionPoolConfig, e)
+      val factory = FOPPool.createFactory(index, connectionPoolConfig, e, newConnection, supervisionDecider)
       new ObjectPool(poolConfig, factory)
   }
 
