@@ -31,6 +31,9 @@ object RedisConnectionPool {
     }
   }
 
+  def ofSingleConnection(redisConnection: RedisConnection)(implicit system: ActorSystem): RedisConnectionPool[Task] =
+    new SinglePool(redisConnection)
+
   def ofRoundRobin(
       sizePerPeer: Int,
       peerConfigs: Seq[PeerConfig],
@@ -63,7 +66,69 @@ object RedisConnectionPool {
       implicit system: ActorSystem,
       scheduler: Scheduler
   ): RedisConnectionPool[Task] =
-    new DefaultPool(pool, peerConfigs, newConnection, passingTimeout)(system, scheduler)
+    new AkkaPool(pool, peerConfigs, newConnection, passingTimeout)(system, scheduler)
+
+  private class AkkaPool(
+      pool: Pool,
+      val peerConfigs: Seq[PeerConfig],
+      newConnection: PeerConfig => RedisConnection,
+      passingTimeout: FiniteDuration = 3 seconds
+  )(implicit system: ActorSystem, scheduler: Scheduler)
+      extends RedisConnectionPool[Task]() {
+
+    private val connectionPoolActor =
+      system.actorOf(
+        RedisConnectionPoolActor.props(
+          pool,
+          peerConfigs.map(v => RedisConnectionActor.props(v, passingTimeout, newConnection))
+        )
+      )
+
+    implicit val to: Timeout = passingTimeout
+
+    override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = {
+      borrowConnection.flatMap { con =>
+        reader.run(con).doOnFinish { _ =>
+          returnConnection(con)
+        }
+      }
+    }
+
+    override def borrowConnection: Task[RedisConnection] = Task.deferFutureAction { implicit ec =>
+      (connectionPoolActor ? BorrowConnection).mapTo[ConnectionGotten].map(_.redisConnection)(ec)
+    }
+
+    override def returnConnection(redisConnection: RedisConnection): Task[Unit] = {
+      Task.pure(())
+    }
+
+    override def numActive: Int = pool.nrOfInstances(system) * peerConfigs.size
+
+    override def clear(): Unit = {}
+
+    override def dispose(): Unit = { connectionPoolActor ! PoisonPill }
+  }
+
+  private class SinglePool(redisConnection: RedisConnection)(implicit system: ActorSystem)
+      extends RedisConnectionPool[Task]() {
+
+    override def peerConfigs: Seq[PeerConfig] = Seq(redisConnection.peerConfig)
+
+    override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = reader(redisConnection)
+
+    override def borrowConnection: Task[RedisConnection] = Task.pure(redisConnection)
+
+    override def returnConnection(redisConnection: RedisConnection): Task[Unit] = Task.pure(())
+
+    def invalidateConnection(redisConnection: RedisConnection): Task[Unit] = Task.pure(())
+
+    override def numActive: Int = 1
+
+    override def clear(): Unit = {}
+
+    override def dispose(): Unit = redisConnection.shutdown()
+
+  }
 
 }
 
@@ -87,45 +152,4 @@ abstract class RedisConnectionPool[M[_]] {
 
   def dispose(): Unit
 
-}
-
-private class DefaultPool(
-    pool: Pool,
-    val peerConfigs: Seq[PeerConfig],
-    newConnection: PeerConfig => RedisConnection,
-    passingTimeout: FiniteDuration = 3 seconds
-)(implicit system: ActorSystem, scheduler: Scheduler)
-    extends RedisConnectionPool[Task]() {
-
-  private val connectionPoolActor =
-    system.actorOf(
-      RedisConnectionPoolActor.props(
-        pool,
-        peerConfigs.map(v => RedisConnectionActor.props(v, passingTimeout, newConnection))
-      )
-    )
-
-  implicit val to: Timeout = passingTimeout
-
-  override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = {
-    borrowConnection.flatMap { con =>
-      reader.run(con).doOnFinish { _ =>
-        returnConnection(con)
-      }
-    }
-  }
-
-  override def borrowConnection: Task[RedisConnection] = Task.deferFutureAction { implicit ec =>
-    (connectionPoolActor ? BorrowConnection).mapTo[ConnectionGotten].map(_.redisConnection)(ec)
-  }
-
-  override def returnConnection(redisConnection: RedisConnection): Task[Unit] = {
-    Task.pure(())
-  }
-
-  override def numActive: Int = pool.nrOfInstances(system) * peerConfigs.size
-
-  override def clear(): Unit = {}
-
-  override def dispose(): Unit = { connectionPoolActor ! PoisonPill }
 }
