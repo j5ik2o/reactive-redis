@@ -20,7 +20,7 @@ case class HGetRequest(id: UUID, key: String, field: String) extends CommandRequ
 
   override protected def parseResponse: Handler = {
     case (StringOptExpr(s), next) =>
-      (HGetSucceeded(UUID.randomUUID(), id, s.get), next)
+      (HGetSucceeded(UUID.randomUUID(), id, s), next)
     case (SimpleExpr(QUEUED), next) =>
       (HGetSuspended(UUID.randomUUID(), id), next)
     case (ErrorExpr(msg), next) =>
@@ -29,7 +29,7 @@ case class HGetRequest(id: UUID, key: String, field: String) extends CommandRequ
 
 }
 
-sealed trait HGetResponse                                              extends CommandResponse
-case class HGetSuspended(id: UUID, requestId: UUID)                    extends HGetResponse
-case class HGetSucceeded(id: UUID, requestId: UUID, value: String)     extends HGetResponse
-case class HGetFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends HGetResponse
+sealed trait HGetResponse                                                  extends CommandResponse
+case class HGetSuspended(id: UUID, requestId: UUID)                        extends HGetResponse
+case class HGetSucceeded(id: UUID, requestId: UUID, value: Option[String]) extends HGetResponse
+case class HGetFailed(id: UUID, requestId: UUID, ex: RedisIOException)     extends HGetResponse
