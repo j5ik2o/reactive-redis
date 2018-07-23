@@ -62,9 +62,15 @@ object StringParsers {
 
   private val bulkStringWithCrLf: P[StringOptExpr] = P((length ~ crlf).flatMap(l => bulkStringRest(l.value)))
 
-  val simpleStringReply: P[Expr]   = P(simpleWithCrLf | errorWithCrLf)
-  val integerReply: P[Expr]        = P(integerWithCrLf | errorWithCrLf)
-  val integerArrayReply: P[Expr]   = P(integerArrayWithCrLf | errorWithCrLf)
+  val simpleStringReply: P[Expr] = P(simpleWithCrLf | errorWithCrLf)
+  val integerReply: P[Expr]      = P(integerWithCrLf | errorWithCrLf)
+  val integerArrayReply: P[Expr] = P(integerArrayWithCrLf | errorWithCrLf)
+
   val stringOptArrayReply: P[Expr] = P(stringOptArrayWithCrLf | errorWithCrLf)
-  val bulkStringReply: P[Expr]     = P(bulkStringWithCrLf | errorWithCrLf)
+
+  val stringArrayReply: P[Expr] = P(stringOptArrayWithCrLf.map { v =>
+    ArrayExpr(v.values.map(_.toStringExpr))
+  } | errorWithCrLf)
+
+  val bulkStringReply: P[Expr] = P(bulkStringWithCrLf | errorWithCrLf)
 }
