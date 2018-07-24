@@ -24,15 +24,19 @@ class StringsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("StringsFea
                                              reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
 
   "StringsFeature" - {
-    "append" in forAll(keyStrValueGen) {
+    "append" in forAll(keyValueGen) {
       case (k, v) =>
         val result = runProgram(for {
-          ar <- redisClient.append(k, v)
-          gr <- redisClient.get(k)
-        } yield (ar, gr))
+          ar1 <- redisClient.append(k, v)
+          gr1 <- redisClient.get(k)
+          ar2 <- redisClient.append(k, v)
+          gr2 <- redisClient.get(k)
+        } yield (ar1, ar2, gr1, gr2))
 
         result._1.value shouldBe v.length
-        result._2.value shouldBe Some(v)
+        result._2.value shouldBe v.length * 2
+        result._3.value shouldBe Some(v)
+        result._4.value shouldBe Some(v + v)
     }
     "bitcount" in forAll(keyStrValueGen) {
       case (k, v) =>
@@ -111,6 +115,7 @@ class StringsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("StringsFea
         } yield result)
 
         result.value shouldBe Some(v)
+        <<<<<<< HEAD
     }
     "getBit" in {
       val k = UUID.randomUUID().toString
