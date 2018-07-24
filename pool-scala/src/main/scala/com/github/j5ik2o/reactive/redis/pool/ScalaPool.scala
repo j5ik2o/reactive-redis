@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 import akka.actor.ActorSystem
 import akka.stream.Supervision
+import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis._
 import io.github.andrebeat.pool._
 import monix.eval.Task
@@ -12,7 +13,7 @@ import monix.execution.Scheduler
 import scala.concurrent.duration._
 
 final case class ScalaPool(connectionPoolConfig: ScalaPoolConfig,
-                           peerConfigs: Seq[PeerConfig],
+                           peerConfigs: NonEmptyList[PeerConfig],
                            newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
                            supervisionDecider: Option[Supervision.Decider] = None)(
     implicit system: ActorSystem,
@@ -42,7 +43,7 @@ final case class ScalaPool(connectionPoolConfig: ScalaPoolConfig,
       }
     )
 
-  private val pools = peerConfigs.map(config => newPool(config))
+  private val pools = peerConfigs.toList.map(config => newPool(config))
 
   pools.foreach(_.fill)
 

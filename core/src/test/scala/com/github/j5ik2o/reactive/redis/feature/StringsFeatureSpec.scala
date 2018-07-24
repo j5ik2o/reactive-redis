@@ -4,6 +4,7 @@ import java.util.UUID
 
 import akka.actor.ActorSystem
 import akka.routing.DefaultResizer
+import cats.data.NonEmptyList
 import cats.implicits._
 import com.github.j5ik2o.reactive.redis.command.strings.BitFieldRequest.SingedBitType
 import com.github.j5ik2o.reactive.redis.command.strings.{ BitFieldRequest, BitOpRequest, BitPosRequest, StartAndEnd }
@@ -16,7 +17,7 @@ import org.scalacheck.Shrink
 class StringsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("StringsFeatureSpec")) {
   implicit val noShrink: Shrink[String] = Shrink.shrinkAny
 
-  override protected def createConnectionPool(peerConfigs: Seq[PeerConfig]): RedisConnectionPool[Task] =
+  override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
     RedisConnectionPool.ofRoundRobin(sizePerPeer = 10,
                                      peerConfigs,
                                      RedisConnection(_, _),

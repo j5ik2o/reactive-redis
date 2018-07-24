@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 import akka.actor.ActorSystem
 import akka.stream.Supervision
+import cats.data.NonEmptyList
 import cn.danielw.fop.{ ObjectFactory, ObjectPool, PoolConfig, Poolable }
 import com.github.j5ik2o.reactive.redis._
 import com.github.j5ik2o.reactive.redis.command.CommandRequestBase
@@ -47,7 +48,7 @@ object FOPPool {
 }
 
 final case class FOPPool(connectionPoolConfig: FOPConfig,
-                         peerConfigs: Seq[PeerConfig],
+                         peerConfigs: NonEmptyList[PeerConfig],
                          newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
                          supervisionDecider: Option[Supervision.Decider] = None)(
     implicit system: ActorSystem,
@@ -67,7 +68,7 @@ final case class FOPPool(connectionPoolConfig: FOPConfig,
 
   private val index = new AtomicLong(0L)
 
-  private val objectPools = peerConfigs.zipWithIndex.map {
+  private val objectPools = peerConfigs.toList.zipWithIndex.map {
     case (e, index) =>
       val factory = FOPPool.createFactory(index, connectionPoolConfig, e, newConnection, supervisionDecider)
       new ObjectPool(poolConfig, factory)

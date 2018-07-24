@@ -7,6 +7,7 @@ import java.util.UUID
 import akka.actor.ActorSystem
 import akka.routing.DefaultResizer
 import akka.stream.scaladsl.{ Sink, Source }
+import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis.command.CommandResponse
 import com.github.j5ik2o.reactive.redis.command.strings.{ GetRequest, SetRequest }
 import monix.eval.Task
@@ -18,14 +19,14 @@ class RedisConnectionPoolFlowSpec extends AbstractActorSpec(ActorSystem("RedisCo
 
   var pool: RedisConnectionPool[Task] = _
 
-  override protected def createConnectionPool(peerConfigs: Seq[PeerConfig]): RedisConnectionPool[Task] =
+  override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
     RedisConnectionPool.ofRoundRobin(sizePerPeer = 10, peerConfigs, newConnection = {
       RedisConnection(_, _)
     }, resizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    val peerConfig = Seq(PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.getPort)))
+    val peerConfig = NonEmptyList.of(PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.getPort)))
     pool = createConnectionPool(peerConfig)
   }
 

@@ -4,7 +4,7 @@ import akka.pattern.ask
 import akka.routing._
 import akka.stream.Supervision
 import akka.util.Timeout
-import cats.data.ReaderT
+import cats.data.{ NonEmptyList, ReaderT }
 import cats.{ Monad, MonadError }
 import com.github.j5ik2o.reactive.redis.pool.RedisConnectionActor.{ BorrowConnection, ConnectionGotten }
 import com.github.j5ik2o.reactive.redis.pool.{ RedisConnectionActor, RedisConnectionPoolActor }
@@ -37,7 +37,7 @@ object RedisConnectionPool {
 
   def ofRoundRobin(
       sizePerPeer: Int,
-      peerConfigs: Seq[PeerConfig],
+      peerConfigs: NonEmptyList[PeerConfig],
       newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
       resizer: Option[Resizer] = None,
       supervisionDecider: Option[Supervision.Decider] = None,
@@ -49,7 +49,7 @@ object RedisConnectionPool {
     )
 
   def ofBalancing(sizePerPeer: Int,
-                  peerConfigs: Seq[PeerConfig],
+                  peerConfigs: NonEmptyList[PeerConfig],
                   newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
                   supervisionDecider: Option[Supervision.Decider] = None,
                   passingTimeout: FiniteDuration = 5 seconds)(
@@ -63,7 +63,7 @@ object RedisConnectionPool {
     )
 
   def apply(pool: Pool,
-            peerConfigs: Seq[PeerConfig],
+            peerConfigs: NonEmptyList[PeerConfig],
             newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
             supervisionDecider: Option[Supervision.Decider] = None,
             passingTimeout: FiniteDuration = 3 seconds)(
@@ -74,7 +74,7 @@ object RedisConnectionPool {
 
   private class AkkaPool(
       pool: Pool,
-      val peerConfigs: Seq[PeerConfig],
+      val peerConfigs: NonEmptyList[PeerConfig],
       newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
       supervisionDecider: Option[Supervision.Decider] = None,
       passingTimeout: FiniteDuration = 3 seconds
@@ -117,7 +117,7 @@ object RedisConnectionPool {
   private class SinglePool(redisConnection: RedisConnection)(implicit system: ActorSystem)
       extends RedisConnectionPool[Task]() {
 
-    override def peerConfigs: Seq[PeerConfig] = Seq(redisConnection.peerConfig)
+    override def peerConfigs: NonEmptyList[PeerConfig] = NonEmptyList.of(redisConnection.peerConfig)
 
     override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = reader(redisConnection)
 
@@ -139,7 +139,7 @@ object RedisConnectionPool {
 
 abstract class RedisConnectionPool[M[_]] {
 
-  def peerConfigs: Seq[PeerConfig]
+  def peerConfigs: NonEmptyList[PeerConfig]
 
   protected val logger = LoggerFactory.getLogger(getClass)
 

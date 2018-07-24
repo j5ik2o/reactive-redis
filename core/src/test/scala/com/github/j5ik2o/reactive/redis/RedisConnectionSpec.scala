@@ -5,6 +5,7 @@ import java.util.UUID
 
 import akka.actor.ActorSystem
 import akka.routing.DefaultResizer
+import cats.data.NonEmptyList
 import cats.implicits._
 import com.github.j5ik2o.reactive.redis.command.keys.{ KeysRequest, KeysSucceeded }
 import com.github.j5ik2o.reactive.redis.command.strings.BitFieldRequest.SingedBitType
@@ -26,7 +27,7 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnection
   var connection: RedisConnection = _
   val redisClient: RedisClient    = RedisClient()
 
-  override protected def createConnectionPool(peerConfigs: Seq[PeerConfig]): RedisConnectionPool[Task] =
+  override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
     RedisConnectionPool.ofRoundRobin(sizePerPeer = 10,
                                      peerConfigs,
                                      RedisConnection(_, _),

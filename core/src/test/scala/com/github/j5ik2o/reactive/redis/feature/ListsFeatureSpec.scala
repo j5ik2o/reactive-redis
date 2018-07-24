@@ -12,7 +12,7 @@ import org.scalacheck.Shrink
 class ListsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("ListsFeatureSpec")) {
   implicit val noShrink: Shrink[String] = Shrink.shrinkAny
 
-  override protected def createConnectionPool(peerConfigs: Seq[PeerConfig]): RedisConnectionPool[Task] =
+  override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
     RedisConnectionPool.ofRoundRobin(sizePerPeer = 10,
                                      peerConfigs,
                                      RedisConnection(_, _),

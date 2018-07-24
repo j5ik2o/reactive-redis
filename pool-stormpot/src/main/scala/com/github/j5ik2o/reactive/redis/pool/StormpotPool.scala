@@ -8,6 +8,7 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.Supervision
 import akka.stream.scaladsl.Flow
+import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis._
 import com.github.j5ik2o.reactive.redis.command.CommandRequestBase
 import com.github.j5ik2o.reactive.redis.pool.PoolType.{ Blaze, Queue }
@@ -82,7 +83,7 @@ final case class RedisConnectionExpiration(validationTimeout: Duration)(implicit
 }
 
 final case class StormpotPool(connectionPoolConfig: StormpotConfig,
-                              peerConfigs: Seq[PeerConfig],
+                              peerConfigs: NonEmptyList[PeerConfig],
                               newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
                               supervisionDecider: Option[Supervision.Decider] = None)(
     implicit system: ActorSystem,
@@ -110,14 +111,16 @@ final case class StormpotPool(connectionPoolConfig: StormpotConfig,
         new QueuePool[RedisConnectionPoolable](config)
     }
 
-  private val pools = peerConfigs.map { peerConfig =>
-    val config = newConfig(peerConfig)
-    newPool(config)
+  private val pools: Seq[LifecycledResizablePool[RedisConnectionPoolable] with ManagedPool] = peerConfigs.toList.map {
+    peerConfig =>
+      val config = newConfig(peerConfig)
+      newPool(config)
   }
 
-  private val index = new AtomicLong(0L)
+  private val index: AtomicLong = new AtomicLong(0L)
 
-  private def getPool = pools(index.getAndIncrement().toInt % pools.size)
+  private def getPool: LifecycledResizablePool[RedisConnectionPoolable] with ManagedPool =
+    pools(index.getAndIncrement().toInt % pools.size)
 
   private val claimTieout = connectionPoolConfig.claimTimeout
     .map(v => new stormpot.Timeout(v.length, v.unit))

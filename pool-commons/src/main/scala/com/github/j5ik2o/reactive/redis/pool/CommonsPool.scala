@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicLong
 import akka.actor.ActorSystem
 import akka.event.{ LogSource, Logging }
 import akka.stream.Supervision
+import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis._
 import com.github.j5ik2o.reactive.redis.command.CommandRequestBase
 import com.github.j5ik2o.reactive.redis.pool.CommonsPool.RedisConnectionPoolFactory
@@ -26,7 +27,7 @@ final case class RedisConnectionPoolable(index: Int, redisConnection: RedisConne
 
 @SuppressWarnings(Array("org.wartremover.warts.Equals"))
 final case class CommonsPool(connectionPoolConfig: CommonsPoolConfig,
-                             peerConfigs: Seq[PeerConfig],
+                             peerConfigs: NonEmptyList[PeerConfig],
                              newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
                              supervisionDecider: Option[Supervision.Decider] = None,
                              validationTimeout: FiniteDuration = 3 seconds)(
@@ -107,7 +108,7 @@ final case class CommonsPool(connectionPoolConfig: CommonsPoolConfig,
     )
 
   private val underlyingConnectionPools: Seq[GenericObjectPool[RedisConnectionPoolable]] = {
-    val results = peerConfigs.zipWithIndex.map { case (e, index) => underlyingConnectionPool(index, e) }
+    val results = peerConfigs.toList.zipWithIndex.map { case (e, index) => underlyingConnectionPool(index, e) }
     if (connectionPoolConfig.abandonedConfig.nonEmpty)
       results.foreach(_.setAbandonedConfig(abandonedConfig))
     results

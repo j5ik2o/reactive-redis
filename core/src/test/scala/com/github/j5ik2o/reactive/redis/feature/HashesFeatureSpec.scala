@@ -2,6 +2,7 @@ package com.github.j5ik2o.reactive.redis.feature
 
 import akka.actor.ActorSystem
 import akka.routing.DefaultResizer
+import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis._
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
@@ -11,7 +12,7 @@ class HashesFeatureSpec extends AbstractRedisClientSpec(ActorSystem("HashesFeatu
 
   implicit val noShrink: Shrink[String] = Shrink.shrinkAny
 
-  override protected def createConnectionPool(peerConfigs: Seq[PeerConfig]): RedisConnectionPool[Task] =
+  override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
     RedisConnectionPool.ofRoundRobin(sizePerPeer = 10,
                                      peerConfigs,
                                      RedisConnection(_, _),

@@ -5,6 +5,7 @@ import java.util.UUID
 
 import akka.actor.ActorSystem
 import akka.routing.DefaultResizer
+import cats.data.NonEmptyList
 import cats.implicits._
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
@@ -15,7 +16,7 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
 
   val redisClient = RedisClient()
 
-  override protected def createConnectionPool(peerConfigs: Seq[PeerConfig]): RedisConnectionPool[Task] =
+  override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
     RedisConnectionPool.ofRoundRobin(sizePerPeer = 10,
                                      peerConfigs,
                                      RedisConnection(_, _),
@@ -27,13 +28,19 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
 
     val masterPeerConfig = PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.getPort))
     val slavePeerConfigs =
-      redisSlaveServers.map(
-        slaveServer => PeerConfig(new InetSocketAddress("127.0.0.1", slaveServer.getPort))
-      )
+      redisSlaveServers
+        .map(
+          slaveServer => PeerConfig(new InetSocketAddress("127.0.0.1", slaveServer.getPort))
+        )
+        .toList
 
     connection = new RedisMasterSlavesConnection(
-      masterConnectionPoolFactory = RedisConnectionPool.ofRoundRobin(3, Seq(masterPeerConfig), RedisConnection(_, _)),
-      slaveConnectionPoolFactory = RedisConnectionPool.ofRoundRobin(5, slavePeerConfigs, RedisConnection(_, _))
+      masterConnectionPoolFactory =
+        RedisConnectionPool.ofRoundRobin(3, NonEmptyList.of(masterPeerConfig), RedisConnection(_, _)),
+      slaveConnectionPoolFactory =
+        RedisConnectionPool.ofRoundRobin(5,
+                                         NonEmptyList.of(slavePeerConfigs.head, slavePeerConfigs.tail: _*),
+                                         RedisConnection(_, _))
     )
     Thread.sleep((1000 * timeFactor).toInt)
   }

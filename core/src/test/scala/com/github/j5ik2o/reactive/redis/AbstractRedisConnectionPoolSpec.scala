@@ -4,6 +4,7 @@ import java.net.InetSocketAddress
 import java.util.UUID
 
 import akka.actor.ActorSystem
+import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis.command.strings.{ GetRequest, SetRequest }
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
@@ -14,7 +15,7 @@ abstract class AbstractRedisConnectionPoolSpec(systemName: String) extends Abstr
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    val peerConfigs = Seq(
+    val peerConfigs = NonEmptyList.of(
       PeerConfig(
         remoteAddress = new InetSocketAddress("127.0.0.1", redisMasterServer.getPort),
         backoffConfig = BackoffConfig(maxRestarts = 1)
