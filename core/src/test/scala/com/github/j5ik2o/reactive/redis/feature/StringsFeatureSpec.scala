@@ -109,7 +109,7 @@ class StringsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("StringsFea
           result <- redisClient.get(k)
         } yield result)
 
-        result.value should not be empty
+        result.value shouldBe Some(v)
     }
     "getBit" in {
       val k = UUID.randomUUID().toString
