@@ -14,6 +14,7 @@ class RedisMasterSlavesConnection(masterConnectionPoolFactory: => RedisConnectio
 
   override def id: UUID = UUID.randomUUID()
 
+  @SuppressWarnings(Array("org.wartremover.warts.TraversableOps"))
   override def peerConfig: PeerConfig = masterConnectionPool.peerConfigs.head
 
   private lazy val masterConnectionPool: RedisConnectionPool[Task] = masterConnectionPoolFactory

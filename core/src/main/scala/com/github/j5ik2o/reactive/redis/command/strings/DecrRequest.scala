@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-case class DecrRequest(id: UUID, key: String) extends CommandRequest with StringParsersSupport {
+final case class DecrRequest(id: UUID, key: String) extends CommandRequest with StringParsersSupport {
 
   override type Response = DecrResponse
 
@@ -29,7 +29,7 @@ case class DecrRequest(id: UUID, key: String) extends CommandRequest with String
 
 }
 
-sealed trait DecrResponse                                              extends CommandResponse
-case class DecrSuspended(id: UUID, requestId: UUID)                    extends DecrResponse
-case class DecrSucceeded(id: UUID, requestId: UUID, value: Int)        extends DecrResponse
-case class DecrFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends DecrResponse
+sealed trait DecrResponse                                                    extends CommandResponse
+final case class DecrSuspended(id: UUID, requestId: UUID)                    extends DecrResponse
+final case class DecrSucceeded(id: UUID, requestId: UUID, value: Int)        extends DecrResponse
+final case class DecrFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends DecrResponse

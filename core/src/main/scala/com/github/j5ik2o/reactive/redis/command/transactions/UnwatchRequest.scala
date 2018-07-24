@@ -7,7 +7,7 @@ import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandRespons
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 
-case class UnwatchRequest(id: UUID) extends CommandRequest with StringParsersSupport {
+final case class UnwatchRequest(id: UUID) extends CommandRequest with StringParsersSupport {
 
   override type Response = UnwatchResponse
 
@@ -26,6 +26,6 @@ case class UnwatchRequest(id: UUID) extends CommandRequest with StringParsersSup
 
 }
 
-sealed trait UnwatchResponse                                              extends CommandResponse
-case class UnwatchSucceeded(id: UUID, requestId: UUID)                    extends UnwatchResponse
-case class UnwatchFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends UnwatchResponse
+sealed trait UnwatchResponse                                                    extends CommandResponse
+final case class UnwatchSucceeded(id: UUID, requestId: UUID)                    extends UnwatchResponse
+final case class UnwatchFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends UnwatchResponse

@@ -9,7 +9,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-case class HDelRequest(id: UUID, key: String, fields: NonEmptyList[String])
+final case class HDelRequest(id: UUID, key: String, fields: NonEmptyList[String])
     extends CommandRequest
     with StringParsersSupport {
 
@@ -31,7 +31,7 @@ case class HDelRequest(id: UUID, key: String, fields: NonEmptyList[String])
 
 }
 
-sealed trait HDelResponse                                               extends CommandResponse
-case class HDelSuspended(id: UUID, requestId: UUID)                     extends HDelResponse
-case class HDelSucceeded(id: UUID, requestId: UUID, numberDeleted: Int) extends HDelResponse
-case class HDelFailed(id: UUID, requestId: UUID, ex: RedisIOException)  extends HDelResponse
+sealed trait HDelResponse                                                     extends CommandResponse
+final case class HDelSuspended(id: UUID, requestId: UUID)                     extends HDelResponse
+final case class HDelSucceeded(id: UUID, requestId: UUID, numberDeleted: Int) extends HDelResponse
+final case class HDelFailed(id: UUID, requestId: UUID, ex: RedisIOException)  extends HDelResponse

@@ -10,7 +10,7 @@ import fastparse.all._
 
 import scala.concurrent.duration.FiniteDuration
 
-case class ExpireRequest(id: UUID, key: String, seconds: FiniteDuration)
+final case class ExpireRequest(id: UUID, key: String, seconds: FiniteDuration)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -32,7 +32,7 @@ case class ExpireRequest(id: UUID, key: String, seconds: FiniteDuration)
   }
 }
 
-sealed trait ExpireResponse                                              extends CommandResponse
-case class ExpireSuspended(id: UUID, requestId: UUID)                    extends ExpireResponse
-case class ExpireSucceeded(id: UUID, requestId: UUID, isSet: Boolean)    extends ExpireResponse
-case class ExpireFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends ExpireResponse
+sealed trait ExpireResponse                                                    extends CommandResponse
+final case class ExpireSuspended(id: UUID, requestId: UUID)                    extends ExpireResponse
+final case class ExpireSucceeded(id: UUID, requestId: UUID, isSet: Boolean)    extends ExpireResponse
+final case class ExpireFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends ExpireResponse

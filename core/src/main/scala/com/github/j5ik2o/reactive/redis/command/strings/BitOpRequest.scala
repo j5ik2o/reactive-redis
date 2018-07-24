@@ -6,13 +6,16 @@ import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command._
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
+import enumeratum._
 import fastparse.all._
 
-case class BitOpRequest(id: UUID,
-                        operand: BitOpRequest.Operand,
-                        outputKey: String,
-                        inputKey1: String,
-                        inputKey2: String)
+import scala.collection.immutable
+
+final case class BitOpRequest(id: UUID,
+                              operand: BitOpRequest.Operand,
+                              outputKey: String,
+                              inputKey1: String,
+                              inputKey2: String)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -20,7 +23,7 @@ case class BitOpRequest(id: UUID,
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"BITOP ${operand.toString} $outputKey $inputKey1 $inputKey2"
+  override def asString: String = s"BITOP ${operand.entryName} $outputKey $inputKey1 $inputKey2"
 
   override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
 
@@ -37,21 +40,23 @@ case class BitOpRequest(id: UUID,
 
 object BitOpRequest {
 
-  sealed trait Operand
+  sealed abstract class Operand(override val entryName: String) extends EnumEntry
 
-  object Operand {
+  object Operand extends Enum[Operand] {
 
-    case object AND extends Operand
+    override def values: immutable.IndexedSeq[Operand] = findValues
 
-    case object OR extends Operand
+    case object AND extends Operand("AND")
 
-    case object XOR extends Operand
+    case object OR extends Operand("OR")
+
+    case object XOR extends Operand("XOR")
 
   }
 
 }
 
-sealed trait BitOpResponse                                       extends CommandResponse
-case class BitOpSuspended(id: UUID, requestId: UUID)             extends BitOpResponse
-case class BitOpSucceeded(id: UUID, requestId: UUID, value: Int) extends BitOpResponse
-case class BitOpFailed(id: UUID, requestId: UUID, ex: Exception) extends BitOpResponse
+sealed trait BitOpResponse                                             extends CommandResponse
+final case class BitOpSuspended(id: UUID, requestId: UUID)             extends BitOpResponse
+final case class BitOpSucceeded(id: UUID, requestId: UUID, value: Int) extends BitOpResponse
+final case class BitOpFailed(id: UUID, requestId: UUID, ex: Exception) extends BitOpResponse

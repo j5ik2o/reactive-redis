@@ -13,12 +13,13 @@ object InTxRequestsAggregationFlow {
   def apply(): Flow[ResponseContext, ResponseContext, NotUsed] = Flow.fromGraph(InTxRequestsAggregationStage())
 }
 
-case class InTxRequestsAggregationStage() extends GraphStage[FlowShape[ResponseContext, ResponseContext]] {
+final case class InTxRequestsAggregationStage() extends GraphStage[FlowShape[ResponseContext, ResponseContext]] {
   private val in  = Inlet[ResponseContext]("InTxRequestsAggregationFlow.int")
   private val out = Outlet[ResponseContext]("InTxRequestsAggregationFlow.out")
 
   override def shape: FlowShape[ResponseContext, ResponseContext] = FlowShape(in, out)
 
+  @SuppressWarnings(Array("org.wartremover.warts.MutableDataStructures", "org.wartremover.warts.Var"))
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
     new GraphStageLogic(shape) with StageLogging {
       private var inTx: Boolean                            = false

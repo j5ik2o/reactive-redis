@@ -8,6 +8,12 @@ import scala.collection.immutable
 
 sealed trait ArchitectureType extends EnumEntry
 
+@SuppressWarnings(
+  Array("org.wartremover.warts.Var",
+        "org.wartremover.warts.Null",
+        "org.wartremover.warts.Serializable",
+        "org.wartremover.warts.Equals")
+)
 object ArchitectureType extends Enum[ArchitectureType] {
   override def values: immutable.IndexedSeq[ArchitectureType] = findValues
 
@@ -35,9 +41,14 @@ object ArchitectureType extends Enum[ArchitectureType] {
     }
   }
 
-  private def getMacOSXArchitecture() = {
+  @SuppressWarnings(
+    Array("org.wartremover.warts.Var",
+          "org.wartremover.warts.Null",
+          "org.wartremover.Serializable",
+          "org.wartremover.Equals")
+  )
+  private def getMacOSXArchitecture(): ArchitectureType = {
     var input: BufferedReader = null
-
     try {
       val proc = Runtime.getRuntime.exec("sysctl hw")
       input = new BufferedReader(new InputStreamReader(proc.getInputStream))
@@ -45,16 +56,16 @@ object ArchitectureType extends Enum[ArchitectureType] {
       val itr = Iterator.continually(input.readLine()).takeWhile { line =>
         line != null && (line.length <= 0 || !line.contains("cpu64bit_capable") || !line.trim.endsWith("1"))
       }
-
       if (itr.isEmpty) x86
       else
         x64
     } finally {
       if (input != null) input.close()
     }
+
   }
 
-  def ofAuto = {
+  def ofAuto: ArchitectureType = {
     OSType.ofAuto match {
       case OSType.Windows => getWindowsArchitecture()
       case OSType.Linux   => getUnixArchitecture()

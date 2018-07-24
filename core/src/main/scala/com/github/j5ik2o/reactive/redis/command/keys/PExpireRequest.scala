@@ -10,7 +10,7 @@ import fastparse.all._
 
 import scala.concurrent.duration.FiniteDuration
 
-case class PExpireRequest(id: UUID, key: String, milliseconds: FiniteDuration)
+final case class PExpireRequest(id: UUID, key: String, milliseconds: FiniteDuration)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -32,7 +32,7 @@ case class PExpireRequest(id: UUID, key: String, milliseconds: FiniteDuration)
   }
 }
 
-sealed trait PExpireResponse                                              extends CommandResponse
-case class PExpireSuspended(id: UUID, requestId: UUID)                    extends PExpireResponse
-case class PExpireSucceeded(id: UUID, requestId: UUID, isSet: Boolean)    extends PExpireResponse
-case class PExpireFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends PExpireResponse
+sealed trait PExpireResponse                                                    extends CommandResponse
+final case class PExpireSuspended(id: UUID, requestId: UUID)                    extends PExpireResponse
+final case class PExpireSucceeded(id: UUID, requestId: UUID, isSet: Boolean)    extends PExpireResponse
+final case class PExpireFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends PExpireResponse

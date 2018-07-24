@@ -10,7 +10,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-case class LPushRequest(id: UUID, key: String, values: NonEmptyList[String])
+final case class LPushRequest(id: UUID, key: String, values: NonEmptyList[String])
     extends CommandRequest
     with StringParsersSupport {
 
@@ -43,7 +43,7 @@ object LPushRequest {
 
 }
 
-sealed trait LPushResponse                                              extends CommandResponse
-case class LPushSuspended(id: UUID, requestId: UUID)                    extends LPushResponse
-case class LPushSucceeded(id: UUID, requestId: UUID, value: Int)        extends LPushResponse
-case class LPushFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends LPushResponse
+sealed trait LPushResponse                                                    extends CommandResponse
+final case class LPushSuspended(id: UUID, requestId: UUID)                    extends LPushResponse
+final case class LPushSucceeded(id: UUID, requestId: UUID, value: Int)        extends LPushResponse
+final case class LPushFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends LPushResponse

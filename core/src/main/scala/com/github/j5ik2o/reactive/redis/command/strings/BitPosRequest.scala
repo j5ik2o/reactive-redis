@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-case class BitPosRequest(id: UUID, key: String, bit: Int, startAndEnd: Option[BitPosRequest.StartAndEnd] = None)
+final case class BitPosRequest(id: UUID, key: String, bit: Int, startAndEnd: Option[BitPosRequest.StartAndEnd] = None)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -37,10 +37,10 @@ case class BitPosRequest(id: UUID, key: String, bit: Int, startAndEnd: Option[Bi
 }
 
 object BitPosRequest {
-  case class StartAndEnd(start: Int, end: Option[Int] = None)
+  final case class StartAndEnd(start: Int, end: Option[Int] = None)
 }
 
-sealed trait BitPosResponse                                       extends CommandResponse
-case class BitPosSuspended(id: UUID, requestId: UUID)             extends BitPosResponse
-case class BitPosSucceeded(id: UUID, requestId: UUID, value: Int) extends BitPosResponse
-case class BitPosFailed(id: UUID, requestId: UUID, ex: Exception) extends BitPosResponse
+sealed trait BitPosResponse                                             extends CommandResponse
+final case class BitPosSuspended(id: UUID, requestId: UUID)             extends BitPosResponse
+final case class BitPosSucceeded(id: UUID, requestId: UUID, value: Int) extends BitPosResponse
+final case class BitPosFailed(id: UUID, requestId: UUID, ex: Exception) extends BitPosResponse

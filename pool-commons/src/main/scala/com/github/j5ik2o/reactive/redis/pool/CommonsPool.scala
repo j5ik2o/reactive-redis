@@ -16,7 +16,7 @@ import org.apache.commons.pool2.{ BasePooledObjectFactory, PooledObject }
 
 import scala.concurrent.duration._
 
-case class RedisConnectionPoolable(index: Int, redisConnection: RedisConnection) extends RedisConnection {
+final case class RedisConnectionPoolable(index: Int, redisConnection: RedisConnection) extends RedisConnection {
   override def id: UUID                                                  = redisConnection.id
   override def peerConfig: PeerConfig                                    = redisConnection.peerConfig
   override def shutdown(): Unit                                          = redisConnection.shutdown()
@@ -24,11 +24,12 @@ case class RedisConnectionPoolable(index: Int, redisConnection: RedisConnection)
 
 }
 
-case class CommonsPool(connectionPoolConfig: CommonsPoolConfig,
-                       peerConfigs: Seq[PeerConfig],
-                       newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
-                       supervisionDecider: Option[Supervision.Decider] = None,
-                       validationTimeout: FiniteDuration = 3 seconds)(
+@SuppressWarnings(Array("org.wartremover.warts.Equals"))
+final case class CommonsPool(connectionPoolConfig: CommonsPoolConfig,
+                             peerConfigs: Seq[PeerConfig],
+                             newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                             supervisionDecider: Option[Supervision.Decider] = None,
+                             validationTimeout: FiniteDuration = 3 seconds)(
     implicit system: ActorSystem,
     scheduler: Scheduler
 ) extends RedisConnectionPool[Task] {
@@ -119,6 +120,7 @@ case class CommonsPool(connectionPoolConfig: CommonsPoolConfig,
     underlyingConnectionPools(idx)
   }
 
+  @SuppressWarnings(Array("org.wartremover.warts.Null", "org.wartremover.warts.Var", "org.wartremover.warts.Equals"))
   override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = {
     var con: RedisConnectionPoolable = null
     try {

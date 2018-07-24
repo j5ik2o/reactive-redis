@@ -58,6 +58,6 @@ case object Suspended extends Result[Nothing] {
   override def value: Nothing = throw new NoSuchElementException("The value has Suspended is Nothing")
 }
 
-case class Provided[A](value: A) extends Result[A] {
+final case class Provided[A](value: A) extends Result[A] {
   override def isSuspended: Boolean = false
 }

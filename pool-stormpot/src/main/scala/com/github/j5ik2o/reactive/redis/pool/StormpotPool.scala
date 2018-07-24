@@ -19,17 +19,17 @@ import stormpot._
 import scala.collection.immutable
 import scala.concurrent.duration._
 
-case class RedisConnectionPoolable(slot: Slot, redisConnection: RedisConnection) extends Poolable {
+final case class RedisConnectionPoolable(slot: Slot, redisConnection: RedisConnection) extends Poolable {
   override def release(): Unit = {
     slot.release(this)
   }
-  def expire() = slot.expire(this)
-  def close()  = redisConnection.shutdown()
+  def expire(): Unit = slot.expire(this)
+  def close(): Unit  = redisConnection.shutdown()
 }
 
-case class RedisConnectionAllocator(peerConfig: PeerConfig,
-                                    newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
-                                    supervisionDecider: Option[Supervision.Decider])(implicit system: ActorSystem)
+final case class RedisConnectionAllocator(peerConfig: PeerConfig,
+                                          newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                                          supervisionDecider: Option[Supervision.Decider])(implicit system: ActorSystem)
     extends Allocator[RedisConnectionPoolable] {
 
   override def allocate(slot: Slot): RedisConnectionPoolable = {
@@ -48,14 +48,14 @@ object PoolType extends Enum[PoolType] {
   case object Queue extends PoolType
 }
 
-case class StormpotConfig(poolType: PoolType = Queue,
-                          sizePerPeer: Option[Int] = None,
-                          claimTimeout: Option[FiniteDuration] = None,
-                          backgroundExpirationEnabled: Option[Boolean] = None,
-                          preciseLeakDetectionEnabled: Option[Boolean] = None,
-                          validationTimeout: Option[Duration] = None)
+final case class StormpotConfig(poolType: PoolType = Queue,
+                                sizePerPeer: Option[Int] = None,
+                                claimTimeout: Option[FiniteDuration] = None,
+                                backgroundExpirationEnabled: Option[Boolean] = None,
+                                preciseLeakDetectionEnabled: Option[Boolean] = None,
+                                validationTimeout: Option[Duration] = None)
 
-case class StormpotConnection(redisConnectionPoolable: RedisConnectionPoolable) extends RedisConnection {
+final case class StormpotConnection(redisConnectionPoolable: RedisConnectionPoolable) extends RedisConnection {
   private val underlyingCon = redisConnectionPoolable.redisConnection
 
   override def id: UUID = underlyingCon.id
@@ -72,7 +72,8 @@ case class StormpotConnection(redisConnectionPoolable: RedisConnectionPoolable) 
 
 }
 
-case class RedisConnectionExpiration(validationTimeout: Duration)(implicit system: ActorSystem, scheduler: Scheduler)
+final case class RedisConnectionExpiration(validationTimeout: Duration)(implicit system: ActorSystem,
+                                                                        scheduler: Scheduler)
     extends Expiration[RedisConnectionPoolable] {
   private val redisClient = RedisClient()
   override def hasExpired(slotInfo: SlotInfo[_ <: RedisConnectionPoolable]): Boolean = {
@@ -80,16 +81,16 @@ case class RedisConnectionExpiration(validationTimeout: Duration)(implicit syste
   }
 }
 
-case class StormpotPool(connectionPoolConfig: StormpotConfig,
-                        peerConfigs: Seq[PeerConfig],
-                        newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
-                        supervisionDecider: Option[Supervision.Decider] = None)(
+final case class StormpotPool(connectionPoolConfig: StormpotConfig,
+                              peerConfigs: Seq[PeerConfig],
+                              newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                              supervisionDecider: Option[Supervision.Decider] = None)(
     implicit system: ActorSystem,
     scheduler: Scheduler
 ) extends RedisConnectionPool[Task] {
 
-  final val DEFAULT_SIZE                     = 8
-  final val DEFAULT_CLAIM_TIMEOUT_IN_SECONDS = 10
+  val DEFAULT_SIZE: Int                     = 8
+  val DEFAULT_CLAIM_TIMEOUT_IN_SECONDS: Int = 10
 
   private def newConfig(peerConfig: PeerConfig): Config[RedisConnectionPoolable] =
     new Config[RedisConnectionPoolable]
@@ -122,6 +123,7 @@ case class StormpotPool(connectionPoolConfig: StormpotConfig,
     .map(v => new stormpot.Timeout(v.length, v.unit))
     .getOrElse(new stormpot.Timeout(DEFAULT_CLAIM_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS))
 
+  @SuppressWarnings(Array("org.wartremover.warts.Equals", "org.wartremover.warts.Null", "org.wartremover.warts.Var"))
   override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = {
     var poolable: RedisConnectionPoolable = null
     try {

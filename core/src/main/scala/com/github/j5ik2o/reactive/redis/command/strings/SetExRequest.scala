@@ -11,7 +11,7 @@ import fastparse.all._
 
 import scala.concurrent.duration.FiniteDuration
 
-case class SetExRequest(id: UUID, key: String, expires: FiniteDuration, value: String)
+final case class SetExRequest(id: UUID, key: String, expires: FiniteDuration, value: String)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -41,7 +41,7 @@ object SetExRequest {
 
 }
 
-sealed trait SetExResponse                                              extends CommandResponse
-case class SetExSuspended(id: UUID, requestId: UUID)                    extends SetExResponse
-case class SetExSucceeded(id: UUID, requestId: UUID)                    extends SetExResponse
-case class SetExFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends SetExResponse
+sealed trait SetExResponse                                                    extends CommandResponse
+final case class SetExSuspended(id: UUID, requestId: UUID)                    extends SetExResponse
+final case class SetExSucceeded(id: UUID, requestId: UUID)                    extends SetExResponse
+final case class SetExFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends SetExResponse

@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model._
 import fastparse.all._
 
-case class MGetRequest(id: UUID, keys: Seq[String]) extends CommandRequest with StringParsersSupport {
+final case class MGetRequest(id: UUID, keys: Seq[String]) extends CommandRequest with StringParsersSupport {
 
   override type Response = MGetResponse
 
@@ -29,7 +29,7 @@ case class MGetRequest(id: UUID, keys: Seq[String]) extends CommandRequest with 
 
 }
 
-sealed trait MGetResponse                                                extends CommandResponse
-case class MGetSuspended(id: UUID, requestId: UUID)                      extends MGetResponse
-case class MGetSucceeded(id: UUID, requestId: UUID, values: Seq[String]) extends MGetResponse
-case class MGetFailed(id: UUID, requestId: UUID, ex: Exception)          extends MGetResponse
+sealed trait MGetResponse                                                      extends CommandResponse
+final case class MGetSuspended(id: UUID, requestId: UUID)                      extends MGetResponse
+final case class MGetSucceeded(id: UUID, requestId: UUID, values: Seq[String]) extends MGetResponse
+final case class MGetFailed(id: UUID, requestId: UUID, ex: Exception)          extends MGetResponse

@@ -8,7 +8,8 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-case class StrLenRequest(id: UUID, key: String) extends CommandRequest with StringParsersSupport {
+final case class StrLenRequest(id: UUID, key: String) extends CommandRequest with StringParsersSupport {
+
   override type Response = StrLenResponse
 
   override val isMasterOnly: Boolean = true
@@ -28,7 +29,7 @@ case class StrLenRequest(id: UUID, key: String) extends CommandRequest with Stri
 
 }
 
-sealed trait StrLenResponse                                              extends CommandResponse
-case class StrLenSuspended(id: UUID, requestId: UUID)                    extends StrLenResponse
-case class StrLenSucceeded(id: UUID, requestId: UUID, length: Int)       extends StrLenResponse
-case class StrLenFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends StrLenResponse
+sealed trait StrLenResponse                                                    extends CommandResponse
+final case class StrLenSuspended(id: UUID, requestId: UUID)                    extends StrLenResponse
+final case class StrLenSucceeded(id: UUID, requestId: UUID, length: Int)       extends StrLenResponse
+final case class StrLenFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends StrLenResponse

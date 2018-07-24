@@ -9,7 +9,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-case class ExpireAtRequest(id: UUID, key: String, expiresAt: ZonedDateTime)
+final case class ExpireAtRequest(id: UUID, key: String, expiresAt: ZonedDateTime)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -32,7 +32,7 @@ case class ExpireAtRequest(id: UUID, key: String, expiresAt: ZonedDateTime)
 
 }
 
-sealed trait ExpireAtResponse                                              extends CommandResponse
-case class ExpireAtSuspended(id: UUID, requestId: UUID)                    extends ExpireAtResponse
-case class ExpireAtSucceeded(id: UUID, requestId: UUID, isSet: Boolean)    extends ExpireAtResponse
-case class ExpireAtFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends ExpireAtResponse
+sealed trait ExpireAtResponse                                                    extends CommandResponse
+final case class ExpireAtSuspended(id: UUID, requestId: UUID)                    extends ExpireAtResponse
+final case class ExpireAtSucceeded(id: UUID, requestId: UUID, isSet: Boolean)    extends ExpireAtResponse
+final case class ExpireAtFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends ExpireAtResponse

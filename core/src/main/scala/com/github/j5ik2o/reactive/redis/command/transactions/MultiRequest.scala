@@ -7,7 +7,7 @@ import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandRespons
 import com.github.j5ik2o.reactive.redis.parser.StringParsers
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 
-case class MultiRequest(id: UUID) extends CommandRequest with StringParsersSupport {
+final case class MultiRequest(id: UUID) extends CommandRequest with StringParsersSupport {
 
   override type Response = MultiResponse
 
@@ -26,6 +26,6 @@ case class MultiRequest(id: UUID) extends CommandRequest with StringParsersSuppo
 
 }
 
-sealed trait MultiResponse                                              extends CommandResponse
-case class MultiSucceeded(id: UUID, requestId: UUID)                    extends MultiResponse
-case class MultiFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends MultiResponse
+sealed trait MultiResponse                                                    extends CommandResponse
+final case class MultiSucceeded(id: UUID, requestId: UUID)                    extends MultiResponse
+final case class MultiFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends MultiResponse

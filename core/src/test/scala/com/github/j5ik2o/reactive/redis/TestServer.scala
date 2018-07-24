@@ -5,7 +5,7 @@ import java.net.InetSocketAddress
 import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.util.{ JarUtil, OSType }
-import org.slf4j.LoggerFactory
+import org.slf4j.{ Logger, LoggerFactory }
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ ExecutionContext, Future }
@@ -25,18 +25,18 @@ object RedisMode {
 
 class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = None, masterPortOpt: Option[Int] = None)
     extends RandomPortSupport {
-  lazy val logger = LoggerFactory.getLogger(getClass)
+  lazy val logger: Logger = LoggerFactory.getLogger(getClass)
   @volatile
   private[this] var process: Option[Process] = None
   private[this] val forbiddenPorts           = 6300.until(7300)
   @volatile
   private var _address: Option[InetSocketAddress] = None
 
-  def getPort = portOpt.getOrElse(_address.get.getPort)
+  def getPort: Int = portOpt.getOrElse(_address.get.getPort)
 
   def address: Option[InetSocketAddress] = _address
 
-  val path = JarUtil
+  val path: String = JarUtil
     .extractExecutableFromJar(if (OSType.ofAuto == OSType.macOS) {
       "redis-server-4.0.app"
     } else {
@@ -117,7 +117,7 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
     result
   }
 
-  def start()(implicit ec: ExecutionContext) {
+  def start()(implicit ec: ExecutionContext): Unit = {
     assertRedisBinaryPresent()
     findAddress()
     logger.info("redis test server will be started")

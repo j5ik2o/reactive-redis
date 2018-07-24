@@ -8,7 +8,10 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr, StringOptExpr }
 import fastparse.all._
 
-case class PingRequest(id: UUID, message: Option[String] = None) extends CommandRequest with StringParsersSupport {
+final case class PingRequest(id: UUID, message: Option[String] = None)
+    extends CommandRequest
+    with StringParsersSupport {
+
   override type Response = PingResponse
 
   override val isMasterOnly: Boolean = true
@@ -19,7 +22,7 @@ case class PingRequest(id: UUID, message: Option[String] = None) extends Command
 
   override protected def parseResponse: Handler = {
     case (StringOptExpr(message), next) =>
-      (PingSucceeded(UUID.randomUUID(), id, message.get), next)
+      (PingSucceeded(UUID.randomUUID(), id, message.getOrElse("")), next)
     case (SimpleExpr(QUEUED), next) =>
       (PingSuspended(UUID.randomUUID(), id), next)
     case (ErrorExpr(msg), next) =>
@@ -28,7 +31,7 @@ case class PingRequest(id: UUID, message: Option[String] = None) extends Command
 
 }
 
-sealed trait PingResponse                                              extends CommandResponse
-case class PingSuspended(id: UUID, requestId: UUID)                    extends PingResponse
-case class PingSucceeded(id: UUID, requestId: UUID, message: String)   extends PingResponse
-case class PingFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends PingResponse
+sealed trait PingResponse                                                    extends CommandResponse
+final case class PingSuspended(id: UUID, requestId: UUID)                    extends PingResponse
+final case class PingSucceeded(id: UUID, requestId: UUID, message: String)   extends PingResponse
+final case class PingFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends PingResponse

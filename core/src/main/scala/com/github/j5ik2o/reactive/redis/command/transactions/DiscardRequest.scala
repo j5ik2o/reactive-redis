@@ -7,7 +7,7 @@ import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandRespons
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 
-case class DiscardRequest(id: UUID) extends CommandRequest with StringParsersSupport {
+final case class DiscardRequest(id: UUID) extends CommandRequest with StringParsersSupport {
 
   override type Response = DiscardResponse
 
@@ -26,6 +26,6 @@ case class DiscardRequest(id: UUID) extends CommandRequest with StringParsersSup
 
 }
 
-sealed trait DiscardResponse                                              extends CommandResponse
-case class DiscardSucceeded(id: UUID, requestId: UUID)                    extends DiscardResponse
-case class DiscardFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends DiscardResponse
+sealed trait DiscardResponse                                                    extends CommandResponse
+final case class DiscardSucceeded(id: UUID, requestId: UUID)                    extends DiscardResponse
+final case class DiscardFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends DiscardResponse

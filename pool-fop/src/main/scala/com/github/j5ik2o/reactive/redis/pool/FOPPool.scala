@@ -13,7 +13,7 @@ import monix.execution.Scheduler
 
 import scala.concurrent.duration._
 
-case class FOPConnectionWithIndex(index: Int, redisConnection: RedisConnection) extends RedisConnection {
+final case class FOPConnectionWithIndex(index: Int, redisConnection: RedisConnection) extends RedisConnection {
   override def id: UUID                                                  = redisConnection.id
   override def peerConfig: PeerConfig                                    = redisConnection.peerConfig
   override def shutdown(): Unit                                          = redisConnection.shutdown()
@@ -46,10 +46,10 @@ object FOPPool {
 
 }
 
-case class FOPPool(connectionPoolConfig: FOPConfig,
-                   peerConfigs: Seq[PeerConfig],
-                   newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
-                   supervisionDecider: Option[Supervision.Decider] = None)(
+final case class FOPPool(connectionPoolConfig: FOPConfig,
+                         peerConfigs: Seq[PeerConfig],
+                         newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                         supervisionDecider: Option[Supervision.Decider] = None)(
     implicit system: ActorSystem,
     scheduler: Scheduler
 ) extends RedisConnectionPool[Task] {
@@ -75,6 +75,7 @@ case class FOPPool(connectionPoolConfig: FOPConfig,
 
   private def getObjectPool = objectPools(index.getAndIncrement().toInt % objectPools.size)
 
+  @SuppressWarnings(Array("org.wartremover.warts.Null", "org.wartremover.warts.Var", "org.wartremover.warts.Equals"))
   override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = {
     var p: Poolable[RedisConnection] = null
     try {

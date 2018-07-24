@@ -10,7 +10,7 @@ import fastparse.all._
 
 import scala.concurrent.duration.FiniteDuration
 
-case class MigrateRequest(id: UUID, host: String, port: Int, key: String, toDbNo: Int, timeout: FiniteDuration)
+final case class MigrateRequest(id: UUID, host: String, port: Int, key: String, toDbNo: Int, timeout: FiniteDuration)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -33,7 +33,7 @@ case class MigrateRequest(id: UUID, host: String, port: Int, key: String, toDbNo
 
 }
 
-sealed trait MigrateResponse                                              extends CommandResponse
-case class MigrateSuspended(id: UUID, requestId: UUID)                    extends MigrateResponse
-case class MigrateSucceeded(id: UUID, requestId: UUID)                    extends MigrateResponse
-case class MigrateFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends MigrateResponse
+sealed trait MigrateResponse                                                    extends CommandResponse
+final case class MigrateSuspended(id: UUID, requestId: UUID)                    extends MigrateResponse
+final case class MigrateSucceeded(id: UUID, requestId: UUID)                    extends MigrateResponse
+final case class MigrateFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends MigrateResponse
