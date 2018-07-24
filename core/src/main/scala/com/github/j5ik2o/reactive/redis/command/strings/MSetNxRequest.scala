@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-case class MSetNxRequest(id: UUID, values: Map[String, Any]) extends CommandRequest with StringParsersSupport {
+final case class MSetNxRequest(id: UUID, values: Map[String, Any]) extends CommandRequest with StringParsersSupport {
 
   override type Response = MSetNxResponse
 
@@ -35,7 +35,7 @@ case class MSetNxRequest(id: UUID, values: Map[String, Any]) extends CommandRequ
 
 }
 
-sealed trait MSetNxResponse                                              extends CommandResponse
-case class MSetNxSuspended(id: UUID, requestId: UUID)                    extends MSetNxResponse
-case class MSetNxSucceeded(id: UUID, requestId: UUID, isSet: Boolean)    extends MSetNxResponse
-case class MSetNxFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends MSetNxResponse
+sealed trait MSetNxResponse                                                    extends CommandResponse
+final case class MSetNxSuspended(id: UUID, requestId: UUID)                    extends MSetNxResponse
+final case class MSetNxSucceeded(id: UUID, requestId: UUID, isSet: Boolean)    extends MSetNxResponse
+final case class MSetNxFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends MSetNxResponse

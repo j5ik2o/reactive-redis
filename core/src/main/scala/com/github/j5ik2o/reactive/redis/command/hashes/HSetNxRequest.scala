@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-case class HSetNxRequest(id: UUID, key: String, field: String, value: String)
+final case class HSetNxRequest(id: UUID, key: String, field: String, value: String)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -31,7 +31,7 @@ case class HSetNxRequest(id: UUID, key: String, field: String, value: String)
 
 }
 
-sealed trait HSetNxResponse                                              extends CommandResponse
-case class HSetNxSuspended(id: UUID, requestId: UUID)                    extends HSetNxResponse
-case class HSetNxSucceeded(id: UUID, requestId: UUID, isSet: Boolean)    extends HSetNxResponse
-case class HSetNxFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends HSetNxResponse
+sealed trait HSetNxResponse                                                    extends CommandResponse
+final case class HSetNxSuspended(id: UUID, requestId: UUID)                    extends HSetNxResponse
+final case class HSetNxSucceeded(id: UUID, requestId: UUID, isSet: Boolean)    extends HSetNxResponse
+final case class HSetNxFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends HSetNxResponse

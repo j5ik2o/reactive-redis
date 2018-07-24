@@ -9,7 +9,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-case class DelRequest(id: UUID, keys: NonEmptyList[String]) extends CommandRequest with StringParsersSupport {
+final case class DelRequest(id: UUID, keys: NonEmptyList[String]) extends CommandRequest with StringParsersSupport {
 
   override type Response = DelResponse
 
@@ -30,7 +30,7 @@ case class DelRequest(id: UUID, keys: NonEmptyList[String]) extends CommandReque
 
 }
 
-sealed trait DelResponse                                              extends CommandResponse
-case class DelSuspended(id: UUID, requestId: UUID)                    extends DelResponse
-case class DelSucceeded(id: UUID, requestId: UUID, value: Int)        extends DelResponse
-case class DelFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends DelResponse
+sealed trait DelResponse                                                    extends CommandResponse
+final case class DelSuspended(id: UUID, requestId: UUID)                    extends DelResponse
+final case class DelSucceeded(id: UUID, requestId: UUID, value: Int)        extends DelResponse
+final case class DelFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends DelResponse

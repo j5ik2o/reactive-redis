@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr, StringOptExpr }
 import fastparse.all._
 
-case class EchoRequest(id: UUID, message: String) extends CommandRequest with StringParsersSupport {
+final case class EchoRequest(id: UUID, message: String) extends CommandRequest with StringParsersSupport {
 
   override type Response = EchoResponse
 
@@ -20,7 +20,7 @@ case class EchoRequest(id: UUID, message: String) extends CommandRequest with St
 
   override protected def parseResponse: Handler = {
     case (StringOptExpr(message), next) =>
-      (EchoSucceeded(UUID.randomUUID(), id, message.get), next)
+      (EchoSucceeded(UUID.randomUUID(), id, message.getOrElse("")), next)
     case (SimpleExpr(QUEUED), next) =>
       (EchoSuspended(UUID.randomUUID(), id), next)
     case (ErrorExpr(msg), next) =>
@@ -29,7 +29,7 @@ case class EchoRequest(id: UUID, message: String) extends CommandRequest with St
 
 }
 
-sealed trait EchoResponse                                              extends CommandResponse
-case class EchoSuspended(id: UUID, requestId: UUID)                    extends EchoResponse
-case class EchoSucceeded(id: UUID, requestId: UUID, message: String)   extends EchoResponse
-case class EchoFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends EchoResponse
+sealed trait EchoResponse                                                    extends CommandResponse
+final case class EchoSuspended(id: UUID, requestId: UUID)                    extends EchoResponse
+final case class EchoSucceeded(id: UUID, requestId: UUID, message: String)   extends EchoResponse
+final case class EchoFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends EchoResponse

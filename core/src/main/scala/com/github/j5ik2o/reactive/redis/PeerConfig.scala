@@ -8,12 +8,12 @@ import akka.stream.OverflowStrategy
 import scala.collection.immutable
 import scala.concurrent.duration._
 
-case class PeerConfig(remoteAddress: InetSocketAddress,
-                      localAddress: Option[InetSocketAddress] = None,
-                      options: immutable.Seq[SocketOption] = immutable.Seq.empty,
-                      halfClose: Boolean = false,
-                      connectTimeout: Duration = Duration.Inf,
-                      idleTimeout: Duration = Duration.Inf,
-                      backoffConfig: BackoffConfig = BackoffConfig(),
-                      requestBufferSize: Int = 1024,
-                      overflowStrategy: OverflowStrategy = OverflowStrategy.backpressure)
+final case class PeerConfig(remoteAddress: InetSocketAddress,
+                            localAddress: Option[InetSocketAddress] = None,
+                            options: immutable.Seq[SocketOption] = immutable.Seq.empty,
+                            halfClose: Boolean = false,
+                            connectTimeout: Duration = Duration.Inf,
+                            idleTimeout: Duration = Duration.Inf,
+                            backoffConfig: BackoffConfig = BackoffConfig(),
+                            requestBufferSize: Int = 1024,
+                            overflowStrategy: OverflowStrategy = OverflowStrategy.backpressure)

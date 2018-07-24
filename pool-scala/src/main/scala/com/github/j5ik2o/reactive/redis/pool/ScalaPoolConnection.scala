@@ -10,7 +10,8 @@ import io.github.andrebeat.pool.Lease
 import monix.eval.Task
 import monix.execution.Scheduler
 
-private[redis] case class ScalaPoolConnection(underlying: Lease[ResettableRedisConnection]) extends RedisConnection {
+private[redis] final case class ScalaPoolConnection(underlying: Lease[ResettableRedisConnection])
+    extends RedisConnection {
 
   private val underlyingCon = underlying.get()
 

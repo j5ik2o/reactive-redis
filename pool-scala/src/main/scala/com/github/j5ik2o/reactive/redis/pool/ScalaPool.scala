@@ -11,17 +11,17 @@ import monix.execution.Scheduler
 
 import scala.concurrent.duration._
 
-case class ScalaPool(connectionPoolConfig: ScalaPoolConfig,
-                     peerConfigs: Seq[PeerConfig],
-                     newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
-                     supervisionDecider: Option[Supervision.Decider] = None)(
+final case class ScalaPool(connectionPoolConfig: ScalaPoolConfig,
+                           peerConfigs: Seq[PeerConfig],
+                           newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                           supervisionDecider: Option[Supervision.Decider] = None)(
     implicit system: ActorSystem,
     scheduler: Scheduler
 ) extends RedisConnectionPool[Task] {
 
-  final val DEFAULT_MAX_TOTAL          = 8
-  final val DEFAULT_MAX_IDLE_TIME      = 5 seconds
-  final val DEFAULT_VALIDATION_TIMEOUT = 3 seconds
+  val DEFAULT_MAX_TOTAL: Int                     = 8
+  val DEFAULT_MAX_IDLE_TIME: FiniteDuration      = 5 seconds
+  val DEFAULT_VALIDATION_TIMEOUT: FiniteDuration = 3 seconds
 
   private val redisClient = RedisClient()
 

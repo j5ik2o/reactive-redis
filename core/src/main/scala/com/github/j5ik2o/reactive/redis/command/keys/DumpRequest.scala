@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.ByteParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ BytesOptExpr, ErrorExpr, Expr, SimpleExpr }
 import fastparse.byte.all._
 
-case class DumpRequest(id: UUID, key: String) extends CommandRequest {
+final case class DumpRequest(id: UUID, key: String) extends CommandRequest {
   type Elem              = Byte
   type Repr              = Bytes
   override type Response = DumpResponse
@@ -32,7 +32,7 @@ case class DumpRequest(id: UUID, key: String) extends CommandRequest {
 
 }
 
-sealed trait DumpResponse                                                       extends CommandResponse
-case class DumpSuspended(id: UUID, requestId: UUID)                             extends DumpResponse
-case class DumpSucceeded(id: UUID, requestId: UUID, value: Option[Array[Byte]]) extends DumpResponse
-case class DumpFailed(id: UUID, requestId: UUID, ex: RedisIOException)          extends DumpResponse
+sealed trait DumpResponse                                                             extends CommandResponse
+final case class DumpSuspended(id: UUID, requestId: UUID)                             extends DumpResponse
+final case class DumpSucceeded(id: UUID, requestId: UUID, value: Option[Array[Byte]]) extends DumpResponse
+final case class DumpFailed(id: UUID, requestId: UUID, ex: RedisIOException)          extends DumpResponse

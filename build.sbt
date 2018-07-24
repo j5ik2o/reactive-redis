@@ -71,8 +71,18 @@ val coreSettings = Seq(
     "org.scalacheck" %% "scalacheck"     % "1.14.0" % Test,
     "ch.qos.logback" % "logback-classic" % "1.2.3" % Test
   ),
-//  Global / concurrentRestrictions += Tags.limit(Tags.Test, 1),
-  parallelExecution in Test := false
+  //  Global / concurrentRestrictions += Tags.limit(Tags.Test, 1),
+  parallelExecution in Test := false,
+  wartremoverErrors ++= Warts.allBut(Wart.Any,
+                                     Wart.Throw,
+                                     Wart.Nothing,
+                                     Wart.Product,
+                                     Wart.NonUnitStatements,
+                                     Wart.DefaultArguments,
+                                     Wart.ImplicitParameter,
+                                     Wart.StringPlusAny,
+                                     Wart.Overloading),
+  wartremoverExcluded += baseDirectory.value / "src" / "test" / "scala"
 )
 
 val akkaVersion = "2.5.11"

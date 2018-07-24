@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-case class SetBitRequest(id: UUID, key: String, offset: Int, value: Int)
+final case class SetBitRequest(id: UUID, key: String, offset: Int, value: Int)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -31,7 +31,7 @@ case class SetBitRequest(id: UUID, key: String, offset: Int, value: Int)
 
 }
 
-sealed trait SetBitResponse                                              extends CommandResponse
-case class SetBitSuspended(id: UUID, requestId: UUID)                    extends SetBitResponse
-case class SetBitSucceeded(id: UUID, requestId: UUID, value: Int)        extends SetBitResponse
-case class SetBitFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends SetBitResponse
+sealed trait SetBitResponse                                                    extends CommandResponse
+final case class SetBitSuspended(id: UUID, requestId: UUID)                    extends SetBitResponse
+final case class SetBitSucceeded(id: UUID, requestId: UUID, value: Int)        extends SetBitResponse
+final case class SetBitFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends SetBitResponse

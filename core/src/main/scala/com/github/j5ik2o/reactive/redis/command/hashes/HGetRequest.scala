@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr, StringOptExpr }
 import fastparse.all._
 
-case class HGetRequest(id: UUID, key: String, field: String) extends CommandRequest with StringParsersSupport {
+final case class HGetRequest(id: UUID, key: String, field: String) extends CommandRequest with StringParsersSupport {
 
   override type Response = HGetResponse
 
@@ -29,7 +29,7 @@ case class HGetRequest(id: UUID, key: String, field: String) extends CommandRequ
 
 }
 
-sealed trait HGetResponse                                                  extends CommandResponse
-case class HGetSuspended(id: UUID, requestId: UUID)                        extends HGetResponse
-case class HGetSucceeded(id: UUID, requestId: UUID, value: Option[String]) extends HGetResponse
-case class HGetFailed(id: UUID, requestId: UUID, ex: RedisIOException)     extends HGetResponse
+sealed trait HGetResponse                                                        extends CommandResponse
+final case class HGetSuspended(id: UUID, requestId: UUID)                        extends HGetResponse
+final case class HGetSucceeded(id: UUID, requestId: UUID, value: Option[String]) extends HGetResponse
+final case class HGetFailed(id: UUID, requestId: UUID, ex: RedisIOException)     extends HGetResponse

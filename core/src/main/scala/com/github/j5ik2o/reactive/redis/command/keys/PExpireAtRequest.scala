@@ -9,7 +9,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-case class PExpireAtRequest(id: UUID, key: String, millisecondsTimestamp: ZonedDateTime)
+final case class PExpireAtRequest(id: UUID, key: String, millisecondsTimestamp: ZonedDateTime)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -31,7 +31,7 @@ case class PExpireAtRequest(id: UUID, key: String, millisecondsTimestamp: ZonedD
   }
 }
 
-sealed trait PExpireAtResponse                                              extends CommandResponse
-case class PExpireAtSuspended(id: UUID, requestId: UUID)                    extends PExpireAtResponse
-case class PExpireAtSucceeded(id: UUID, requestId: UUID, isSet: Boolean)    extends PExpireAtResponse
-case class PExpireAtFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends PExpireAtResponse
+sealed trait PExpireAtResponse                                                    extends CommandResponse
+final case class PExpireAtSuspended(id: UUID, requestId: UUID)                    extends PExpireAtResponse
+final case class PExpireAtSucceeded(id: UUID, requestId: UUID, isSet: Boolean)    extends PExpireAtResponse
+final case class PExpireAtFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends PExpireAtResponse

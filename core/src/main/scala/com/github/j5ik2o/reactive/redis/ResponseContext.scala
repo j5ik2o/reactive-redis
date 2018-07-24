@@ -6,7 +6,12 @@ import java.util.UUID
 
 import akka.util.ByteString
 import cats.implicits._
-import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, TransactionalCommandRequest }
+import com.github.j5ik2o.reactive.redis.command.{
+  CommandRequest,
+  CommandRequestBase,
+  CommandResponse,
+  TransactionalCommandRequest
+}
 import scodec.bits.ByteVector
 
 import scala.util.Try
@@ -22,13 +27,13 @@ trait ResponseBase {
     requestContext.promise.complete(result)
 }
 
-case class ResponseContext(byteString: ByteString,
-                           requestContext: RequestContext,
-                           requestsInTx: Seq[CommandRequest] = Seq.empty,
-                           responseAt: ZonedDateTime = ZonedDateTime.now)
+final case class ResponseContext(byteString: ByteString,
+                                 requestContext: RequestContext,
+                                 requestsInTx: Seq[CommandRequest] = Seq.empty,
+                                 responseAt: ZonedDateTime = ZonedDateTime.now)
     extends ResponseBase {
 
-  val commandRequest = requestContext.commandRequest
+  val commandRequest: CommandRequestBase = requestContext.commandRequest
 
   def withRequestsInTx(values: Seq[CommandRequest]): ResponseContext = copy(requestsInTx = values)
 

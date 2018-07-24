@@ -8,7 +8,8 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers
 import com.github.j5ik2o.reactive.redis.parser.model.{ ArraySizeExpr, ErrorExpr, Expr }
 import scodec.bits.ByteVector
 
-case class ExecRequest(id: UUID) extends TransactionalCommandRequest with StringParsersSupport {
+@SuppressWarnings(Array("org.wartremover.warts.EitherProjectionPartial"))
+final case class ExecRequest(id: UUID) extends TransactionalCommandRequest with StringParsersSupport {
 
   override type Response = ExecResponse
 
@@ -35,6 +36,6 @@ case class ExecRequest(id: UUID) extends TransactionalCommandRequest with String
   override val isMasterOnly: Boolean = true
 }
 
-sealed trait ExecResponse                                                           extends CommandResponse
-case class ExecSucceeded(id: UUID, requestId: UUID, response: Seq[CommandResponse]) extends ExecResponse
-case class ExecFailed(id: UUID, requestId: UUID, ex: RedisIOException)              extends ExecResponse
+sealed trait ExecResponse                                                                 extends CommandResponse
+final case class ExecSucceeded(id: UUID, requestId: UUID, response: Seq[CommandResponse]) extends ExecResponse
+final case class ExecFailed(id: UUID, requestId: UUID, ex: RedisIOException)              extends ExecResponse

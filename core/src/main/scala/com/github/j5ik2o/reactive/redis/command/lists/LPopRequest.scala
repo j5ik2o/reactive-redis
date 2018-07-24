@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr, StringOptExpr }
 import fastparse.all._
 
-case class LPopRequest(id: UUID, key: String) extends CommandRequest with StringParsersSupport {
+final case class LPopRequest(id: UUID, key: String) extends CommandRequest with StringParsersSupport {
 
   override type Response = LPopResponse
 
@@ -29,7 +29,7 @@ case class LPopRequest(id: UUID, key: String) extends CommandRequest with String
 
 }
 
-sealed trait LPopResponse                                                  extends CommandResponse
-case class LPopSuspended(id: UUID, requestId: UUID)                        extends LPopResponse
-case class LPopSucceeded(id: UUID, requestId: UUID, value: Option[String]) extends LPopResponse
-case class LPopFailed(id: UUID, requestId: UUID, ex: RedisIOException)     extends LPopResponse
+sealed trait LPopResponse                                                        extends CommandResponse
+final case class LPopSuspended(id: UUID, requestId: UUID)                        extends LPopResponse
+final case class LPopSucceeded(id: UUID, requestId: UUID, value: Option[String]) extends LPopResponse
+final case class LPopFailed(id: UUID, requestId: UUID, ex: RedisIOException)     extends LPopResponse

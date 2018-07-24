@@ -39,6 +39,6 @@ class RedisClient(implicit system: ActorSystem)
   def validate(timeout: Duration)(implicit scheduler: Scheduler): Reader[RedisConnection, Boolean] = Reader {
     connection =>
       val id = UUID.randomUUID().toString
-      Await.result(ping(Some(id)).run(connection).runAsync, timeout).exists(_ == id)
+      Await.result(ping(Some(id)).run(connection).runAsync, timeout).exists(_ === id)
   }
 }

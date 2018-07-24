@@ -50,7 +50,7 @@ trait RedisConnection {
     }
 }
 
-case class ResettableRedisConnection(newRedisConnection: () => RedisConnection) extends RedisConnection {
+final case class ResettableRedisConnection(newRedisConnection: () => RedisConnection) extends RedisConnection {
   private val underlying: AtomicReference[RedisConnection] = new AtomicReference[RedisConnection](newRedisConnection())
 
   override def id: UUID = underlying.get.id

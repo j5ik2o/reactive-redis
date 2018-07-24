@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model._
 import fastparse.all._
 
-case class KeysRequest(id: UUID, pattern: String) extends CommandRequest with StringParsersSupport {
+final case class KeysRequest(id: UUID, pattern: String) extends CommandRequest with StringParsersSupport {
 
   override type Response = KeysResponse
 
@@ -29,7 +29,7 @@ case class KeysRequest(id: UUID, pattern: String) extends CommandRequest with St
 
 }
 
-sealed trait KeysResponse                                                extends CommandResponse
-case class KeysSuspended(id: UUID, requestId: UUID)                      extends KeysResponse
-case class KeysSucceeded(id: UUID, requestId: UUID, values: Seq[String]) extends KeysResponse
-case class KeysFailed(id: UUID, requestId: UUID, ex: RedisIOException)   extends KeysResponse
+sealed trait KeysResponse                                                      extends CommandResponse
+final case class KeysSuspended(id: UUID, requestId: UUID)                      extends KeysResponse
+final case class KeysSucceeded(id: UUID, requestId: UUID, values: Seq[String]) extends KeysResponse
+final case class KeysFailed(id: UUID, requestId: UUID, ex: RedisIOException)   extends KeysResponse

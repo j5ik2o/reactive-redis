@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 import fastparse.all._
 
-case class FlushAllRequest(id: UUID, async: Boolean = false) extends CommandRequest with StringParsersSupport {
+final case class FlushAllRequest(id: UUID, async: Boolean = false) extends CommandRequest with StringParsersSupport {
 
   override type Response = FlushAllResponse
 
@@ -29,7 +29,7 @@ case class FlushAllRequest(id: UUID, async: Boolean = false) extends CommandRequ
 
 }
 
-sealed trait FlushAllResponse                                              extends CommandResponse
-case class FlushAllSuspended(id: UUID, requestId: UUID)                    extends FlushAllResponse
-case class FlushAllSucceeded(id: UUID, requestId: UUID)                    extends FlushAllResponse
-case class FlushAllFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends FlushAllResponse
+sealed trait FlushAllResponse                                                    extends CommandResponse
+final case class FlushAllSuspended(id: UUID, requestId: UUID)                    extends FlushAllResponse
+final case class FlushAllSucceeded(id: UUID, requestId: UUID)                    extends FlushAllResponse
+final case class FlushAllFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends FlushAllResponse

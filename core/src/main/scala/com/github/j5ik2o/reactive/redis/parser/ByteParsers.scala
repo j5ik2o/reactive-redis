@@ -3,6 +3,12 @@ package com.github.j5ik2o.reactive.redis.parser
 import com.github.j5ik2o.reactive.redis.parser.model._
 import fastparse.byte.all._
 
+@SuppressWarnings(
+  Array("org.wartremover.warts.Product",
+        "org.wartremover.warts.Serializable",
+        "org.wartremover.warts.Equals",
+        "org.wartremover.warts.EitherProjectionPartial")
+)
 object ByteParsers {
   val QUEUED = "QUEUED"
   val OK     = "OK"

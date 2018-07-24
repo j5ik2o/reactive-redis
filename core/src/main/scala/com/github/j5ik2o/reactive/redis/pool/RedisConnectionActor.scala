@@ -22,7 +22,7 @@ object RedisConnectionActor {
     Props(new RedisConnectionActor(peerConfig, newConnection, supervisionDecider, passingTimeout))
 
   case object BorrowConnection
-  case class ConnectionGotten(redisConnection: RedisConnection)
+  final case class ConnectionGotten(redisConnection: RedisConnection)
 
 }
 

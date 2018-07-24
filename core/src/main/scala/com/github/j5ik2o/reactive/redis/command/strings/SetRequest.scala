@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandRespons
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 
-case class SetRequest(id: UUID, key: String, value: String) extends CommandRequest with StringParsersSupport {
+final case class SetRequest(id: UUID, key: String, value: String) extends CommandRequest with StringParsersSupport {
 
   override type Response = SetResponse
 
@@ -36,7 +36,7 @@ object SetRequest {
 
 }
 
-sealed trait SetResponse                                              extends CommandResponse
-case class SetSuspended(id: UUID, requestId: UUID)                    extends SetResponse
-case class SetSucceeded(id: UUID, requestId: UUID)                    extends SetResponse
-case class SetFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends SetResponse
+sealed trait SetResponse                                                    extends CommandResponse
+final case class SetSuspended(id: UUID, requestId: UUID)                    extends SetResponse
+final case class SetSucceeded(id: UUID, requestId: UUID)                    extends SetResponse
+final case class SetFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends SetResponse

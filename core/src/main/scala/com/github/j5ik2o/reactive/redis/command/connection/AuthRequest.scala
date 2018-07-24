@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 import fastparse.all._
 
-case class AuthRequest(id: UUID, password: String) extends CommandRequest with StringParsersSupport {
+final case class AuthRequest(id: UUID, password: String) extends CommandRequest with StringParsersSupport {
 
   override type Response = AuthResponse
 
@@ -27,6 +27,6 @@ case class AuthRequest(id: UUID, password: String) extends CommandRequest with S
 
 }
 
-sealed trait AuthResponse                                              extends CommandResponse
-case class AuthSucceeded(id: UUID, requestId: UUID)                    extends AuthResponse
-case class AuthFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends AuthResponse
+sealed trait AuthResponse                                                    extends CommandResponse
+final case class AuthSucceeded(id: UUID, requestId: UUID)                    extends AuthResponse
+final case class AuthFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends AuthResponse

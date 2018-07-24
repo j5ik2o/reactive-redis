@@ -7,7 +7,7 @@ import com.github.j5ik2o.reactive.redis.command.CommandRequestBase
 import com.github.j5ik2o.reactive.redis.{ PeerConfig, RedisConnection }
 import monix.eval.Task
 
-case class FOPConnection(underlying: Poolable[RedisConnection]) extends RedisConnection {
+final case class FOPConnection(underlying: Poolable[RedisConnection]) extends RedisConnection {
   private val underlyingCon = underlying.getObject
 
   override def id: UUID = underlyingCon.id

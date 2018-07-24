@@ -11,7 +11,7 @@ import fastparse.all._
 
 import scala.concurrent.duration.FiniteDuration
 
-case class PSetExRequest(id: UUID, key: String, millis: FiniteDuration, value: String)
+final case class PSetExRequest(id: UUID, key: String, millis: FiniteDuration, value: String)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -41,7 +41,7 @@ object PSetExRequest {
 
 }
 
-sealed trait PSetExResponse                                              extends CommandResponse
-case class PSetExSuspended(id: UUID, requestId: UUID)                    extends PSetExResponse
-case class PSetExSucceeded(id: UUID, requestId: UUID)                    extends PSetExResponse
-case class PSetExFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends PSetExResponse
+sealed trait PSetExResponse                                                    extends CommandResponse
+final case class PSetExSuspended(id: UUID, requestId: UUID)                    extends PSetExResponse
+final case class PSetExSucceeded(id: UUID, requestId: UUID)                    extends PSetExResponse
+final case class PSetExFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends PSetExResponse

@@ -1,13 +1,12 @@
 package com.github.j5ik2o.reactive.redis.parser
 
-import java.nio.charset.StandardCharsets
-
+import java.nio.charset.{ Charset, StandardCharsets }
 import fastparse.core.Parsed
 import org.scalatest.FreeSpec
 import scodec.bits.ByteVector
 
 class ParsersSpec extends FreeSpec {
-  implicit val enc = StandardCharsets.UTF_8
+  implicit val enc: Charset = StandardCharsets.UTF_8
   "ParsersSpec" - {
     "crlf" in {
       val Parsed.Success(result, _) = ByteParsers.crlf.parse(ByteVector.encodeString("\r\n").right.get)

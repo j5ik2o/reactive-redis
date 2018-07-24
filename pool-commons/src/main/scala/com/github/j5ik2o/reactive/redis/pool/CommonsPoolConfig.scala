@@ -16,13 +16,13 @@ import scala.concurrent.duration.Duration
   * @param logWriter
   * @param useUsageTracking
   */
-case class CommonsAbandonedConfig(removeAbandonedOnBorrow: Option[Boolean] = None,
-                                  removeAbandonedOnMaintenance: Option[Boolean] = None,
-                                  removeAbandonedTimeout: Option[Duration] = None,
-                                  logAbandoned: Option[Boolean] = None,
-                                  requireFullStackTrace: Option[Boolean] = None,
-                                  logWriter: Option[PrintWriter] = None,
-                                  useUsageTracking: Option[Boolean] = None)
+final case class CommonsAbandonedConfig(removeAbandonedOnBorrow: Option[Boolean] = None,
+                                        removeAbandonedOnMaintenance: Option[Boolean] = None,
+                                        removeAbandonedTimeout: Option[Duration] = None,
+                                        logAbandoned: Option[Boolean] = None,
+                                        requireFullStackTrace: Option[Boolean] = None,
+                                        logWriter: Option[PrintWriter] = None,
+                                        useUsageTracking: Option[Boolean] = None)
 
 /**
   *
@@ -49,7 +49,7 @@ case class CommonsAbandonedConfig(removeAbandonedOnBorrow: Option[Boolean] = Non
   * @param minIdlePerPeer number of min idle connections
   * @param abandonedConfig
   */
-case class CommonsPoolConfig(
+final case class CommonsPoolConfig(
     lifo: Option[Boolean] = None,
     fairness: Option[Boolean] = None,
     maxWaitMillis: Option[Duration] = None,
