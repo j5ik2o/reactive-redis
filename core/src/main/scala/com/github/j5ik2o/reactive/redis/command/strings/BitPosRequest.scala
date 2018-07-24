@@ -37,7 +37,7 @@ final case class BitPosRequest(id: UUID, key: String, bit: Int, startAndEnd: Opt
 }
 
 object BitPosRequest {
-  case class StartAndEnd(start: Int, end: Option[Int] = None)
+  final case class StartAndEnd(start: Int, end: Option[Int] = None)
 }
 
 sealed trait BitPosResponse                                             extends CommandResponse
