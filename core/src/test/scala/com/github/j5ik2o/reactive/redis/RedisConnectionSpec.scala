@@ -15,10 +15,13 @@ import com.github.j5ik2o.reactive.redis.command.transactions.{
   MultiRequest,
   MultiSucceeded
 }
+import com.github.j5ik2o.reactive.redis.util.BitUtil
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
+import org.scalacheck.Shrink
 
 class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnectionSpec")) {
+  implicit val noShrink: Shrink[String] = Shrink.shrinkAny
 
   var connection: RedisConnection = _
   val redisClient: RedisClient    = RedisClient()
@@ -47,34 +50,38 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnection
     "append" in {
       val key = UUID.randomUUID().toString
       connection
-        .send(AppendRequest(UUID.randomUUID(), key, "1"))
+        .send(AppendRequest(UUID.randomUUID(), key, "a"))
         .runAsync
         .futureValue
         .asInstanceOf[AppendSucceeded]
         .value shouldBe 1
       connection
-        .send(AppendRequest(UUID.randomUUID(), key, "2"))
+        .send(AppendRequest(UUID.randomUUID(), key, "b"))
         .runAsync
         .futureValue
         .asInstanceOf[AppendSucceeded]
         .value shouldBe 2
       connection
-        .send(AppendRequest(UUID.randomUUID(), key, "3"))
+        .send(AppendRequest(UUID.randomUUID(), key, "c"))
         .runAsync
         .futureValue
         .asInstanceOf[AppendSucceeded]
         .value shouldBe 3
       val result =
         redisClient.get(key).run(connection).runAsync.futureValue
-      result.value shouldBe Some("123")
+      result.value shouldBe Some("abc")
     }
-    "bitcount" in {
-      val key   = UUID.randomUUID().toString
-      val value = "a"
-      redisClient.set(key, value).run(connection).runAsync.futureValue
-      val result2 =
-        connection.send(BitCountRequest(UUID.randomUUID(), key)).runAsync.futureValue.asInstanceOf[BitCountSucceeded]
-      result2.value shouldBe 3
+    "bitcount" in forAll(keyStrValueGen) {
+      case (k, v) =>
+        redisClient.set(k, v).run(connection).runAsync.futureValue
+        val end = v.length / 2
+        val result2 =
+          connection
+            .send(BitCountRequest(UUID.randomUUID(), k, startAndEnd = Some(StartAndEnd(0, end))))
+            .runAsync
+            .futureValue
+            .asInstanceOf[BitCountSucceeded]
+        result2.value shouldBe BitUtil.getBitCount(v, startAndEnd = Some(StartAndEnd(0, end)))
     }
     "bitfield" in {
       val key = UUID.randomUUID().toString

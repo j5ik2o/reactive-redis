@@ -21,7 +21,7 @@ trait StringsFeature {
       case AppendFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
-  def bitCount(key: String, startAndEnd: Option[StartAndEnd]): ReaderTTaskRedisConnection[Result[Int]] =
+  def bitCount(key: String, startAndEnd: Option[StartAndEnd] = None): ReaderTTaskRedisConnection[Result[Int]] =
     send(BitCountRequest(UUID.randomUUID(), key, startAndEnd)).flatMap {
       case BitCountSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case BitCountSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
@@ -45,7 +45,9 @@ trait StringsFeature {
       case BitOpFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
-  def bitPos(key: String, bit: Int, startAndEnd: Option[StartAndEnd] = None): ReaderTTaskRedisConnection[Result[Int]] =
+  def bitPos(key: String,
+             bit: Int,
+             startAndEnd: Option[BitPosRequest.StartAndEnd] = None): ReaderTTaskRedisConnection[Result[Int]] =
     send(BitPosRequest(UUID.randomUUID(), key, bit, startAndEnd)).flatMap {
       case BitPosSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case BitPosSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))

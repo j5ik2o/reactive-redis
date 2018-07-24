@@ -19,7 +19,7 @@ class ListsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("ListsFeature
                                      resizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
 
   "ListsFeature" - {
-    "lpush & lpop" in forAll(keyValuesGen) {
+    "lpush & lpop" in forAll(keyStrValuesGen) {
       case (k, values) =>
         val result = runProgram(for {
           _ <- redisClient.lpush(k, NonEmptyList(values.head, values.tail))
