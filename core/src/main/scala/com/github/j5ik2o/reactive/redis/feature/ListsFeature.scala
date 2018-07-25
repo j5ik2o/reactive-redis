@@ -7,10 +7,25 @@ import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis._
 import com.github.j5ik2o.reactive.redis.command.lists._
 
+import scala.concurrent.duration.Duration
+
 trait ListsFeature { this: RedisClient =>
+
+  def blpop(keys: NonEmptyList[String], timeout: Duration): ReaderTTaskRedisConnection[Result[Seq[String]]] =
+    send(BLPopRequest(UUID.randomUUID(), keys, timeout)).flatMap {
+      case BLPopSuspended(_, _)         => ReaderTTask.pure(Suspended)
+      case BLPopSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case BLPopFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+    }
+
+  def brpop(keys: NonEmptyList[String], timeout: Duration): ReaderTTaskRedisConnection[Result[Seq[String]]] =
+    send(BRPopRequest(UUID.randomUUID(), keys, timeout)).flatMap {
+      case BRPopSuspended(_, _)         => ReaderTTask.pure(Suspended)
+      case BRPopSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case BRPopFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+    }
+
   /*
-   * BLPOP
-   * BRPOP
    * BRPOPLPUSH
    * LINDEX
    * LINSERT

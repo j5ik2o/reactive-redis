@@ -9,6 +9,8 @@ import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Shrink
 
+import scala.concurrent.duration._
+
 class ListsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("ListsFeatureSpec")) {
   implicit val noShrink: Shrink[String] = Shrink.shrinkAny
 
@@ -19,6 +21,15 @@ class ListsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("ListsFeature
                                              reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
 
   "ListsFeature" - {
+    "lpush & blpop" in forAll(keyStrValuesGen) {
+      case (k, values) =>
+        val result = runProgram(for {
+          _ <- redisClient.lpush(k, NonEmptyList(values.head, values.tail))
+          r <- redisClient.blpop(NonEmptyList.of(k), 1 seconds)
+        } yield r)
+        result.value(1) shouldBe values.last
+    }
+
     "lpush & lpop" in forAll(keyStrValuesGen) {
       case (k, values) =>
         val result = runProgram(for {
