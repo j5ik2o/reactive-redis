@@ -26,11 +26,11 @@ final case class RedisConnectionPoolable(index: Int, redisConnection: RedisConne
 }
 
 @SuppressWarnings(Array("org.wartremover.warts.Equals"))
-final case class CommonsPool(connectionPoolConfig: CommonsPoolConfig,
-                             peerConfigs: NonEmptyList[PeerConfig],
-                             newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
-                             supervisionDecider: Option[Supervision.Decider] = None,
-                             validationTimeout: FiniteDuration = 3 seconds)(
+final class CommonsPool private (val connectionPoolConfig: CommonsPoolConfig,
+                                 val peerConfigs: NonEmptyList[PeerConfig],
+                                 val newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                                 val supervisionDecider: Option[Supervision.Decider] = None,
+                                 val validationTimeout: FiniteDuration = 3 seconds)(
     implicit system: ActorSystem,
     scheduler: Scheduler
 ) extends RedisConnectionPool[Task] {
@@ -178,6 +178,31 @@ final case class CommonsPool(connectionPoolConfig: CommonsPoolConfig,
 }
 
 object CommonsPool {
+
+  def ofSingle(connectionPoolConfig: CommonsPoolConfig,
+               peerConfig: PeerConfig,
+               newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+               supervisionDecider: Option[Supervision.Decider] = None,
+               validationTimeout: FiniteDuration = 3 seconds)(
+      implicit system: ActorSystem,
+      scheduler: Scheduler
+  ): CommonsPool =
+    new CommonsPool(connectionPoolConfig,
+                    NonEmptyList.of(peerConfig),
+                    newConnection,
+                    supervisionDecider,
+                    validationTimeout)
+
+  def ofMultiple(connectionPoolConfig: CommonsPoolConfig,
+                 peerConfigs: NonEmptyList[PeerConfig],
+                 newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                 supervisionDecider: Option[Supervision.Decider] = None,
+                 validationTimeout: FiniteDuration = 3 seconds)(
+      implicit system: ActorSystem,
+      scheduler: Scheduler
+  ): CommonsPool =
+    new CommonsPool(connectionPoolConfig, peerConfigs, newConnection, supervisionDecider, validationTimeout)
+
   private class RedisConnectionPoolFactory(index: Int,
                                            peerConfig: PeerConfig,
                                            supervisionDecider: Option[Supervision.Decider],

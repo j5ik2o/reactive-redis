@@ -12,5 +12,5 @@ import monix.execution.Scheduler.Implicits.global
 
 class StormpotPoolSpec extends AbstractRedisConnectionPoolSpec("StormpotPoolSpec") {
   override protected def createConnectionPool(connectionConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
-    StormpotPool(StormpotConfig(), connectionConfigs, RedisConnection(_, _))
+    StormpotPool.ofMultiple(StormpotConfig(), connectionConfigs, RedisConnection(_, _))
 }
