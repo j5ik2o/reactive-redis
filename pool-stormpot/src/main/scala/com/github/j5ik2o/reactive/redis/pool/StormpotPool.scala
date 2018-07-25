@@ -82,10 +82,31 @@ final case class RedisConnectionExpiration(validationTimeout: Duration)(implicit
   }
 }
 
-final case class StormpotPool(connectionPoolConfig: StormpotConfig,
-                              peerConfigs: NonEmptyList[PeerConfig],
-                              newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
-                              supervisionDecider: Option[Supervision.Decider] = None)(
+object StormpotPool {
+
+  def ofSingle(connectionPoolConfig: StormpotConfig,
+               peerConfig: PeerConfig,
+               newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+               supervisionDecider: Option[Supervision.Decider] = None)(
+      implicit system: ActorSystem,
+      scheduler: Scheduler
+  ): StormpotPool =
+    new StormpotPool(connectionPoolConfig, NonEmptyList.of(peerConfig), newConnection, supervisionDecider)
+
+  def ofMultiple(connectionPoolConfig: StormpotConfig,
+                 peerConfigs: NonEmptyList[PeerConfig],
+                 newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                 supervisionDecider: Option[Supervision.Decider] = None)(
+      implicit system: ActorSystem,
+      scheduler: Scheduler
+  ): StormpotPool =
+    new StormpotPool(connectionPoolConfig, peerConfigs, newConnection, supervisionDecider)
+}
+
+final class StormpotPool private (val connectionPoolConfig: StormpotConfig,
+                                  val peerConfigs: NonEmptyList[PeerConfig],
+                                  val newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                                  val supervisionDecider: Option[Supervision.Decider] = None)(
     implicit system: ActorSystem,
     scheduler: Scheduler
 ) extends RedisConnectionPool[Task] {

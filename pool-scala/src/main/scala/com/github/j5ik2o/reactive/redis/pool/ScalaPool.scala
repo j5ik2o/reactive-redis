@@ -12,10 +12,30 @@ import monix.execution.Scheduler
 
 import scala.concurrent.duration._
 
-final case class ScalaPool(connectionPoolConfig: ScalaPoolConfig,
-                           peerConfigs: NonEmptyList[PeerConfig],
-                           newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
-                           supervisionDecider: Option[Supervision.Decider] = None)(
+object ScalaPool {
+
+  def ofSingle(connectionPoolConfig: ScalaPoolConfig,
+               peerConfig: PeerConfig,
+               newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+               supervisionDecider: Option[Supervision.Decider] = None)(
+      implicit system: ActorSystem,
+      scheduler: Scheduler
+  ): ScalaPool = new ScalaPool(connectionPoolConfig, NonEmptyList.of(peerConfig), newConnection, supervisionDecider)
+
+  def ofMultiple(connectionPoolConfig: ScalaPoolConfig,
+                 peerConfigs: NonEmptyList[PeerConfig],
+                 newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                 supervisionDecider: Option[Supervision.Decider] = None)(
+      implicit system: ActorSystem,
+      scheduler: Scheduler
+  ): ScalaPool = new ScalaPool(connectionPoolConfig, peerConfigs, newConnection, supervisionDecider)
+
+}
+
+final class ScalaPool private (val connectionPoolConfig: ScalaPoolConfig,
+                               val peerConfigs: NonEmptyList[PeerConfig],
+                               val newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                               val supervisionDecider: Option[Supervision.Decider] = None)(
     implicit system: ActorSystem,
     scheduler: Scheduler
 ) extends RedisConnectionPool[Task] {

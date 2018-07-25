@@ -13,10 +13,10 @@ class ListsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("ListsFeature
   implicit val noShrink: Shrink[String] = Shrink.shrinkAny
 
   override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
-    RedisConnectionPool.ofRoundRobin(sizePerPeer = 10,
-                                     peerConfigs,
-                                     RedisConnection(_, _),
-                                     resizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
+    RedisConnectionPool.ofMultipleRoundRobin(sizePerPeer = 10,
+                                             peerConfigs,
+                                             RedisConnection(_, _),
+                                             reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
 
   "ListsFeature" - {
     "lpush & lpop" in forAll(keyStrValuesGen) {

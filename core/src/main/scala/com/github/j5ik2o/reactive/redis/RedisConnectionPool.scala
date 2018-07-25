@@ -35,24 +35,55 @@ object RedisConnectionPool {
   def ofSingleConnection(redisConnection: RedisConnection)(implicit system: ActorSystem): RedisConnectionPool[Task] =
     new SinglePool(redisConnection)
 
-  def ofRoundRobin(
+  def ofSingleRoundRobin(
       sizePerPeer: Int,
-      peerConfigs: NonEmptyList[PeerConfig],
+      peerConfig: PeerConfig,
       newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
-      resizer: Option[Resizer] = None,
+      reSizer: Option[Resizer] = None,
       supervisionDecider: Option[Supervision.Decider] = None,
       passingTimeout: FiniteDuration = 5 seconds
   )(implicit system: ActorSystem, scheduler: Scheduler, ME: MonadError[Task, Throwable]): RedisConnectionPool[Task] =
-    apply(RoundRobinPool(sizePerPeer, resizer), peerConfigs, newConnection, supervisionDecider, passingTimeout)(
+    apply(RoundRobinPool(sizePerPeer, reSizer),
+          NonEmptyList.of(peerConfig),
+          newConnection,
+          supervisionDecider,
+          passingTimeout)(
       system,
       scheduler
     )
 
-  def ofBalancing(sizePerPeer: Int,
-                  peerConfigs: NonEmptyList[PeerConfig],
-                  newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
-                  supervisionDecider: Option[Supervision.Decider] = None,
-                  passingTimeout: FiniteDuration = 5 seconds)(
+  def ofMultipleRoundRobin(
+      sizePerPeer: Int,
+      peerConfigs: NonEmptyList[PeerConfig],
+      newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+      reSizer: Option[Resizer] = None,
+      supervisionDecider: Option[Supervision.Decider] = None,
+      passingTimeout: FiniteDuration = 5 seconds
+  )(implicit system: ActorSystem, scheduler: Scheduler, ME: MonadError[Task, Throwable]): RedisConnectionPool[Task] =
+    apply(RoundRobinPool(sizePerPeer, reSizer), peerConfigs, newConnection, supervisionDecider, passingTimeout)(
+      system,
+      scheduler
+    )
+
+  def ofSingleBalancing(sizePerPeer: Int,
+                        peerConfig: PeerConfig,
+                        newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                        supervisionDecider: Option[Supervision.Decider] = None,
+                        passingTimeout: FiniteDuration = 5 seconds)(
+      implicit system: ActorSystem,
+      scheduler: Scheduler,
+      ME: MonadError[Task, Throwable]
+  ): RedisConnectionPool[Task] =
+    apply(BalancingPool(sizePerPeer), NonEmptyList.of(peerConfig), newConnection, supervisionDecider, passingTimeout)(
+      system,
+      scheduler
+    )
+
+  def ofMultipleBalancing(sizePerPeer: Int,
+                          peerConfigs: NonEmptyList[PeerConfig],
+                          newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                          supervisionDecider: Option[Supervision.Decider] = None,
+                          passingTimeout: FiniteDuration = 5 seconds)(
       implicit system: ActorSystem,
       scheduler: Scheduler,
       ME: MonadError[Task, Throwable]

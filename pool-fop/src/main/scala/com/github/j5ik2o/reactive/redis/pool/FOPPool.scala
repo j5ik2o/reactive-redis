@@ -24,6 +24,22 @@ final case class FOPConnectionWithIndex(index: Int, redisConnection: RedisConnec
 
 object FOPPool {
 
+  def ofSingle(connectionPoolConfig: FOPConfig,
+               peerConfig: PeerConfig,
+               newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+               supervisionDecider: Option[Supervision.Decider] = None)(
+      implicit system: ActorSystem,
+      scheduler: Scheduler
+  ): FOPPool = new FOPPool(connectionPoolConfig, NonEmptyList.of(peerConfig), newConnection, supervisionDecider)
+
+  def ofMultiple(connectionPoolConfig: FOPConfig,
+                 peerConfigs: NonEmptyList[PeerConfig],
+                 newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                 supervisionDecider: Option[Supervision.Decider] = None)(
+      implicit system: ActorSystem,
+      scheduler: Scheduler
+  ): FOPPool = new FOPPool(connectionPoolConfig, peerConfigs, newConnection, supervisionDecider)
+
   private def createFactory(
       index: Int,
       connectionPoolConfig: FOPConfig,
@@ -47,10 +63,10 @@ object FOPPool {
 
 }
 
-final case class FOPPool(connectionPoolConfig: FOPConfig,
-                         peerConfigs: NonEmptyList[PeerConfig],
-                         newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
-                         supervisionDecider: Option[Supervision.Decider] = None)(
+final class FOPPool private (val connectionPoolConfig: FOPConfig,
+                             val peerConfigs: NonEmptyList[PeerConfig],
+                             val newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                             val supervisionDecider: Option[Supervision.Decider] = None)(
     implicit system: ActorSystem,
     scheduler: Scheduler
 ) extends RedisConnectionPool[Task] {
