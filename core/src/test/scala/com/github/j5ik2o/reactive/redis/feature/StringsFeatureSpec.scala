@@ -24,7 +24,7 @@ class StringsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("StringsFea
                                              reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
 
   "StringsFeature" - {
-    "append" in forAll(keyValueGen) {
+    "append" in forAll(keyStrValueGen) {
       case (k, v) =>
         val result = runProgram(for {
           ar1 <- redisClient.append(k, v)
@@ -115,7 +115,6 @@ class StringsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("StringsFea
         } yield result)
 
         result.value shouldBe Some(v)
-        <<<<<<< HEAD
     }
     "getBit" in {
       val k = UUID.randomUUID().toString

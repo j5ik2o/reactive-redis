@@ -149,6 +149,7 @@ final class StormpotPool private (val connectionPoolConfig: StormpotConfig,
 
   @SuppressWarnings(Array("org.wartremover.warts.Equals", "org.wartremover.warts.Null", "org.wartremover.warts.Var"))
   override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = {
+    // scalastyle:off
     var poolable: RedisConnectionPoolable = null
     try {
       logger.debug("---- start")
@@ -160,6 +161,7 @@ final class StormpotPool private (val connectionPoolConfig: StormpotConfig,
         poolable.release()
       logger.debug("---- finish")
     }
+    // scalastyle:on
   }
 
   override def borrowConnection: Task[RedisConnection] = {

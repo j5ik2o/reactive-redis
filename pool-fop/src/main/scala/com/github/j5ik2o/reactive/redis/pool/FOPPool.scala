@@ -94,6 +94,7 @@ final class FOPPool private (val connectionPoolConfig: FOPConfig,
 
   @SuppressWarnings(Array("org.wartremover.warts.Null", "org.wartremover.warts.Var", "org.wartremover.warts.Equals"))
   override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = {
+    // scalastyle:off
     var p: Poolable[RedisConnection] = null
     try {
       p = getObjectPool.borrowObject()
@@ -102,6 +103,7 @@ final class FOPPool private (val connectionPoolConfig: FOPConfig,
       if (p != null)
         p.returnObject()
     }
+    // scalastyle:on
   }
 
   override def borrowConnection: Task[RedisConnection] = {

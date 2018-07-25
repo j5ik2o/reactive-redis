@@ -15,5 +15,9 @@ final case class PeerConfig(remoteAddress: InetSocketAddress,
                             connectTimeout: Duration = Duration.Inf,
                             idleTimeout: Duration = Duration.Inf,
                             backoffConfig: BackoffConfig = BackoffConfig(),
-                            requestBufferSize: Int = 1024,
+                            requestBufferSize: Int = PeerConfig.DEFAULT_MAX_REQUEST_BUFFER_SIZE,
                             overflowStrategy: OverflowStrategy = OverflowStrategy.backpressure)
+
+object PeerConfig {
+  val DEFAULT_MAX_REQUEST_BUFFER_SIZE: Int = 1024
+}

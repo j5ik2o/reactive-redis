@@ -1,3 +1,11 @@
+val compileScalaStyle = taskKey[Unit]("compileScalaStyle")
+
+lazy val scalaStyleSettings = Seq(
+  (scalastyleConfig in Compile) := file("scalastyle-config.xml"),
+  compileScalaStyle := scalastyle.in(Compile).toTask("").value,
+  (compile in Compile) := (compile in Compile).dependsOn(compileScalaStyle).value
+)
+
 val coreSettings = Seq(
   sonatypeProfileName := "com.github.j5ik2o",
   organization := "com.github.j5ik2o",
@@ -83,7 +91,7 @@ val coreSettings = Seq(
                                      Wart.StringPlusAny,
                                      Wart.Overloading),
   wartremoverExcluded += baseDirectory.value / "src" / "test" / "scala"
-)
+) ++ scalaStyleSettings
 
 val akkaVersion = "2.5.11"
 
