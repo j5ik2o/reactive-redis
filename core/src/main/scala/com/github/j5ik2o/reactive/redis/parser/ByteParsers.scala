@@ -26,9 +26,7 @@ object ByteParsers {
 
   private val length = P(BS('$'.toByte) ~ BS('-'.toByte).!.? ~ digit.rep(1).!).map {
     case (m, n) =>
-      val r = LengthExpr(m.map(_ => -1).getOrElse(1) * n.decodeUtf8.right.get.toInt)
-      println(r)
-      r
+      LengthExpr(m.map(_ => -1).getOrElse(1) * n.decodeUtf8.right.get.toInt)
   }
   private val simple: P[SimpleExpr] =
     P(BS('+'.toByte) ~ alphaDigit.rep(1).!).map(v => SimpleExpr(v.decodeUtf8.right.get))

@@ -123,6 +123,7 @@ final class CommonsPool private (val connectionPoolConfig: CommonsPoolConfig,
 
   @SuppressWarnings(Array("org.wartremover.warts.Null", "org.wartremover.warts.Var", "org.wartremover.warts.Equals"))
   override def withConnectionM[T](reader: ReaderRedisConnection[Task, T]): Task[T] = {
+    // scalastyle:off
     var con: RedisConnectionPoolable = null
     try {
       con = getUnderlyingConnectionPool.borrowObject()
@@ -131,6 +132,7 @@ final class CommonsPool private (val connectionPoolConfig: CommonsPoolConfig,
       if (con != null)
         underlyingConnectionPools(con.index).returnObject(con)
     }
+    // scalastyle:on
   }
 
   override def borrowConnection: Task[RedisConnection] =
