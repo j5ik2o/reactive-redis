@@ -11,26 +11,26 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.{ Failure, Success }
 
-sealed trait RedisMode
-
-object RedisMode {
-
-  case object Standalone extends RedisMode
-
-  case object Sentinel extends RedisMode
-
-  case object Cluster extends RedisMode
-
-}
-
-class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = None, masterPortOpt: Option[Int] = None)
+@SuppressWarnings(
+  Array(
+    "org.wartremover.warts.Var",
+    "org.wartremover.warts.Null",
+    "org.wartremover.warts.Serializable",
+    "org.wartremover.warts.Equals",
+    "org.wartremover.warts.OptionPartial",
+    "org.wartremover.warts.Recursion",
+    "org.wartremover.warts.While"
+  )
+)
+class RedisTestServer(mode: RedisMode = RedisMode.Standalone,
+                      portOpt: Option[Int] = None,
+                      masterPortOpt: Option[Int] = None,
+                      forbiddenPorts: Seq[Int] = 6300.until(7300))
     extends RandomPortSupport {
   lazy val logger: Logger = LoggerFactory.getLogger(getClass)
-  @volatile
-  private[this] var process: Option[Process] = None
-  private[this] val forbiddenPorts           = 6300.until(7300)
-  @volatile
-  private var _address: Option[InetSocketAddress] = None
+
+  @volatile private[this] var process: Option[Process]      = None
+  @volatile private var _address: Option[InetSocketAddress] = None
 
   def getPort: Int = portOpt.getOrElse(_address.get.getPort)
 
@@ -38,9 +38,9 @@ class TestServer(mode: RedisMode = RedisMode.Standalone, portOpt: Option[Int] = 
 
   val path: String = JarUtil
     .extractExecutableFromJar(if (OSType.ofAuto == OSType.macOS) {
-      "redis-server-4.0.app"
+      "redis-server/redis-server-4.0.macOS"
     } else {
-      "redis-server-4.0.elf"
+      "redis-server/redis-server-4.0.Linux"
     })
     .getPath
 

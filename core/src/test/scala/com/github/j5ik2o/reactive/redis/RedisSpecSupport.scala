@@ -9,22 +9,22 @@ trait RedisSpecSupport extends RandomPortSupport with Suite with BeforeAndAfterA
 
   def waitFor(): Unit
 
-  private var _redisMasterServer: TestServer = _
+  private var _redisMasterServer: RedisTestServer = _
 
-  private val _redisSalveServers: ArrayBuffer[TestServer] = ArrayBuffer.empty
+  private val _redisSalveServers: ArrayBuffer[RedisTestServer] = ArrayBuffer.empty
 
-  def redisMasterServer: TestServer       = _redisMasterServer
-  def redisSlaveServers: List[TestServer] = _redisSalveServers.toList
+  def redisMasterServer: RedisTestServer       = _redisMasterServer
+  def redisSlaveServers: List[RedisTestServer] = _redisSalveServers.toList
 
-  def newSalveServers(masterPort: Int)(n: Int): List[TestServer] =
+  def newSalveServers(masterPort: Int)(n: Int): List[RedisTestServer] =
     (for (_ <- 1 to n) yield newRedisServer(Some(masterPort))).toList
 
-  def newRedisServer(masterPortOpt: Option[Int] = None): TestServer = {
-    new TestServer(masterPortOpt = masterPortOpt)
+  def newRedisServer(masterPortOpt: Option[Int] = None): RedisTestServer = {
+    new RedisTestServer(masterPortOpt = masterPortOpt)
   }
 
   def startMasterServer(): Unit = {
-    _redisMasterServer = new TestServer()
+    _redisMasterServer = new RedisTestServer()
     _redisMasterServer.start()
   }
 

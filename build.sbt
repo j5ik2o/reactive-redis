@@ -95,6 +95,17 @@ val coreSettings = Seq(
 
 val akkaVersion = "2.5.11"
 
+lazy val test = (project in file("test"))
+  .settings(
+    coreSettings ++ Seq(
+      name := "reactive-redis-test",
+      libraryDependencies ++= Seq(
+        "com.google.guava" % "guava"      % "25.1-jre",
+        "commons-io"       % "commons-io" % "2.6"
+      )
+    )
+  )
+
 lazy val core = (project in file("core")).settings(
   coreSettings ++ Seq(
     name := "reactive-redis-core",
@@ -104,12 +115,10 @@ lazy val core = (project in file("core")).settings(
       "com.typesafe.akka" %% "akka-stream"    % akkaVersion,
       "com.typesafe.akka" %% "akka-slf4j"     % akkaVersion,
       "com.lihaoyi"       %% "fastparse"      % "1.0.0",
-      "com.lihaoyi"       %% "fastparse-byte" % "1.0.0",
-      "com.google.guava"  % "guava"           % "25.1-jre" % Test,
-      "commons-io"        % "commons-io"      % "2.6" % Test
+      "com.lihaoyi"       %% "fastparse-byte" % "1.0.0"
     )
   )
-)
+) dependsOn (test % "test")
 
 lazy val `pool-commons` = (project in file("pool-commons"))
   .settings(
@@ -160,4 +169,4 @@ lazy val `root` = (project in file("."))
   .settings(
     name := "reactive-redis-project"
   )
-  .aggregate(core, `pool-commons`, `pool-fop`, `pool-scala`, `pool-stormpot`)
+  .aggregate(core, `pool-commons`, `pool-fop`, `pool-scala`, `pool-stormpot`, test)
