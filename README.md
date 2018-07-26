@@ -9,6 +9,7 @@ Akka-Stream based Redis Client for Scala
 
 - Transport is akka-stream 2.5.x.
 - Response parser is fastparse.
+- monix.eval.Task support.
 
 ## Installation
 
