@@ -18,7 +18,7 @@ object RedisClient {
 
 }
 
-class RedisClient(implicit system: ActorSystem)
+class RedisClient()(implicit system: ActorSystem)
     extends StringsFeature
     with ListsFeature
     with HashesFeature

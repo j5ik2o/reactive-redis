@@ -1,86 +1,18 @@
 package com.github.j5ik2o.reactive.redis.pool
 
-import java.util.UUID
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
-import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.Supervision
-import akka.stream.scaladsl.Flow
 import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis._
-import com.github.j5ik2o.reactive.redis.command.CommandRequestBase
 import com.github.j5ik2o.reactive.redis.pool.PoolType.{ Blaze, Queue }
-import enumeratum._
 import monix.eval.Task
 import monix.execution.Scheduler
 import stormpot._
 
-import scala.collection.immutable
 import scala.concurrent.duration._
-
-final case class RedisConnectionPoolable(slot: Slot, redisConnection: RedisConnection) extends Poolable {
-  override def release(): Unit = {
-    slot.release(this)
-  }
-  def expire(): Unit = slot.expire(this)
-  def close(): Unit  = redisConnection.shutdown()
-}
-
-final case class RedisConnectionAllocator(peerConfig: PeerConfig,
-                                          newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
-                                          supervisionDecider: Option[Supervision.Decider])(implicit system: ActorSystem)
-    extends Allocator[RedisConnectionPoolable] {
-
-  override def allocate(slot: Slot): RedisConnectionPoolable = {
-    RedisConnectionPoolable(slot, newConnection(peerConfig, supervisionDecider))
-  }
-
-  override def deallocate(t: RedisConnectionPoolable): Unit = {
-    t.close()
-  }
-}
-
-sealed trait PoolType extends EnumEntry
-object PoolType extends Enum[PoolType] {
-  override def values: immutable.IndexedSeq[PoolType] = findValues
-  case object Blaze extends PoolType
-  case object Queue extends PoolType
-}
-
-final case class StormpotConfig(poolType: PoolType = Queue,
-                                sizePerPeer: Option[Int] = None,
-                                claimTimeout: Option[FiniteDuration] = None,
-                                backgroundExpirationEnabled: Option[Boolean] = None,
-                                preciseLeakDetectionEnabled: Option[Boolean] = None,
-                                validationTimeout: Option[Duration] = None)
-
-final case class StormpotConnection(redisConnectionPoolable: RedisConnectionPoolable) extends RedisConnection {
-  private val underlyingCon = redisConnectionPoolable.redisConnection
-
-  override def id: UUID = underlyingCon.id
-
-  override def peerConfig: PeerConfig = underlyingCon.peerConfig
-
-  override def shutdown(): Unit = underlyingCon.shutdown()
-
-  override def toFlow[C <: CommandRequestBase](parallelism: Int)(
-      implicit scheduler: Scheduler
-  ): Flow[C, C#Response, NotUsed] = underlyingCon.toFlow(parallelism)
-
-  override def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = underlyingCon.send(cmd)
-
-}
-
-final case class RedisConnectionExpiration(validationTimeout: Duration)(implicit system: ActorSystem,
-                                                                        scheduler: Scheduler)
-    extends Expiration[RedisConnectionPoolable] {
-  private val redisClient = RedisClient()
-  override def hasExpired(slotInfo: SlotInfo[_ <: RedisConnectionPoolable]): Boolean = {
-    !redisClient.validate(validationTimeout).run(slotInfo.getPoolable.redisConnection)
-  }
-}
 
 object StormpotPool {
 

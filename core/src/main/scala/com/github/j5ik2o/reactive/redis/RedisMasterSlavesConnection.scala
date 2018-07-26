@@ -6,8 +6,8 @@ import com.github.j5ik2o.reactive.redis.command.CommandRequestBase
 import monix.eval.Task
 import org.slf4j.LoggerFactory
 
-class RedisMasterSlavesConnection(masterConnectionPoolFactory: => RedisConnectionPool[Task],
-                                  slaveConnectionPoolFactory: => RedisConnectionPool[Task])
+final class RedisMasterSlavesConnection(masterConnectionPoolFactory: => RedisConnectionPool[Task],
+                                        slaveConnectionPoolFactory: => RedisConnectionPool[Task])
     extends RedisConnection {
 
   private val logger = LoggerFactory.getLogger(getClass)
