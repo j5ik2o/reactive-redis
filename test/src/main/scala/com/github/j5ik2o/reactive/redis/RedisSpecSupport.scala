@@ -6,15 +6,11 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext
 
 @SuppressWarnings(
-  Array(
-    "org.wartremover.warts.Null",
-    "org.wartremover.warts.Var",
-    "org.wartremover.warts.MutableDataStructures"
-  )
+  Array("org.wartremover.warts.Null", "org.wartremover.warts.Var", "org.wartremover.warts.MutableDataStructures")
 )
-trait RedisSpecSupport extends RandomPortSupport with Suite with BeforeAndAfterAll {
+trait RedisSpecSupport extends Suite with BeforeAndAfterAll {
 
-  def waitFor(): Unit
+  def waitFor(): Unit = {}
 
   private var _redisMasterServer: RedisTestServer = _
 
@@ -34,10 +30,12 @@ trait RedisSpecSupport extends RandomPortSupport with Suite with BeforeAndAfterA
   def startMasterServer()(implicit ec: ExecutionContext): Unit = {
     _redisMasterServer = new RedisTestServer()
     _redisMasterServer.start()
+    waitFor()
   }
 
   def stopMasterServer(): Unit = {
     _redisMasterServer.stop()
+    waitFor()
   }
 
   def startSlaveServers(size: Int)(implicit ec: ExecutionContext): Unit = {
@@ -45,11 +43,15 @@ trait RedisSpecSupport extends RandomPortSupport with Suite with BeforeAndAfterA
     _redisSalveServers.append(newSalveServers(_redisMasterServer.getPort)(size): _*)
     _redisSalveServers.foreach { slaveServer =>
       slaveServer.start()
+      waitFor()
     }
   }
 
   def stopSlaveServers(): Unit = {
-    _redisSalveServers.foreach(_.stop())
+    _redisSalveServers.foreach { slaveServer =>
+      slaveServer.stop()
+      waitFor()
+    }
     _redisSalveServers.clear()
   }
 

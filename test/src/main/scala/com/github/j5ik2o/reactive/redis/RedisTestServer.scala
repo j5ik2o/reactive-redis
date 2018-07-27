@@ -25,8 +25,7 @@ import scala.util.{ Failure, Success }
 class RedisTestServer(mode: RedisMode = RedisMode.Standalone,
                       portOpt: Option[Int] = None,
                       masterPortOpt: Option[Int] = None,
-                      forbiddenPorts: Seq[Int] = 6300.until(7300))
-    extends RandomPortSupport {
+                      forbiddenPorts: Seq[Int] = 6300.until(7300)) {
   lazy val logger: Logger = LoggerFactory.getLogger(getClass)
 
   @volatile private[this] var process: Option[Process]      = None
@@ -56,7 +55,7 @@ class RedisTestServer(mode: RedisMode = RedisMode.Standalone,
   private[this] def findAddress(): InetSocketAddress = {
     var tries = 100
     while (_address.isEmpty && tries >= 0) {
-      _address = Some(temporaryServerAddress())
+      _address = Some(RandomPortSupport.temporaryServerAddress())
       if (forbiddenPorts.contains(_address.get.getPort)) {
         _address = None
         tries -= 1
