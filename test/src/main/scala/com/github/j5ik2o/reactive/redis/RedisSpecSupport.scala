@@ -3,8 +3,15 @@ package com.github.j5ik2o.reactive.redis
 import org.scalatest.{ BeforeAndAfterAll, Suite }
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 
+@SuppressWarnings(
+  Array(
+    "org.wartremover.warts.Null",
+    "org.wartremover.warts.Var",
+    "org.wartremover.warts.MutableDataStructures"
+  )
+)
 trait RedisSpecSupport extends RandomPortSupport with Suite with BeforeAndAfterAll {
 
   def waitFor(): Unit
@@ -13,7 +20,8 @@ trait RedisSpecSupport extends RandomPortSupport with Suite with BeforeAndAfterA
 
   private val _redisSalveServers: ArrayBuffer[RedisTestServer] = ArrayBuffer.empty
 
-  def redisMasterServer: RedisTestServer       = _redisMasterServer
+  def redisMasterServer: RedisTestServer = _redisMasterServer
+
   def redisSlaveServers: List[RedisTestServer] = _redisSalveServers.toList
 
   def newSalveServers(masterPort: Int)(n: Int): List[RedisTestServer] =
@@ -23,7 +31,7 @@ trait RedisSpecSupport extends RandomPortSupport with Suite with BeforeAndAfterA
     new RedisTestServer(masterPortOpt = masterPortOpt)
   }
 
-  def startMasterServer(): Unit = {
+  def startMasterServer()(implicit ec: ExecutionContext): Unit = {
     _redisMasterServer = new RedisTestServer()
     _redisMasterServer.start()
   }
@@ -32,9 +40,9 @@ trait RedisSpecSupport extends RandomPortSupport with Suite with BeforeAndAfterA
     _redisMasterServer.stop()
   }
 
-  def startSlaveServers(): Unit = {
+  def startSlaveServers(size: Int)(implicit ec: ExecutionContext): Unit = {
     _redisSalveServers.clear()
-    _redisSalveServers.append(newSalveServers(_redisMasterServer.getPort)(1): _*)
+    _redisSalveServers.append(newSalveServers(_redisMasterServer.getPort)(size): _*)
     _redisSalveServers.foreach { slaveServer =>
       slaveServer.start()
     }
@@ -47,6 +55,7 @@ trait RedisSpecSupport extends RandomPortSupport with Suite with BeforeAndAfterA
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
+    import scala.concurrent.ExecutionContext.Implicits.global
     startMasterServer()
   }
 
@@ -54,4 +63,5 @@ trait RedisSpecSupport extends RandomPortSupport with Suite with BeforeAndAfterA
     stopMasterServer()
     super.afterAll()
   }
+
 }
