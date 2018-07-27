@@ -24,7 +24,7 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    startSlaveServers()
+    startSlaveServers(1)
 
     val masterPeerConfig = PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.getPort))
     val slavePeerConfigs =
