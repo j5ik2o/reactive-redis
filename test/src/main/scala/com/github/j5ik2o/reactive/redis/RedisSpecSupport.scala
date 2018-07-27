@@ -1,9 +1,6 @@
 package com.github.j5ik2o.reactive.redis
 
-import org.scalatest.{ BeforeAndAfterAll, Suite }
-
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.ExecutionContext.Implicits.global
 
 trait RedisSpecSupport extends RandomPortSupport with Suite with BeforeAndAfterAll {
 

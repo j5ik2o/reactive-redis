@@ -101,7 +101,8 @@ lazy val test = (project in file("test"))
       name := "reactive-redis-test",
       libraryDependencies ++= Seq(
         "com.google.guava" % "guava"      % "25.1-jre",
-        "commons-io"       % "commons-io" % "2.6"
+        "commons-io"       % "commons-io" % "2.6",
+        "org.scalatest"    %% "scalatest" % "3.0.5" % Provided
       )
     )
   )
