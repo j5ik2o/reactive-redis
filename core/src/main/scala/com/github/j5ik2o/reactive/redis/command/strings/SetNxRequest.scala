@@ -15,7 +15,7 @@ final case class SetNxRequest(id: UUID, key: String, value: String) extends Comm
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"""SETNX $key "$value""""
+  override def asString: String = s"""SETNX $key $value"""
 
   override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
 

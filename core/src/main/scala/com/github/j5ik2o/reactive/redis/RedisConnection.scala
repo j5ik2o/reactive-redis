@@ -104,7 +104,7 @@ private[redis] class RedisConnectionImpl(val peerConfig: PeerConfig, supervision
         Flow[RequestContext]
           .map { rc =>
             log.debug(s"request = [{}]", rc.commandRequestString)
-            (ByteString.fromString(rc.commandRequest.asString + "\r\n"), rc)
+            (rc.commandRequestByteString ++ ByteString("\r\n"), rc)
           }
       )
       val responseFlow = b.add(Flow[(ByteString, RequestContext)].map {

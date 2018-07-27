@@ -4,6 +4,7 @@ import java.util.UUID
 
 import cats.Show
 import com.github.j5ik2o.reactive.redis._
+import com.github.j5ik2o.reactive.redis.command.ByteStringSerializer
 import com.github.j5ik2o.reactive.redis.command.strings._
 
 import scala.concurrent.duration.FiniteDuration
@@ -143,7 +144,7 @@ trait StringsFeature {
       case PSetExFailed(_, _, ex) => ReaderTTask.raiseError(ex)
     }
 
-  def set[A: Show](key: String, value: A): ReaderTTaskRedisConnection[Result[Unit]] =
+  def set[A: ByteStringSerializer](key: String, value: A): ReaderTTaskRedisConnection[Result[Unit]] =
     send(SetRequest(UUID.randomUUID(), key, value)).flatMap {
       case SetSuspended(_, _)  => ReaderTTask.pure(Suspended)
       case SetSucceeded(_, _)  => ReaderTTask.pure(Provided(()))

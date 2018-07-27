@@ -19,7 +19,7 @@ final case class SetExRequest(id: UUID, key: String, expires: FiniteDuration, va
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"""SETEX $key ${expires.toSeconds} "$value""""
+  override def asString: String = s"""SETEX $key ${expires.toSeconds} $value"""
 
   override protected def responseParser: P[Expr] = P(simpleStringReply)
 
