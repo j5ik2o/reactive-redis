@@ -5,7 +5,7 @@ import akka.routing.DefaultResizer
 import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis._
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
+import monix.execution.Scheduler
 import org.scalacheck.Shrink
 
 class HashesFeatureSpec extends AbstractRedisClientSpec(ActorSystem("HashesFeatureSpec")) {

@@ -11,10 +11,11 @@ import com.github.j5ik2o.reactive.redis.command.strings.{ BitFieldRequest, BitOp
 import com.github.j5ik2o.reactive.redis.util.BitUtil
 import com.github.j5ik2o.reactive.redis.{ AbstractRedisClientSpec, PeerConfig, RedisConnection, RedisConnectionPool }
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
+import monix.execution.Scheduler
 import org.scalacheck.Shrink
 
 class StringsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("StringsFeatureSpec")) {
+
   implicit val noShrink: Shrink[String] = Shrink.shrinkAny
 
   override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =

@@ -11,7 +11,6 @@ import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis.command.CommandResponse
 import com.github.j5ik2o.reactive.redis.command.strings.{ GetRequest, SetRequest }
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
 
 import scala.collection.immutable
 

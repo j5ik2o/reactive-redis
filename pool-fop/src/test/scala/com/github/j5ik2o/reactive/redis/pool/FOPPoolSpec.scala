@@ -8,7 +8,6 @@ import com.github.j5ik2o.reactive.redis.{
   RedisConnectionPool
 }
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
 
 class FOPPoolSpec extends AbstractRedisConnectionPoolSpec("FOPPoolSpec") {
   override protected def createConnectionPool(connectionConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =

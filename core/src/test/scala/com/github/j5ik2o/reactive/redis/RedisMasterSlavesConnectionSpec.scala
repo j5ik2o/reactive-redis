@@ -8,7 +8,6 @@ import akka.routing.DefaultResizer
 import cats.data.NonEmptyList
 import cats.implicits._
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
 
 class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("RedisClientSpec")) {
 

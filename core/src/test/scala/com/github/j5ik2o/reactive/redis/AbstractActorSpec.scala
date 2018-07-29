@@ -5,6 +5,7 @@ import akka.stream.ActorMaterializer
 import akka.testkit.TestKit
 import cats.data.NonEmptyList
 import monix.eval.Task
+import monix.execution.Scheduler
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.prop.PropertyChecks
@@ -22,6 +23,8 @@ abstract class AbstractActorSpec(_system: ActorSystem)
     with PropertyChecks
     with RedisSpecSupport
     with ScalaCheckSupport {
+
+  implicit val scheduler: Scheduler = Scheduler(system.dispatcher)
 
   val logger = LoggerFactory.getLogger(getClass)
 

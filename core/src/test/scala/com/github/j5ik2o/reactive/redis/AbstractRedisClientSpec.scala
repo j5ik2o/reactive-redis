@@ -5,9 +5,9 @@ import java.net.InetSocketAddress
 import akka.actor.ActorSystem
 import cats.data.NonEmptyList
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
 
 abstract class AbstractRedisClientSpec(system: ActorSystem) extends AbstractActorSpec(system) {
+
   private var _redisClient: RedisClient                  = _
   private var _connectionPool: RedisConnectionPool[Task] = _
 
