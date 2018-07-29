@@ -18,7 +18,6 @@ import com.github.j5ik2o.reactive.redis.command.transactions.{
 }
 import com.github.j5ik2o.reactive.redis.util.BitUtil
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Shrink
 
 class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnectionSpec")) {

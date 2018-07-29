@@ -6,12 +6,13 @@ import cats.data.NonEmptyList
 import cats.implicits._
 import com.github.j5ik2o.reactive.redis.{ AbstractRedisClientSpec, PeerConfig, RedisConnection, RedisConnectionPool }
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
+import monix.execution.Scheduler
 import org.scalacheck.Shrink
 
 import scala.concurrent.duration._
 
 class ListsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("ListsFeatureSpec")) {
+
   implicit val noShrink: Shrink[String] = Shrink.shrinkAny
 
   override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
