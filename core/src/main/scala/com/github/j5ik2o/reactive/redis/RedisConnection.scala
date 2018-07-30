@@ -134,6 +134,7 @@ private[redis] class RedisConnectionImpl(val peerConfig: PeerConfig, supervision
     }
     .viaMat(KillSwitches.single)(Keep.both)
     .toMat(Sink.ignore)(Keep.left)
+    .withAttributes(ActorAttributes.dispatcher("reactive-redis.dispatcher"))
     .run()
 
   def shutdown(): Unit = killSwitch.shutdown()
