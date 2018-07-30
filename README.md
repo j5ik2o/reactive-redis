@@ -34,6 +34,268 @@ resolvers += "Sonatype OSS Snapshot Repository" at "https://oss.sonatype.org/con
 libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SNAPSHOT"
 ```
 
+## Support Commands
+
+- Cluster
+
+<table>
+  <tr>
+    <td>Command</td>
+    <td>Support</td>
+  </tr>
+  <tr>
+    <td>CLUSTER ADDSLOTS</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER ADDSLOTS</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER ADDSCLUSTER COUNT-FAILURE-REPORTSLOTS</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER COUNTKEYSINSLOT</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER DELSLOTS</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER FAILOVER</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER FORGET</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER GETKEYSINSLOT</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER INFO</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER KEYSLOT</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER MEET</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER NODES</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER REPLICATE</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER RESET</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER SAVECONFIG</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER SET-CONFIG-EPOCH</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER SETSLOT</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER SLAVES</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>CLUSTER SLOTS</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>READONLY</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>READWRITE</td>
+    <td>TODO</td>
+  </tr>
+</table>
+
+- Connection
+
+<table>
+  <tr>
+    <td>Command</td>
+    <td>Support</td>
+  </tr>
+  <tr>
+    <td>AUTH</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>ECHO</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>PING</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>QUIT</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>SELECT</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>SWAPDB</td>
+    <td>TODO</td>
+  </tr>
+</table>
+
+- Strings
+
+<table>
+  <tr>
+    <td>Command</td>
+    <td>Support</td>
+  </tr>
+  <tr>
+    <td>APPEND</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>BITCOUNT</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>BITFIELD</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>BITOP</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>BITPOS</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>DECR</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>DECRBY</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>GET</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>GETBIT</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>GETRANGE</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>GETSET</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>INCR</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>INCRBY</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>INCRBYFLOAT</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>MGET</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>MSET</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>MSETNX</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>PSETEX</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>SET</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>SETBIT</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>SETEX</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>SETNX</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>SETRANGE</td>
+    <td>Supported</td>
+  </tr>
+  <tr>
+    <td>STRLEN</td>
+    <td>Supported</td>
+  </tr>
+</table>
+
+- Transaction
+
+<table>
+  <tr>
+    <td>Command</td>
+    <td>Support</td>
+  </tr>
+  <tr>
+		<td>DISCARD</td>
+		<td>Supported</td>
+	</tr>
+	<tr>
+		<td>EXEC</td>
+		<td>Supported</td>
+	</tr>
+	<tr>
+		<td>MULTI</td>
+		<td>Supported</td>
+	</tr>
+	<tr>
+		<td>UNWATCH</td>
+		<td>Supported</td>
+	</tr>
+	<tr>
+		<td>WATCH</td>
+		<td>Supported</td>
+	</tr>
+</table>
+  
 ## Usage
 
 ### Non connection pooling
