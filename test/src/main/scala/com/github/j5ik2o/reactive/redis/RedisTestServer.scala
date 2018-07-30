@@ -129,6 +129,7 @@ class RedisTestServer(mode: RedisMode = RedisMode.Standalone,
     }
     val builder  = new ProcessBuilder(cmd.asJava)
     val _process = builder.start()
+    Thread.sleep(200)
     printlnStreamFuture(new BufferedReader(new InputStreamReader(_process.getInputStream)))
     printlnStreamFuture(new BufferedReader(new InputStreamReader(_process.getErrorStream)))
     process = Some(_process)
