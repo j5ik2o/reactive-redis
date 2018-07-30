@@ -162,6 +162,39 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
   </tr>
 </table>
 
+- Streams
+
+<table>
+		<tr>
+		<td>XADD</td>
+		<td>TODO</td>
+	</tr>
+	<tr>
+		<td>XLEN</td>
+		<td>TODO</td>
+	</tr>
+	<tr>
+		<td>XPENDING</td>
+		<td>TODO</td>
+	</tr>
+	<tr>
+		<td>XRANGE</td>
+		<td>TODO</td>
+	</tr>
+	<tr>
+		<td>XREAD</td>
+		<td>TODO</td>
+	</tr>
+	<tr>
+		<td>XREADGROUP</td>
+		<td>TODO</td>
+	</tr>
+	<tr>
+		<td>XREVRANGE</td>
+		<td>TODO</td>
+	</tr>
+</table>
+
 - Strings
 
 <table>
