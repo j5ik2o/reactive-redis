@@ -173,7 +173,7 @@ lazy val benchmark = (project in file("benchmark"))
     )
   )
   .enablePlugins(JmhPlugin)
-  .dependsOn(core, test)
+  .dependsOn(core, test, `pool-commons`, `pool-fop`, `pool-scala`, `pool-stormpot`)
 
 lazy val `root` = (project in file("."))
   .settings(coreSettings)
