@@ -4,7 +4,6 @@ import java.util.concurrent.TimeUnit
 
 import cats.implicits._
 import com.github.j5ik2o.reactive.redis.BenchmarkHelper
-import monix.eval.Task
 import org.openjdk.jmh.annotations._
 
 import scala.concurrent.Await
@@ -13,7 +12,7 @@ import scala.concurrent.duration._
 @SuppressWarnings(Array("org.wartremover.warts.Null", "org.wartremover.warts.Var"))
 @OutputTimeUnit(TimeUnit.SECONDS)
 @BenchmarkMode(Array(Mode.Throughput))
-@State(Scope.Thread)
+@State(Scope.Benchmark)
 class Get extends BenchmarkHelper {
 
   override def fixture(): Unit = {

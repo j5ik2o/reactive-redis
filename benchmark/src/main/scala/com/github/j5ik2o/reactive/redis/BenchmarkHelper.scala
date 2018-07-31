@@ -14,12 +14,14 @@ import redis.{ RedisClientPool, RedisServer }
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-@SuppressWarnings(Array("org.wartremover.warts.Null", "org.wartremover.warts.Var"))
+@SuppressWarnings(
+  Array("org.wartremover.warts.Null", "org.wartremover.warts.Var", "org.wartremover.warts.Serializable")
+)
 trait BenchmarkHelper {
   implicit val system: ActorSystem  = ActorSystem()
   implicit val scheduler: Scheduler = Scheduler(system.dispatcher)
   val client: RedisClient           = RedisClient()
-  val sizePerPeer: Int              = 1
+  val sizePerPeer: Int              = 3
   val WAIT_IN_SEC: Int              = 1000 * 3
 
   val redisTestServer: RedisTestServer = new RedisTestServer()
