@@ -165,9 +165,19 @@ lazy val `pool-scala` = (project in file("pool-scala"))
   )
   .dependsOn(core % "compile;test->test")
 
+lazy val benchmark = (project in file("benchmark"))
+  .settings(
+    coreSettings ++ Seq(
+      name := "reactive-redis-benchmark",
+      libraryDependencies ++= Seq("com.github.etaty" %% "rediscala" % "1.8.0", "redis.clients" % "jedis" % "2.9.0")
+    )
+  )
+  .enablePlugins(JmhPlugin)
+  .dependsOn(core, test, `pool-commons`, `pool-fop`, `pool-scala`, `pool-stormpot`)
+
 lazy val `root` = (project in file("."))
   .settings(coreSettings)
   .settings(
     name := "reactive-redis-project"
   )
-  .aggregate(core, `pool-commons`, `pool-fop`, `pool-scala`, `pool-stormpot`, test)
+  .aggregate(core, benchmark, `pool-commons`, `pool-fop`, `pool-scala`, `pool-stormpot`, test)

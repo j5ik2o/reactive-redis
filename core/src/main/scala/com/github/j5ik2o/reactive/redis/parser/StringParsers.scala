@@ -56,6 +56,7 @@ object StringParsers {
 
   val stringOptArrayWithCrLf: P[ArrayExpr[StringOptExpr]] = P(array(stringOptArrayElement) ~ crlf.?)
   val integerArrayWithCrLf: P[ArrayExpr[NumberExpr]]      = P(array(integerArrayElement) ~ crlf.?)
+
   def bulkStringRest(l: Int): P[StringOptExpr] = {
     if (l == -1) {
       P(End).!.map(_ => StringOptExpr(None))

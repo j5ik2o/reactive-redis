@@ -19,11 +19,11 @@
         <appender-ref ref="akka" />
     </appender>
 
-    <logger name="akka.actor" level="ERROR" additivity="false">
+    <logger name="com.github.j5ik2o" level="ERROR" additivity="false">
         <appender-ref ref="akka-async" />
     </logger>
 
-    <root level="DEBUG">
+    <root level="ERROR">
         <appender-ref ref="akka-async"/>
     </root>
 
