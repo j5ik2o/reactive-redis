@@ -23,12 +23,6 @@ class Get extends BenchmarkHelper {
   }
 
   @Benchmark
-  def rediscala(): Unit = {
-    Await.result(rediscalaPool.get("A"), Duration.Inf)
-    ()
-  }
-
-  @Benchmark
   def reactiveRedis(): Unit = {
     Await.result(pool.withConnectionF { con =>
       client.get("A").run(con)
@@ -37,10 +31,15 @@ class Get extends BenchmarkHelper {
   }
 
   @Benchmark
-  def reactiveRedisPure(): Unit = {
-    Await.result(pool.withConnectionF { con =>
-      Task.pure(())
-    }.runAsync, Duration.Inf)
+  def jedis: Unit = {
+    val jedis = jedisPool.getResource
+    jedis.get("A")
+    jedis.close()
+  }
+
+  @Benchmark
+  def rediscala(): Unit = {
+    Await.result(rediscalaPool.get("A"), Duration.Inf)
     ()
   }
 

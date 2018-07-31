@@ -3,10 +3,12 @@ package com.github.j5ik2o.reactive.redis
 import java.net.InetSocketAddress
 
 import akka.actor.ActorSystem
-import akka.io.Tcp.SO.TcpNoDelay
+import akka.io.Inet.SO.{ ReceiveBufferSize, SendBufferSize }
+import akka.io.Tcp.SO.{ KeepAlive, TcpNoDelay }
 import com.github.j5ik2o.reactive.redis.pool._
 import monix.eval.Task
 import monix.execution.Scheduler
+import redis.clients.jedis.JedisPool
 import redis.{ RedisClientPool, RedisServer }
 
 import scala.concurrent.Await
@@ -30,15 +32,22 @@ trait BenchmarkHelper {
 
   def pool: RedisConnectionPool[Task] = _pool
 
+  private var _jedisPool: JedisPool = _
+
+  def jedisPool: JedisPool = _jedisPool
+
   def fixture(): Unit
 
   def setup(): Unit = {
     redisTestServer.start()
     Thread.sleep(WAIT_IN_SEC)
+    _jedisPool = new JedisPool("127.0.0.1", redisTestServer.getPort)
     val peerConfig: PeerConfig =
-      PeerConfig(new InetSocketAddress("127.0.0.1", redisTestServer.getPort),
-                 options = Vector(TcpNoDelay(true)),
-                 requestBufferSize = Int.MaxValue)
+      PeerConfig(
+        new InetSocketAddress("127.0.0.1", redisTestServer.getPort),
+        options = Vector(TcpNoDelay(true), KeepAlive(true), SendBufferSize(2048), ReceiveBufferSize(2048)),
+        requestBufferSize = Int.MaxValue
+      )
     // _pool = StormpotPool.ofSingle(StormpotConfig(), peerConfig, RedisConnection(_, _))
     // _pool = ScalaPool.ofSingle(ScalaPoolConfig(), peerConfig, RedisConnection(_, _))
     // _pool = FOPPool.ofSingle(FOPConfig(), peerConfig, RedisConnection(_, _))

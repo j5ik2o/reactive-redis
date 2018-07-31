@@ -24,6 +24,13 @@ class Ping extends BenchmarkHelper {
   }
 
   @Benchmark
+  def jedis: Unit = {
+    val jedis = jedisPool.getResource
+    jedis.ping()
+    jedis.close()
+  }
+
+  @Benchmark
   def rediscala: Unit = {
     Await.result(rediscalaPool.ping(), Duration.Inf)
     ()

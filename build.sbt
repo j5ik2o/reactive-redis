@@ -169,7 +169,7 @@ lazy val benchmark = (project in file("benchmark"))
   .settings(
     coreSettings ++ Seq(
       name := "reactive-redis-benchmark",
-      libraryDependencies ++= Seq("com.github.etaty" %% "rediscala" % "1.8.0")
+      libraryDependencies ++= Seq("com.github.etaty" %% "rediscala" % "1.8.0", "redis.clients" % "jedis" % "2.9.0")
     )
   )
   .enablePlugins(JmhPlugin)
