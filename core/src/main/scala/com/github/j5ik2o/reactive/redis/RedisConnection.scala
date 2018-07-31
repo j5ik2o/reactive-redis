@@ -78,26 +78,26 @@ private[redis] class RedisConnectionImpl(val peerConfig: PeerConfig, supervision
     implicit system: ActorSystem
 ) extends RedisConnection {
 
-  val id: UUID = UUID.randomUUID()
+  lazy val id: UUID = UUID.randomUUID()
 
   import peerConfig._
   import peerConfig.backoffConfig._
 
-  private val log = Logging(system, this)
+  private lazy val log = Logging(system, this)
 
-  private implicit val mat: ActorMaterializer = ActorMaterializer(
+  private implicit lazy val mat: ActorMaterializer = ActorMaterializer(
     ActorMaterializerSettings(system).withSupervisionStrategy(
       supervisionDecider.getOrElse(RedisConnection.DEFAULT_DECIDER)
     )
   )
 
-  protected val tcpFlow: Flow[ByteString, ByteString, NotUsed] =
+  protected lazy val tcpFlow: Flow[ByteString, ByteString, NotUsed] =
     RestartFlow.withBackoff(minBackoff, maxBackoff, randomFactor, maxRestarts) { () =>
       Tcp()
         .outgoingConnection(remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout)
     }
 
-  protected val connectionFlow: Flow[RequestContext, ResponseContext, NotUsed] =
+  protected lazy val connectionFlow: Flow[RequestContext, ResponseContext, NotUsed] =
     Flow.fromGraph(GraphDSL.create() { implicit b =>
       import GraphDSL.Implicits._
       val requestFlow = b.add(
@@ -121,7 +121,7 @@ private[redis] class RedisConnectionImpl(val peerConfig: PeerConfig, supervision
       FlowShape(requestFlow.in, responseFlow.out)
     })
 
-  protected val (requestQueue: SourceQueueWithComplete[RequestContext], killSwitch: UniqueKillSwitch) = Source
+  protected lazy val (requestQueue: SourceQueueWithComplete[RequestContext], killSwitch: UniqueKillSwitch) = Source
     .queue[RequestContext](requestBufferSize, overflowStrategy)
     .via(connectionFlow)
     .via(InTxRequestsAggregationFlow())

@@ -33,9 +33,9 @@ class RedisConnectionActor(peerConfig: PeerConfig,
     implicit scheduler: Scheduler
 ) extends Actor
     with ActorLogging {
-  private implicit val as: ActorSystem    = context.system
-  private val connection: RedisConnection = newConnection(peerConfig, supervisionDecider)
-  implicit val to: Timeout                = passingTimeout
+  private implicit val as: ActorSystem         = context.system
+  private lazy val connection: RedisConnection = newConnection(peerConfig, supervisionDecider)
+  implicit val to: Timeout                     = passingTimeout
 
   override def postStop(): Unit = {
     log.debug("connection_id = {}: connection#shutdown", connection.id)

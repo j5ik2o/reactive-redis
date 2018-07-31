@@ -17,7 +17,7 @@ class RedisConnectionPoolActor(pool: Pool, connectionProps: NonEmptyList[Props])
 
   private val index = new AtomicLong(0L)
 
-  private val routers: NonEmptyList[ActorRef] = connectionProps.map(p => context.actorOf(pool.props(p)))
+  private lazy val routers: NonEmptyList[ActorRef] = connectionProps.map(p => context.actorOf(pool.props(p)))
 
   override def receive: Receive = {
     case msg => routers.toList(index.getAndIncrement().toInt % routers.size) forward msg
