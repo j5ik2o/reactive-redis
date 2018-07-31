@@ -10,8 +10,8 @@ import com.github.j5ik2o.reactive.redis.parser.model._
 )
 object StringParsers {
   import fastparse.all._
-  val QUEUED         = "QUEUED"
-  val OK             = "OK"
+  val QUEUED: String = "QUEUED"
+  val OK: String     = "OK"
   val digit: P0      = P(CharIn('0' to '9'))
   val lowerAlpha: P0 = P(CharIn('a' to 'z'))
   val upperAlpha: P0 = P(CharIn('A' to 'Z'))
