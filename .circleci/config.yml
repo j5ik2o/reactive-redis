@@ -21,11 +21,11 @@ jobs:
       - restore_cache:
           keys:
           - v1-dependencies-{{ checksum "build.sbt" }}
-      - run:  sbt +test:compile
+      - run:  sbt +core/test:compile && sbt +pool-commons/test:compile && sbt +pool-fop/test:compile && sbt +pool-scala/test:compile && sbt +pool-stormpot/test:compile
 
       - save_cache:
           paths:
             - "~/.ivy2/cache"
             - "~/.sbt"
           key: v1-dependencies--{{ checksum "build.sbt" }}
-      - run: sbt +test
+      - run: sbt +core/test && sbt +pool-commons/test && sbt +pool-fop/test && sbt +pool-scala/test && sbt +pool-stormpot/test
