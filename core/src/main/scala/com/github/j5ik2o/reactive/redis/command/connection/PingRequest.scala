@@ -5,7 +5,7 @@ import java.util.UUID
 import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
-import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr, StringOptExpr }
+import com.github.j5ik2o.reactive.redis.parser.model._
 import fastparse.all._
 
 final case class PingRequest(id: UUID, message: Option[String] = None)
@@ -21,10 +21,12 @@ final case class PingRequest(id: UUID, message: Option[String] = None)
   override protected def responseParser: P[Expr] = P(bulkStringReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
-    case (StringOptExpr(message), next) =>
-      (PingSucceeded(UUID.randomUUID(), id, message.getOrElse("")), next)
     case (SimpleExpr(QUEUED), next) =>
       (PingSuspended(UUID.randomUUID(), id), next)
+    case (SimpleExpr(message), next) =>
+      (PingSucceeded(UUID.randomUUID(), id, message), next)
+    case (StringOptExpr(message), next) =>
+      (PingSucceeded(UUID.randomUUID(), id, message.getOrElse("")), next)
     case (ErrorExpr(msg), next) =>
       (PingFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
