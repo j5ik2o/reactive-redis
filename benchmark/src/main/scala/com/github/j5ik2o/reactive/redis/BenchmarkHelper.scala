@@ -32,11 +32,15 @@ trait BenchmarkHelper {
 
   private var _pool: RedisConnectionPool[Task] = _
 
-  def pool: RedisConnectionPool[Task] = _pool
+  def reactiveRedisPool: RedisConnectionPool[Task] = _pool
 
   private var _jedisPool: JedisPool = _
 
   def jedisPool: JedisPool = _jedisPool
+
+  private var _scalaRedisPool: com.redis.RedisClientPool = _
+
+  def scalaRedisPool: com.redis.RedisClientPool = _scalaRedisPool
 
   def fixture(): Unit
 
@@ -56,6 +60,7 @@ trait BenchmarkHelper {
     _pool = CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig, RedisConnection(_, _))
     //_pool = RedisConnectionPool.ofSingleRoundRobin(sizePerPeer, peerConfig, RedisConnection(_, _))
     _rediscalaPool = _root_.redis.RedisClientPool(List(RedisServer("127.0.0.1", redisTestServer.getPort)))
+    _scalaRedisPool = new com.redis.RedisClientPool("127.0.0.1", redisTestServer.getPort)
     Thread.sleep(WAIT_IN_SEC)
     fixture()
   }
