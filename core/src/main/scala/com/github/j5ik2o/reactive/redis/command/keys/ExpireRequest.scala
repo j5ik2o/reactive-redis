@@ -20,7 +20,7 @@ final case class ExpireRequest(id: UUID, key: String, seconds: FiniteDuration)
 
   override def asString: String = s"EXPIRE $key ${seconds.toSeconds}"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>

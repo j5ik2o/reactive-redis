@@ -18,7 +18,7 @@ final case class SetBitRequest(id: UUID, key: String, offset: Int, value: Int)
 
   override def asString: String = s"SETBIT $key $offset $value"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>

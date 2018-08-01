@@ -16,7 +16,7 @@ final case class GetBitRequest(id: UUID, key: String, offset: Int) extends Comma
 
   override def asString: String = s"GETBIT $key $offset"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>

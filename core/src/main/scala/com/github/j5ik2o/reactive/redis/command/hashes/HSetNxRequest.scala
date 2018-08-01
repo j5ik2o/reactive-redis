@@ -18,7 +18,7 @@ final case class HSetNxRequest(id: UUID, key: String, field: String, value: Stri
 
   override def asString: String = s"HSETNX $key $field $value"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>

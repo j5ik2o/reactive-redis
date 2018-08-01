@@ -15,7 +15,7 @@ final case class AppendRequest(id: UUID, key: String, value: String) extends Com
 
   override def asString: String = s"""APPEND $key "$value""""
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>

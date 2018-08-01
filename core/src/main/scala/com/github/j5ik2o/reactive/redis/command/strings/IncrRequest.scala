@@ -16,7 +16,7 @@ final case class IncrRequest(id: UUID, key: String) extends CommandRequest with 
 
   override def asString: String = s"INCR $key"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>

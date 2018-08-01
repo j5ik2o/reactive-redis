@@ -16,7 +16,7 @@ final case class LPopRequest(id: UUID, key: String) extends CommandRequest with 
 
   override def asString: String = s"LPOP $key"
 
-  override protected def responseParser: P[Expr] = P(bulkStringReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(bulkStringReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (StringOptExpr(s), next) =>

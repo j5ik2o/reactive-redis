@@ -36,7 +36,7 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnection
     super.beforeAll()
     connection = RedisConnection(
       PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.getPort),
-                 backoffConfig = BackoffConfig(maxRestarts = 1)),
+                 backoffConfig = Some(BackoffConfig(maxRestarts = 1))),
       None
     )
   }

@@ -15,7 +15,7 @@ final case class HExistsRequest(id: UUID, key: String, field: String) extends Co
 
   override def asString: String = s"HEXISTS $key $field"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>

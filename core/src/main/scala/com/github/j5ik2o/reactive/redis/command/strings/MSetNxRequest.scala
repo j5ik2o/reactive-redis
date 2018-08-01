@@ -22,7 +22,7 @@ final case class MSetNxRequest(id: UUID, values: Map[String, Any]) extends Comma
     s"MSETNX $keyWithValues"
   }
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>

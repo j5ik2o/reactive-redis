@@ -22,7 +22,7 @@ final case class BRPopRequest(id: UUID, keys: NonEmptyList[String], timeout: Dur
 
   override def asString: String = s"BRPOP ${keys.toList.mkString(" ")} ${timetoutToSeconds}"
 
-  override protected def responseParser: P[Expr] = P(stringArrayReply)
+  override protected def responseParser: P[Expr] = wrap(stringArrayReply)
   override protected def parseResponse: Handler = {
     case (ArrayExpr(values), next) =>
       (BRPopSucceeded(UUID.randomUUID(), id, values.asInstanceOf[Seq[StringExpr]].map(_.value)), next)

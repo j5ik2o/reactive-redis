@@ -18,7 +18,7 @@ final case class BitFieldRequest(id: UUID, key: String, options: BitFieldRequest
 
   override def asString: String = s"BITFIELD $key ${options.map(_.asString).mkString(" ")}"
 
-  override protected def responseParser: P[Expr] = P(integerArrayReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerArrayReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (ArrayExpr(values), next) =>

@@ -23,7 +23,7 @@ final case class BLPopRequest(id: UUID, keys: NonEmptyList[String], timeout: Dur
 
   override def asString: String = s"BLPOP ${keys.toList.mkString(" ")} ${timetoutToSeconds}"
 
-  override protected def responseParser: P[Expr] = P(stringArrayReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(stringArrayReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (ArrayExpr(values), next) =>

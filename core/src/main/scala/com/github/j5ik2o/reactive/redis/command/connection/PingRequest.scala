@@ -18,7 +18,7 @@ final case class PingRequest(id: UUID, message: Option[String] = None)
 
   override def asString: String = s"PING ${message.getOrElse("")}"
 
-  override protected def responseParser: P[Expr] = P(bulkStringReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(bulkStringReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (SimpleExpr(QUEUED), next) =>

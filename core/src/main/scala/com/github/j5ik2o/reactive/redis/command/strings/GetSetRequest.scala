@@ -16,7 +16,7 @@ final case class GetSetRequest(id: UUID, key: String, value: String) extends Com
 
   override def asString: String = s"GETSET $key $value"
 
-  override protected def responseParser: P[Expr] = P(bulkStringReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(bulkStringReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (StringOptExpr(s), next) =>

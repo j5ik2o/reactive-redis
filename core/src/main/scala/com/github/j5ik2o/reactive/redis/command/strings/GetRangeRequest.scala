@@ -18,7 +18,7 @@ final case class GetRangeRequest(id: UUID, key: String, startAndEnd: StartAndEnd
 
   override def asString: String = s"GETRANGE $key ${startAndEnd.start} ${startAndEnd.end}"
 
-  override protected def responseParser: P[Expr] = P(bulkStringReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(bulkStringReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (StringOptExpr(s), next) =>

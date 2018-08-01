@@ -16,7 +16,7 @@ final case class PersistRequest(id: UUID, key: String) extends CommandRequest wi
 
   override def asString: String = s"PERSIST $key"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>

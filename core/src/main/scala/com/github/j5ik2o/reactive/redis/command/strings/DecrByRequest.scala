@@ -16,7 +16,7 @@ final case class DecrByRequest(id: UUID, key: String, value: Int) extends Comman
 
   override def asString: String = s"DECRBY $key $value"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>

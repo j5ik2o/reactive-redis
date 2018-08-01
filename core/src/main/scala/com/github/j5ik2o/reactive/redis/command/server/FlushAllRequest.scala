@@ -16,7 +16,7 @@ final case class FlushAllRequest(id: UUID, async: Boolean = false) extends Comma
 
   override def asString: String = s"FLUSHALL" + (if (async) " ASYNC" else "")
 
-  override protected def responseParser: P[Expr] = P(simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (SimpleExpr(OK), next) =>

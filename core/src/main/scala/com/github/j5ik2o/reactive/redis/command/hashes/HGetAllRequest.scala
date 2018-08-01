@@ -15,7 +15,7 @@ final case class HGetAllRequest(id: UUID, key: String) extends CommandRequest wi
 
   override def asString: String = s"HGETALL $key"
 
-  override protected def responseParser: P[Expr] = P(stringArrayReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(stringArrayReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (ArrayExpr(values), next) =>

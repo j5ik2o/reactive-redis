@@ -111,12 +111,14 @@ lazy val core = (project in file("core")).settings(
   coreSettings ++ Seq(
     name := "reactive-redis-core",
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor"     % akkaVersion,
-      "com.typesafe.akka" %% "akka-testkit"   % akkaVersion % Test,
-      "com.typesafe.akka" %% "akka-stream"    % akkaVersion,
-      "com.typesafe.akka" %% "akka-slf4j"     % akkaVersion,
-      "com.lihaoyi"       %% "fastparse"      % "1.0.0",
-      "com.lihaoyi"       %% "fastparse-byte" % "1.0.0"
+      "com.typesafe.akka"  %% "akka-actor"     % akkaVersion,
+      "com.typesafe.akka"  %% "akka-testkit"   % akkaVersion % Test,
+      "com.typesafe.akka"  %% "akka-stream"    % akkaVersion,
+      "com.typesafe.akka"  %% "akka-slf4j"     % akkaVersion,
+      "com.lihaoyi"        %% "fastparse"      % "1.0.0",
+      "com.lihaoyi"        %% "fastparse-byte" % "1.0.0",
+      "redis.clients"      % "jedis"           % "2.9.0",
+      "org.apache.commons" % "commons-lang3"   % "3.7"
     )
   )
 ) dependsOn (test % "test")
@@ -169,10 +171,9 @@ lazy val benchmark = (project in file("benchmark"))
   .settings(
     coreSettings ++ Seq(
       name := "reactive-redis-benchmark",
-      libraryDependencies ++= Seq(
-        "com.github.etaty" %% "rediscala" % "1.8.0",
-        "redis.clients" % "jedis" % "2.9.0",
-        "net.debasishg" %% "redisclient" % "3.7")
+      libraryDependencies ++= Seq("com.github.etaty" %% "rediscala"   % "1.8.0",
+                                  "redis.clients"    % "jedis"        % "2.9.0",
+                                  "net.debasishg"    %% "redisclient" % "3.7")
     )
   )
   .enablePlugins(JmhPlugin)

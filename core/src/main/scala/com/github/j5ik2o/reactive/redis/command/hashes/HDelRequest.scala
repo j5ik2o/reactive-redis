@@ -18,7 +18,7 @@ final case class HDelRequest(id: UUID, key: String, fields: NonEmptyList[String]
 
   override def asString: String = s"HDEL $key ${fields.toList.mkString(" ")}"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>

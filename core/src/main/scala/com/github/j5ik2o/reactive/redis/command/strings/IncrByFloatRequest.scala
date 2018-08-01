@@ -18,7 +18,7 @@ final case class IncrByFloatRequest(id: UUID, key: String, value: Double)
 
   override def asString: String = s"INCRBYFLOAT $key $value"
 
-  override protected def responseParser: P[Expr] = P(bulkStringReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(bulkStringReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (StringOptExpr(s), next) =>

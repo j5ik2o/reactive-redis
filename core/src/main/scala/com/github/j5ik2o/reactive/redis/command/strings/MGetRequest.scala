@@ -16,7 +16,7 @@ final case class MGetRequest(id: UUID, keys: Seq[String]) extends CommandRequest
 
   override def asString: String = s"MGET ${keys.mkString(" ")}"
 
-  override protected def responseParser: P[Expr] = P(stringArrayReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(stringArrayReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (ArrayExpr(values), next) =>

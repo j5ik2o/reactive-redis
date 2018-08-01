@@ -15,7 +15,7 @@ final case class UnwatchRequest(id: UUID) extends CommandRequest with StringPars
 
   override def asString: String = "UNWATCH"
 
-  override protected def responseParser: P[Expr] = simpleStringReply
+  override protected def responseParser: P[Expr] = wrap(simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (SimpleExpr(OK), next) =>

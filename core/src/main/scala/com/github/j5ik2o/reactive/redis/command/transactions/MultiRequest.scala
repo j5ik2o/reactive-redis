@@ -4,7 +4,7 @@ import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
-import com.github.j5ik2o.reactive.redis.parser.StringParsers
+import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 
 final case class MultiRequest(id: UUID) extends CommandRequest with StringParsersSupport {
@@ -15,7 +15,7 @@ final case class MultiRequest(id: UUID) extends CommandRequest with StringParser
 
   override def asString: String = "MULTI"
 
-  override protected def responseParser: P[Expr] = StringParsers.simpleStringReply
+  override protected def responseParser: P[Expr] = wrap(simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (SimpleExpr(_), next) =>

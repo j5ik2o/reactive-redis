@@ -16,7 +16,7 @@ final case class HGetRequest(id: UUID, key: String, field: String) extends Comma
 
   override def asString: String = s"HGET $key $field"
 
-  override protected def responseParser: P[Expr] = P(bulkStringReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(bulkStringReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (StringOptExpr(s), next) =>

@@ -16,7 +16,7 @@ final case class KeysRequest(id: UUID, pattern: String) extends CommandRequest w
 
   override def asString: String = s"KEYS $pattern"
 
-  override protected def responseParser: P[Expr] = P(stringArrayReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(stringArrayReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (ArrayExpr(values), next) =>

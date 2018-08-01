@@ -16,7 +16,7 @@ final case class SetRequest(id: UUID, key: String, value: String) extends Comman
 
   override def asString: String = s"""SET $key "$value""""
 
-  override protected def responseParser: P[Expr] = simpleStringReply
+  override protected def responseParser: P[Expr] = wrap(simpleStringReply)
 
   override def parseResponse: Handler = {
     case (SimpleExpr(OK), next) =>

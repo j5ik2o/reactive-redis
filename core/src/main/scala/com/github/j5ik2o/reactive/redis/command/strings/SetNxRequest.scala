@@ -17,7 +17,7 @@ final case class SetNxRequest(id: UUID, key: String, value: String) extends Comm
 
   override def asString: String = s"""SETNX $key "$value""""
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>

@@ -16,7 +16,7 @@ final case class EchoRequest(id: UUID, message: String) extends CommandRequest w
 
   override def asString: String = s"ECHO $message"
 
-  override protected def responseParser: P[Expr] = P(bulkStringReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(bulkStringReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (StringOptExpr(message), next) =>

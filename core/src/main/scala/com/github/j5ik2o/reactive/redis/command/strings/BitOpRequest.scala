@@ -25,7 +25,7 @@ final case class BitOpRequest(id: UUID,
 
   override def asString: String = s"BITOP ${operand.entryName} $outputKey $inputKey1 $inputKey2"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>

@@ -20,7 +20,7 @@ final case class PExpireRequest(id: UUID, key: String, milliseconds: FiniteDurat
 
   override def asString: String = s"PEXPIRE $key ${milliseconds.toMillis}"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>

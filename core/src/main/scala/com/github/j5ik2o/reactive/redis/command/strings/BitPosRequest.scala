@@ -23,7 +23,7 @@ final case class BitPosRequest(id: UUID, key: String, bit: Int, startAndEnd: Opt
       }
     }
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>

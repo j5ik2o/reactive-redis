@@ -19,7 +19,7 @@ final case class ExpireAtRequest(id: UUID, key: String, expiresAt: ZonedDateTime
 
   override def asString: String = s"""EXPIREAT $key ${expiresAt.toEpochSecond}"""
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>

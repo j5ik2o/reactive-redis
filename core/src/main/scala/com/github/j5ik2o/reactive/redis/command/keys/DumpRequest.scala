@@ -17,7 +17,7 @@ final case class DumpRequest(id: UUID, key: String) extends CommandRequest {
 
   override def asString: String = s"DUMP $key"
 
-  override protected def responseParser: P[Expr] = P(bulkBytesReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(bulkBytesReply | simpleStringReply)
 
   override protected def convertToParseSource(s: Bytes): Bytes = s
 

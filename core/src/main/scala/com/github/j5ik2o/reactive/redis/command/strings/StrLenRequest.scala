@@ -16,7 +16,7 @@ final case class StrLenRequest(id: UUID, key: String) extends CommandRequest wit
 
   override def asString: String = s"STRLEN $key"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (NumberExpr(n), next) =>

@@ -16,7 +16,7 @@ final case class AuthRequest(id: UUID, password: String) extends CommandRequest 
 
   override def asString: String = s"AUTH $password"
 
-  override protected def responseParser: P[Expr] = P(simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (SimpleExpr(OK), next) =>

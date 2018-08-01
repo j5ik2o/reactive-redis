@@ -21,7 +21,7 @@ final case class PSetExRequest(id: UUID, key: String, millis: FiniteDuration, va
 
   override def asString: String = s"""PSETEX $key ${millis.toMillis} "$value""""
 
-  override protected def responseParser: P[Expr] = P(simpleStringReply)
+  override protected def responseParser: P[Expr] = wrap(simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (SimpleExpr(OK), next) =>

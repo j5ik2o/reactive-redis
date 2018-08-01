@@ -15,7 +15,7 @@ final case class WatchRequest(id: UUID, keys: Set[String]) extends CommandReques
 
   override def asString: String = s"WATCH ${keys.mkString(" ")}"
 
-  override protected def responseParser: P[Expr] = simpleStringReply
+  override protected def responseParser: P[Expr] = wrap(simpleStringReply)
 
   override protected def parseResponse: Handler = {
     case (SimpleExpr(OK), next) =>

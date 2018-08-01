@@ -4,7 +4,7 @@ import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command._
-import com.github.j5ik2o.reactive.redis.parser.StringParsers
+import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ArraySizeExpr, ErrorExpr, Expr }
 import scodec.bits.ByteVector
 
@@ -15,7 +15,7 @@ final case class ExecRequest(id: UUID) extends TransactionalCommandRequest with 
 
   override def asString: String = "EXEC"
 
-  override protected def responseParser: P[Expr] = StringParsers.arrayPrefixWithCrLfOrErrorWithCrLf
+  override protected def responseParser: P[Expr] = wrap(arrayPrefixWithCrLfOrErrorWithCrLf)
 
   protected def parseResponse(text: ByteVector, requests: Seq[CommandRequest]): Handler = {
     case (ArraySizeExpr(size), next) =>
