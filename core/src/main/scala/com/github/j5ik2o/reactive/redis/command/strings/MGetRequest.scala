@@ -16,9 +16,11 @@ final case class MGetRequest(id: UUID, keys: Seq[String]) extends CommandRequest
 
   override def asString: String = s"MGET ${keys.mkString(" ")}"
 
-  override protected def responseParser: P[Expr] = wrap(stringArrayReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(
+    stringArrayReply | simpleStringReply | errorReply
+  )
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (ArrayExpr(values), next) =>
       (MGetSucceeded(UUID.randomUUID(), id, values.asInstanceOf[Seq[StringExpr]].map(_.value)), next)
     case (SimpleExpr(QUEUED), next) =>

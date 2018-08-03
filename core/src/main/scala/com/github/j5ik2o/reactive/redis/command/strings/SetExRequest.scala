@@ -21,9 +21,9 @@ final case class SetExRequest(id: UUID, key: String, expires: FiniteDuration, va
 
   override def asString: String = s"""SETEX $key ${expires.toSeconds} "$value""""
 
-  override protected def responseParser: P[Expr] = wrap(simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (SimpleExpr(OK), next) =>
       (SetExSucceeded(UUID.randomUUID(), id), next)
     case (SimpleExpr(QUEUED), next) =>

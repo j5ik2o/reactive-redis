@@ -70,8 +70,8 @@ object ByteParsers {
   private val stringOptArrayWithCrLf: P[ArrayExpr[StringOptExpr]]    = P(array(stringOptArrayElement) ~ crlf.?)
   private[parser] val integerArrayWithCrLf: P[ArrayExpr[NumberExpr]] = P(array(integerArrayElement) ~ crlf.?)
 
-  private[parser] val bulkBytesWithCrLf: P[BytesOptExpr]   = P((length ~ crlf).flatMap(l => bulkBytesRest(l.value)))
-  private[parser] val bulkStringWithCrLf: P[StringOptExpr] = P((length ~ crlf).flatMap(l => bulkStringRest(l.value)))
+  private[parser] val bulkBytesWithCrLf: P[BytesOptExpr]   = P((length ~/ crlf).flatMap(l => bulkBytesRest(l.value)))
+  private[parser] val bulkStringWithCrLf: P[StringOptExpr] = P((length ~/ crlf).flatMap(l => bulkStringRest(l.value)))
 
   private def bulkBytesRest(l: Int): P[BytesOptExpr] = {
     if (l == -1) {

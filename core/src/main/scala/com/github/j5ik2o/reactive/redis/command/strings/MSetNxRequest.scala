@@ -22,9 +22,9 @@ final case class MSetNxRequest(id: UUID, values: Map[String, Any]) extends Comma
     s"MSETNX $keyWithValues"
   }
 
-  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (MSetNxSucceeded(UUID.randomUUID(), id, n == 1), next)
     case (SimpleExpr(QUEUED), next) =>

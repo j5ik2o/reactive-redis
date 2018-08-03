@@ -18,9 +18,9 @@ final case class HSetNxRequest(id: UUID, key: String, field: String, value: Stri
 
   override def asString: String = s"HSETNX $key $field $value"
 
-  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (HSetNxSucceeded(UUID.randomUUID(), id, n == 1), next)
     case (SimpleExpr(QUEUED), next) =>

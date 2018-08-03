@@ -17,9 +17,9 @@ final case class DelRequest(id: UUID, keys: NonEmptyList[String]) extends Comman
 
   override def asString: String = s"DEL ${keys.toList.mkString(" ")}"
 
-  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (DelSucceeded(UUID.randomUUID(), id, n), next)
     case (SimpleExpr(QUEUED), next) =>
@@ -32,5 +32,5 @@ final case class DelRequest(id: UUID, keys: NonEmptyList[String]) extends Comman
 
 sealed trait DelResponse                                                    extends CommandResponse
 final case class DelSuspended(id: UUID, requestId: UUID)                    extends DelResponse
-final case class DelSucceeded(id: UUID, requestId: UUID, value: Int)        extends DelResponse
+final case class DelSucceeded(id: UUID, requestId: UUID, value: Long)       extends DelResponse
 final case class DelFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends DelResponse

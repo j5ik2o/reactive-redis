@@ -25,9 +25,9 @@ final case class BitOpRequest(id: UUID,
 
   override def asString: String = s"BITOP ${operand.entryName} $outputKey $inputKey1 $inputKey2"
 
-  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (BitOpSucceeded(UUID.randomUUID(), id, n), next)
     case (SimpleExpr(QUEUED), next) =>
@@ -56,7 +56,7 @@ object BitOpRequest {
 
 }
 
-sealed trait BitOpResponse                                             extends CommandResponse
-final case class BitOpSuspended(id: UUID, requestId: UUID)             extends BitOpResponse
-final case class BitOpSucceeded(id: UUID, requestId: UUID, value: Int) extends BitOpResponse
-final case class BitOpFailed(id: UUID, requestId: UUID, ex: Exception) extends BitOpResponse
+sealed trait BitOpResponse                                              extends CommandResponse
+final case class BitOpSuspended(id: UUID, requestId: UUID)              extends BitOpResponse
+final case class BitOpSucceeded(id: UUID, requestId: UUID, value: Long) extends BitOpResponse
+final case class BitOpFailed(id: UUID, requestId: UUID, ex: Exception)  extends BitOpResponse

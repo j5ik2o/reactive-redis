@@ -16,16 +16,14 @@ final case class BitPosRequest(id: UUID, key: String, bit: Int, startAndEnd: Opt
 
   override val isMasterOnly: Boolean = false
 
-  override def asString: String =
-    s"BITPOS $key $bit" + startAndEnd.fold("") { e =>
-      " " + e.start + e.end.fold("") { v =>
-        s" $v"
-      }
-    }
+  override val asString: String =
+  s"BITPOS $key $bit" + startAndEnd.fold("") { e =>
+    " " + e.asString
+  }
 
-  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (BitPosSucceeded(UUID.randomUUID, id, n), next)
     case (SimpleExpr(QUEUED), next) =>
@@ -37,10 +35,14 @@ final case class BitPosRequest(id: UUID, key: String, bit: Int, startAndEnd: Opt
 }
 
 object BitPosRequest {
-  final case class StartAndEnd(start: Int, end: Option[Int] = None)
+  final case class StartAndEnd(start: Int, end: Option[Int] = None) {
+    def asString: String = start + end.fold("") { v =>
+      s" $v"
+    }
+  }
 }
 
-sealed trait BitPosResponse                                             extends CommandResponse
-final case class BitPosSuspended(id: UUID, requestId: UUID)             extends BitPosResponse
-final case class BitPosSucceeded(id: UUID, requestId: UUID, value: Int) extends BitPosResponse
-final case class BitPosFailed(id: UUID, requestId: UUID, ex: Exception) extends BitPosResponse
+sealed trait BitPosResponse                                              extends CommandResponse
+final case class BitPosSuspended(id: UUID, requestId: UUID)              extends BitPosResponse
+final case class BitPosSucceeded(id: UUID, requestId: UUID, value: Long) extends BitPosResponse
+final case class BitPosFailed(id: UUID, requestId: UUID, ex: Exception)  extends BitPosResponse

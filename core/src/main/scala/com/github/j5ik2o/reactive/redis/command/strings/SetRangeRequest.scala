@@ -19,9 +19,9 @@ final case class SetRangeRequest(id: UUID, key: String, range: Int, value: Strin
 
   override def asString: String = s"""SETRANGE $key $range "$value""""
 
-  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (SetRangeSucceeded(UUID.randomUUID(), id, n), next)
     case (SimpleExpr(QUEUED), next) =>
@@ -41,5 +41,5 @@ object SetRangeRequest {
 
 sealed trait SetRangeResponse                                                    extends CommandResponse
 final case class SetRangeSuspended(id: UUID, requestId: UUID)                    extends SetRangeResponse
-final case class SetRangeSucceeded(id: UUID, requestId: UUID, value: Int)        extends SetRangeResponse
+final case class SetRangeSucceeded(id: UUID, requestId: UUID, value: Long)       extends SetRangeResponse
 final case class SetRangeFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends SetRangeResponse

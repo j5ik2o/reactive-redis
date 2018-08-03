@@ -16,9 +16,9 @@ final case class StrLenRequest(id: UUID, key: String) extends CommandRequest wit
 
   override def asString: String = s"STRLEN $key"
 
-  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (StrLenSucceeded(UUID.randomUUID(), id, n), next)
     case (SimpleExpr(QUEUED), next) =>
@@ -31,5 +31,5 @@ final case class StrLenRequest(id: UUID, key: String) extends CommandRequest wit
 
 sealed trait StrLenResponse                                                    extends CommandResponse
 final case class StrLenSuspended(id: UUID, requestId: UUID)                    extends StrLenResponse
-final case class StrLenSucceeded(id: UUID, requestId: UUID, length: Int)       extends StrLenResponse
+final case class StrLenSucceeded(id: UUID, requestId: UUID, length: Long)      extends StrLenResponse
 final case class StrLenFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends StrLenResponse

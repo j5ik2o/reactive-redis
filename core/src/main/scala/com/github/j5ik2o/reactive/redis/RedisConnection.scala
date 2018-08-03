@@ -2,30 +2,27 @@ package com.github.j5ik2o.reactive.redis
 
 import java.time.ZonedDateTime
 import java.util.UUID
-import java.util.concurrent.atomic.AtomicReference
 
 import akka.NotUsed
-import akka.actor.ActorSystem
+import akka.actor.{ ActorRef, ActorSystem }
 import akka.event.{ LogSource, Logging }
 import akka.stream._
 import akka.stream.scaladsl._
-import akka.util.ByteString
-import cats.implicits._
-import com.github.j5ik2o.reactive.redis.command.connection.{ PingRequest, PingSucceeded }
-import com.github.j5ik2o.reactive.redis.command.strings._
-import com.github.j5ik2o.reactive.redis.command.transactions.InTxRequestsAggregationFlow
+import akka.util.{ ByteString, Timeout }
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequestBase, CommandResponse }
+import com.github.j5ik2o.reactive.redis.experimental.jedis.RedisConnectionJedis
+import com.github.j5ik2o.reactive.redis.util.{ ActorSource, InTxRequestsAggregationFlow }
 import monix.eval.Task
 import monix.execution.Scheduler
-import org.apache.commons.lang3.time.StopWatch
-import redis.clients.jedis.Jedis
 
+import scala.concurrent.duration._
 import scala.concurrent.{ Future, Promise }
 
 object RedisConnection {
 
   implicit val logSource: LogSource[RedisConnection] = new LogSource[RedisConnection] {
-    override def genString(o: RedisConnection): String  = s"connection:${o.id}"
+    override def genString(o: RedisConnection): String = s"connection:${o.id}"
+
     override def getClazz(o: RedisConnection): Class[_] = o.getClass
   }
 
@@ -34,17 +31,23 @@ object RedisConnection {
     case _                     => Supervision.Stop
   }
 
+  def ofJedis(peerConfig: PeerConfig,
+              supervisionDecider: Option[Supervision.Decider])(implicit system: ActorSystem): RedisConnection =
+    new RedisConnectionJedis(peerConfig, supervisionDecider)
+
   def apply(peerConfig: PeerConfig,
             supervisionDecider: Option[Supervision.Decider])(implicit system: ActorSystem): RedisConnection =
-//    new RedisConnectionJedis(peerConfig, supervisionDecider)
     new RedisConnectionImpl(peerConfig, supervisionDecider)
 
 }
 
 trait RedisConnection {
   def id: UUID
+
   def peerConfig: PeerConfig
+
   def shutdown(): Unit
+
   def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response]
 
   def toFlow[C <: CommandRequestBase](
@@ -53,59 +56,6 @@ trait RedisConnection {
     Flow[C].mapAsync(parallelism) { cmd =>
       send(cmd).runAsync
     }
-}
-
-final case class ResettableRedisConnection(newRedisConnection: () => RedisConnection) extends RedisConnection {
-  private val underlying: AtomicReference[RedisConnection] = new AtomicReference[RedisConnection](newRedisConnection())
-
-  override def id: UUID = underlying.get.id
-
-  override def peerConfig: PeerConfig = underlying.get.peerConfig
-
-  def reset(): Unit = {
-    underlying.set(newRedisConnection())
-    // shutdown()
-  }
-
-  override def shutdown(): Unit = {
-    underlying.get.shutdown()
-  }
-
-  override def toFlow[C <: CommandRequestBase](parallelism: Int)(
-      implicit scheduler: Scheduler
-  ): Flow[C, C#Response, NotUsed] = underlying.get.toFlow(parallelism)
-
-  override def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = underlying.get.send(cmd)
-
-}
-
-private[redis] class RedisConnectionJedis(val peerConfig: PeerConfig, supervisionDecider: Option[Supervision.Decider])
-    extends RedisConnection {
-  lazy val jedis = new Jedis(peerConfig.remoteAddress.getHostName, peerConfig.remoteAddress.getPort)
-
-  override def id: UUID = UUID.randomUUID()
-
-  override def shutdown(): Unit = jedis.close()
-
-  override def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = {
-    cmd match {
-      case c: SetRequest =>
-        Task {
-          val result = jedis.set(c.key, c.value)
-          SetSucceeded(UUID.randomUUID(), c.id).asInstanceOf[cmd.Response]
-        }
-      case c: PingRequest =>
-        Task {
-          val result = jedis.ping()
-          PingSucceeded(UUID.randomUUID(), c.id, result).asInstanceOf[cmd.Response]
-        }
-      case c: GetRequest =>
-        Task {
-          val result = jedis.get(c.key)
-          GetSucceeded(UUID.randomUUID(), c.id, Some(result)).asInstanceOf[cmd.Response]
-        }
-    }
-  }
 }
 
 private[redis] class RedisConnectionImpl(val peerConfig: PeerConfig, supervisionDecider: Option[Supervision.Decider])(
@@ -167,56 +117,26 @@ private[redis] class RedisConnectionImpl(val peerConfig: PeerConfig, supervision
       FlowShape(requestFlow.in, responseFlow.out)
     })
 
-  protected lazy val (requestQueue: SourceQueueWithComplete[RequestContext], killSwitch: UniqueKillSwitch) = Source
-    .queue[RequestContext](requestBufferSize, overflowStrategy)
-    .via(connectionFlow)
-    .via(InTxRequestsAggregationFlow())
-    .map { responseContext =>
-      val stopWatch = new StopWatch()
-      stopWatch.start()
-      val result = responseContext.parseResponse
-      stopWatch.stop()
-
-      if (log.isDebugEnabled)
-        log.debug(s"req_id = {}, command = {}: parse = {} nano seconds",
-                  responseContext.commandRequestId,
-                  responseContext.commandRequestString,
-                  stopWatch.getNanoTime)
-
-      responseContext.completePromise(result.toTry)
-    }
-    .viaMat(KillSwitches.single)(Keep.both)
-    .toMat(Sink.ignore)(Keep.left)
-    .withAttributes(ActorAttributes.dispatcher("reactive-redis.dispatcher"))
-    .run()
+  protected lazy val (sourceActorRefFuture: Future[ActorRef], killSwitch: UniqueKillSwitch) =
+    ActorSource[RequestContext](requestBufferSize)
+      .via(connectionFlow)
+      .via(InTxRequestsAggregationFlow())
+      .async
+      .map(_.complete)
+      .viaMat(KillSwitches.single)(Keep.both)
+      .toMat(Sink.ignore)(Keep.left)
+      .withAttributes(ActorAttributes.dispatcher("reactive-redis.dispatcher"))
+      .run()
 
   def shutdown(): Unit = killSwitch.shutdown()
 
   def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = {
-    val stopWatch = new StopWatch()
-    stopWatch.start()
     val promise = Promise[CommandResponse]()
-    val offerResult = requestQueue
-      .offer(RequestContext(cmd, promise, ZonedDateTime.now()))
     Task.deferFutureAction { implicit ec =>
-      offerResult.flatMap {
-        case QueueOfferResult.Enqueued =>
-          val f = promise.future.map(_.asInstanceOf[cmd.Response])
-          f.onComplete { _ =>
-            stopWatch.stop()
-            log.debug("send: {} nano seconds", stopWatch.getNanoTime)
-          }
-          f
-        case QueueOfferResult.Failure(t) =>
-          Future.failed(BufferOfferException("Failed to send request", Some(t)))
-        case QueueOfferResult.Dropped =>
-          Future.failed(
-            BufferOfferException(
-              s"Failed to send request, the queue buffer was full."
-            )
-          )
-        case QueueOfferResult.QueueClosed =>
-          Future.failed(BufferOfferException("Failed to send request, the queue was closed"))
+      sourceActorRefFuture.flatMap { ref =>
+        implicit val to: Timeout = Timeout(10 seconds)
+        ref ! RequestContext(cmd, promise, ZonedDateTime.now())
+        promise.future.asInstanceOf[Future[cmd.Response]]
       }
     }
   }

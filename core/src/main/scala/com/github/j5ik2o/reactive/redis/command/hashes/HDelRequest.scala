@@ -18,9 +18,9 @@ final case class HDelRequest(id: UUID, key: String, fields: NonEmptyList[String]
 
   override def asString: String = s"HDEL $key ${fields.toList.mkString(" ")}"
 
-  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (HDelSucceeded(UUID.randomUUID(), id, n), next)
     case (SimpleExpr(QUEUED), next) =>
@@ -31,7 +31,7 @@ final case class HDelRequest(id: UUID, key: String, fields: NonEmptyList[String]
 
 }
 
-sealed trait HDelResponse                                                     extends CommandResponse
-final case class HDelSuspended(id: UUID, requestId: UUID)                     extends HDelResponse
-final case class HDelSucceeded(id: UUID, requestId: UUID, numberDeleted: Int) extends HDelResponse
-final case class HDelFailed(id: UUID, requestId: UUID, ex: RedisIOException)  extends HDelResponse
+sealed trait HDelResponse                                                      extends CommandResponse
+final case class HDelSuspended(id: UUID, requestId: UUID)                      extends HDelResponse
+final case class HDelSucceeded(id: UUID, requestId: UUID, numberDeleted: Long) extends HDelResponse
+final case class HDelFailed(id: UUID, requestId: UUID, ex: RedisIOException)   extends HDelResponse

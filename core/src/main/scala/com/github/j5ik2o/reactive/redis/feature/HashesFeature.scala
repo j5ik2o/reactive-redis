@@ -9,10 +9,10 @@ import com.github.j5ik2o.reactive.redis.command.hashes._
 trait HashesFeature {
   this: RedisClient =>
 
-  def hdel(key: String, field: String): ReaderTTaskRedisConnection[Result[Int]] =
+  def hdel(key: String, field: String): ReaderTTaskRedisConnection[Result[Long]] =
     hdel(key, NonEmptyList.of(field))
 
-  def hdel(key: String, fields: NonEmptyList[String]): ReaderTTaskRedisConnection[Result[Int]] =
+  def hdel(key: String, fields: NonEmptyList[String]): ReaderTTaskRedisConnection[Result[Long]] =
     send(HDelRequest(UUID.randomUUID(), key, fields)).flatMap {
       case HDelSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case HDelSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))

@@ -31,9 +31,13 @@ trait BenchmarkHelper {
 
   def rediscalaPool: RedisClientPool = _rediscalaPool
 
-  private var _pool: RedisConnectionPool[Task] = _
+  private var _poolOfJedis: RedisConnectionPool[Task] = _
 
-  def reactiveRedisPool: RedisConnectionPool[Task] = _pool
+  private var _poolOfDefault: RedisConnectionPool[Task] = _
+
+  def reactiveRedisPoolOfJedis: RedisConnectionPool[Task] = _poolOfJedis
+
+  def reactiveRedisPoolOfDefault: RedisConnectionPool[Task] = _poolOfDefault
 
   private var _jedisPool: JedisPool = _
 
@@ -60,7 +64,8 @@ trait BenchmarkHelper {
     // _pool = ScalaPool.ofSingle(ScalaPoolConfig(), peerConfig, RedisConnection(_, _))
     // _pool = FOPPool.ofSingle(FOPConfig(), peerConfig, RedisConnection(_, _))
     //_pool = RedisConnectionPool.ofSingleRoundRobin(sizePerPeer, peerConfig, RedisConnection(_, _))
-    _pool = CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig, RedisConnection(_, _))
+    _poolOfDefault = CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig, RedisConnection.apply)
+    _poolOfJedis = CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig, RedisConnection.ofJedis)
     _rediscalaPool = _root_.redis.RedisClientPool(List(RedisServer("127.0.0.1", redisTestServer.getPort)))
     _scalaRedisPool = new com.redis.RedisClientPool("127.0.0.1", redisTestServer.getPort)
     Thread.sleep(WAIT_IN_SEC)
@@ -68,7 +73,7 @@ trait BenchmarkHelper {
   }
 
   def tearDown(): Unit = {
-    _pool.dispose()
+    _poolOfJedis.dispose()
     redisTestServer.stop()
     Await.result(system.terminate(), Duration.Inf)
   }

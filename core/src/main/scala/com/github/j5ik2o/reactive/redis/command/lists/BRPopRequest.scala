@@ -20,10 +20,11 @@ final case class BRPopRequest(id: UUID, keys: NonEmptyList[String], timeout: Dur
 
   private def timetoutToSeconds: Long = if (timeout.isFinite()) timeout.toSeconds else 0
 
-  override def asString: String = s"BRPOP ${keys.toList.mkString(" ")} ${timetoutToSeconds}"
+  override def asString: String = s"BRPOP ${keys.toList.mkString(" ")} $timetoutToSeconds"
 
-  override protected def responseParser: P[Expr] = wrap(stringArrayReply)
-  override protected def parseResponse: Handler = {
+  override protected lazy val responseParser: P[Expr] = fastParse(stringArrayReply | errorReply)
+
+  override protected lazy val parseResponse: Handler = {
     case (ArrayExpr(values), next) =>
       (BRPopSucceeded(UUID.randomUUID(), id, values.asInstanceOf[Seq[StringExpr]].map(_.value)), next)
     case (SimpleExpr(QUEUED), next) =>

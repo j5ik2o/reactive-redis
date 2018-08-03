@@ -10,12 +10,7 @@ import cats.implicits._
 import com.github.j5ik2o.reactive.redis.command.keys.{ KeysRequest, KeysSucceeded }
 import com.github.j5ik2o.reactive.redis.command.strings.BitFieldRequest.SingedBitType
 import com.github.j5ik2o.reactive.redis.command.strings._
-import com.github.j5ik2o.reactive.redis.command.transactions.{
-  ExecRequest,
-  ExecSucceeded,
-  MultiRequest,
-  MultiSucceeded
-}
+import com.github.j5ik2o.reactive.redis.command.transactions._
 import com.github.j5ik2o.reactive.redis.util.BitUtil
 import monix.eval.Task
 import org.scalacheck.Shrink
@@ -109,7 +104,7 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnection
     }
     "bitpos" in {
       val key = UUID.randomUUID().toString
-      redisClient.set(key, """\xff\xf0\x00""").run(connection).runAsync.futureValue
+      redisClient.set(key, "\\xff\\xf0\\x00").run(connection).runAsync.futureValue
       val result =
         connection.send(BitPosRequest(UUID.randomUUID(), key, 0)).runAsync.futureValue.asInstanceOf[BitPosSucceeded]
       result.value shouldBe 12
@@ -195,8 +190,13 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnection
       redisClient.set("test-1", UUID.randomUUID().toString).run(connection).runAsync.futureValue
       redisClient.get("test-1").run(connection).runAsync.futureValue
       val resultFinish =
-        connection.send(ExecRequest(UUID.randomUUID())).runAsync.futureValue.asInstanceOf[ExecSucceeded]
-      println(resultFinish)
+        connection.send(ExecRequest(UUID.randomUUID())).runAsync.futureValue
+      resultFinish match {
+        case es: ExecSucceeded =>
+          println(es)
+        case ef: ExecFailed =>
+          println(ef.ex.cause.get.getMessage)
+      }
     }
   }
 }

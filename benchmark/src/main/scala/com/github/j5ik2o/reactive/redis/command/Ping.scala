@@ -18,7 +18,7 @@ class Ping extends BenchmarkHelper {
 
   @Benchmark
   def reactiveRedis: Unit = {
-    Await.result(reactiveRedisPool.withConnectionF { con =>
+    Await.result(reactiveRedisPoolOfJedis.withConnectionF { con =>
       client.ping().run(con)
     }.runAsync, Duration.Inf)
     ()

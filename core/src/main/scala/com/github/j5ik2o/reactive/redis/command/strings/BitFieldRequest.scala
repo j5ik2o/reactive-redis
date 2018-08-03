@@ -18,9 +18,11 @@ final case class BitFieldRequest(id: UUID, key: String, options: BitFieldRequest
 
   override def asString: String = s"BITFIELD $key ${options.map(_.asString).mkString(" ")}"
 
-  override protected def responseParser: P[Expr] = wrap(integerArrayReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(
+    integerArrayReply | simpleStringReply | errorReply
+  )
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (ArrayExpr(values), next) =>
       (BitFieldSucceeded(UUID.randomUUID(), id, values.asInstanceOf[Seq[NumberExpr]].map(_.value)), next)
     case (SimpleExpr(QUEUED), next) =>
@@ -83,7 +85,7 @@ object BitFieldRequest {
 
 }
 
-sealed trait BitFieldResponse                                                   extends CommandResponse
-final case class BitFieldSuspended(id: UUID, requestId: UUID)                   extends BitFieldResponse
-final case class BitFieldSucceeded(id: UUID, requestId: UUID, values: Seq[Int]) extends BitFieldResponse
-final case class BitFieldFailed(id: UUID, requestId: UUID, ex: Exception)       extends BitFieldResponse
+sealed trait BitFieldResponse                                                    extends CommandResponse
+final case class BitFieldSuspended(id: UUID, requestId: UUID)                    extends BitFieldResponse
+final case class BitFieldSucceeded(id: UUID, requestId: UUID, values: Seq[Long]) extends BitFieldResponse
+final case class BitFieldFailed(id: UUID, requestId: UUID, ex: Exception)        extends BitFieldResponse

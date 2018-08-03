@@ -16,9 +16,9 @@ final case class IncrRequest(id: UUID, key: String) extends CommandRequest with 
 
   override def asString: String = s"INCR $key"
 
-  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (IncrSucceeded(UUID.randomUUID(), id, n), next)
     case (SimpleExpr(QUEUED), next) =>
@@ -31,5 +31,5 @@ final case class IncrRequest(id: UUID, key: String) extends CommandRequest with 
 
 sealed trait IncrResponse                                                    extends CommandResponse
 final case class IncrSuspended(id: UUID, requestId: UUID)                    extends IncrResponse
-final case class IncrSucceeded(id: UUID, requestId: UUID, value: Int)        extends IncrResponse
+final case class IncrSucceeded(id: UUID, requestId: UUID, value: Long)       extends IncrResponse
 final case class IncrFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends IncrResponse

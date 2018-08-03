@@ -23,9 +23,9 @@ final case class BLPopRequest(id: UUID, keys: NonEmptyList[String], timeout: Dur
 
   override def asString: String = s"BLPOP ${keys.toList.mkString(" ")} ${timetoutToSeconds}"
 
-  override protected def responseParser: P[Expr] = wrap(stringArrayReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(stringArrayReply | simpleStringReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (ArrayExpr(values), next) =>
       (BLPopSucceeded(UUID.randomUUID(), id, values.asInstanceOf[Seq[StringExpr]].map(_.value)), next)
     case (SimpleExpr(QUEUED), next) =>

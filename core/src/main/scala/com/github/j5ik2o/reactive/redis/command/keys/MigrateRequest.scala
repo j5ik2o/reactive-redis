@@ -20,9 +20,9 @@ final case class MigrateRequest(id: UUID, host: String, port: Int, key: String, 
 
   override def asString: String = s"""MIGRATE $host $port $key $toDbNo ${timeout.toMillis}"""
 
-  override protected def responseParser: P[Expr] = wrap(simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (SimpleExpr(OK), next) =>
       (MigrateSucceeded(UUID.randomUUID(), id), next)
     case (SimpleExpr(QUEUED), next) =>

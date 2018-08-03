@@ -1,13 +1,11 @@
 package com.github.j5ik2o.reactive.redis.command.strings
 
-import java.io.StringReader
-import java.text.ParseException
-import java.util.{StringTokenizer, UUID}
+import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
-import com.github.j5ik2o.reactive.redis.command.{CommandRequest, CommandResponse, Decoder, StringParsersSupport}
+import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
-import com.github.j5ik2o.reactive.redis.parser.model.{ErrorExpr, Expr, SimpleExpr, StringOptExpr}
+import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr, StringOptExpr }
 import fastparse.all._
 
 final case class GetRequest(id: UUID, key: String) extends CommandRequest with StringParsersSupport {
@@ -18,17 +16,10 @@ final case class GetRequest(id: UUID, key: String) extends CommandRequest with S
 
   override def asString: String = s"GET $key"
 
-  def get = new Decoder[Expr, Elem, Repr] {
-    override def parse(input: Repr, index: Int): Either[ParseException, (Expr, Int)] = {
-      val t = new StringTokenizer(input)
-      val s = t.nextToken()
-      if (s == "")
-    }
-  }
+  override protected lazy val responseParser: P[Expr] = fastParse(bulkStringReply | simpleStringReply | errorReply)
+  // override protected lazy val responseParser: P[Expr] = default(Reference)(NewParsers.getParer(Reference))
 
-  override protected def responseParser: P[Expr] = wrap(P(bulkStringReply | simpleStringReply))
-
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (StringOptExpr(s), next) =>
       (GetSucceeded(UUID.randomUUID(), id, s), next)
     case (SimpleExpr(QUEUED), next) =>

@@ -1,13 +1,25 @@
 package com.github.j5ik2o.reactive.redis.parser
 
 import java.nio.charset.{ Charset, StandardCharsets }
+
+import com.github.j5ik2o.reactive.redis.parser.model.Expr
+import com.github.j5ik2o.reactive.redis.parser.util.instance.{ Reference, Sliceable }
 import fastparse.core.Parsed
 import org.scalatest.FreeSpec
 import scodec.bits.ByteVector
+import com.github.j5ik2o.reactive.redis.parser.util.instance.ReferenceTypes.Parser
 
 class ParsersSpec extends FreeSpec {
+  val P = Reference
+  def printResult[E](e: Either[E, Expr]) =
+    e.fold(println, println)
+
   implicit val enc: Charset = StandardCharsets.UTF_8
   "ParsersSpec" - {
+    "error" in {
+      val expr = CustomParsers.getParer(P)
+      printResult { P.run(expr)("-test\r\n") }
+    }
     "crlf" in {
       val Parsed.Success(result, _) = ByteParsers.crlf.parse(ByteVector.encodeString("\r\n").right.get)
       println(result)

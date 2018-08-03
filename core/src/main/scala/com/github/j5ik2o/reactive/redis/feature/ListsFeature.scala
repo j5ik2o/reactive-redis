@@ -38,10 +38,10 @@ trait ListsFeature { this: RedisClient =>
       case LPopFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
-  def lpush[A: Show](key: String, value: A): ReaderTTaskRedisConnection[Result[Int]] =
+  def lpush[A: Show](key: String, value: A): ReaderTTaskRedisConnection[Result[Long]] =
     lpush(key, NonEmptyList.of(value))
 
-  def lpush[A: Show](key: String, values: NonEmptyList[A]): ReaderTTaskRedisConnection[Result[Int]] =
+  def lpush[A: Show](key: String, values: NonEmptyList[A]): ReaderTTaskRedisConnection[Result[Long]] =
     send(LPushRequest(UUID.randomUUID(), key, values)).flatMap {
       case LPushSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case LPushSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))

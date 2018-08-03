@@ -18,9 +18,9 @@ final case class SetBitRequest(id: UUID, key: String, offset: Int, value: Int)
 
   override def asString: String = s"SETBIT $key $offset $value"
 
-  override protected def responseParser: P[Expr] = wrap(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (SetBitSucceeded(UUID.randomUUID(), id, n), next)
     case (SimpleExpr(QUEUED), next) =>
@@ -33,5 +33,5 @@ final case class SetBitRequest(id: UUID, key: String, offset: Int, value: Int)
 
 sealed trait SetBitResponse                                                    extends CommandResponse
 final case class SetBitSuspended(id: UUID, requestId: UUID)                    extends SetBitResponse
-final case class SetBitSucceeded(id: UUID, requestId: UUID, value: Int)        extends SetBitResponse
+final case class SetBitSucceeded(id: UUID, requestId: UUID, value: Long)       extends SetBitResponse
 final case class SetBitFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends SetBitResponse
