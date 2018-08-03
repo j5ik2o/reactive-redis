@@ -16,9 +16,10 @@ final case class GetRequest(id: UUID, key: String) extends CommandRequest with S
 
   override def asString: String = s"GET $key"
 
-  override protected def responseParser: P[Expr] = P(bulkStringReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(bulkStringReply | simpleStringReply | errorReply)
+  // override protected lazy val responseParser: P[Expr] = default(Reference)(NewParsers.getParer(Reference))
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (StringOptExpr(s), next) =>
       (GetSucceeded(UUID.randomUUID(), id, s), next)
     case (SimpleExpr(QUEUED), next) =>

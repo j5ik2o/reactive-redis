@@ -17,11 +17,11 @@ final case class DumpRequest(id: UUID, key: String) extends CommandRequest {
 
   override def asString: String = s"DUMP $key"
 
-  override protected def responseParser: P[Expr] = P(bulkBytesReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(bulkBytesReply | simpleStringReply)
 
   override protected def convertToParseSource(s: Bytes): Bytes = s
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (BytesOptExpr(b), next) =>
       (DumpSucceeded(UUID.randomUUID(), id, b), next)
     case (SimpleExpr(QUEUED), next) =>

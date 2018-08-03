@@ -11,8 +11,8 @@ import scala.concurrent.Promise
 final case class RequestContext(commandRequest: CommandRequestBase,
                                 promise: Promise[CommandResponse],
                                 requestAt: ZonedDateTime) {
-  val id: UUID                     = commandRequest.id
-  val commandRequestString: String = commandRequest.asString
-  def isMulti: Boolean             = commandRequest.isInstanceOf[MultiRequest]
-  def isExec: Boolean              = commandRequest.isInstanceOf[ExecRequest]
+  lazy val id: UUID                     = commandRequest.id
+  lazy val commandRequestString: String = commandRequest.asString
+  def isMulti: Boolean                  = commandRequest.isInstanceOf[MultiRequest]
+  def isExec: Boolean                   = commandRequest.isInstanceOf[ExecRequest]
 }

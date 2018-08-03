@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import cats.implicits._
 import com.github.j5ik2o.reactive.redis.BenchmarkHelper
+import monix.eval.Task
 import org.openjdk.jmh.annotations._
 
 import scala.concurrent.Await
@@ -16,14 +17,22 @@ import scala.concurrent.duration._
 class Get extends BenchmarkHelper {
 
   override def fixture(): Unit = {
-    Await.result(pool.withConnectionF { con =>
+    Await.result(reactiveRedisPoolOfJedis.withConnectionF { con =>
       client.set("A", "value").run(con)
     }.runAsync, Duration.Inf)
   }
 
   @Benchmark
-  def reactiveRedis(): Unit = {
-    Await.result(pool.withConnectionF { con =>
+  def reactiveRedisOfDefault(): Unit = {
+    Await.result(reactiveRedisPoolOfDefault.withConnectionF { con =>
+      client.get("A").run(con)
+    }.runAsync, Duration.Inf)
+    ()
+  }
+
+  @Benchmark
+  def reactiveRedisOfJedis(): Unit = {
+    Await.result(reactiveRedisPoolOfJedis.withConnectionF { con =>
       client.get("A").run(con)
     }.runAsync, Duration.Inf)
     ()
@@ -31,14 +40,27 @@ class Get extends BenchmarkHelper {
 
   @Benchmark
   def jedis: Unit = {
-    val jedis = jedisPool.getResource
-    jedis.get("A")
-    jedis.close()
+    Await.result(Task {
+      val jedis = jedisPool.getResource
+      jedis.get("A")
+      jedis.close()
+    }.runAsync, Duration.Inf)
+    ()
   }
 
   @Benchmark
   def rediscala(): Unit = {
     Await.result(rediscalaPool.get("A"), Duration.Inf)
+    ()
+  }
+
+  @Benchmark
+  def scalaRedis(): Unit = {
+    Await.result(Task {
+      scalaRedisPool.withClient { client =>
+        client.get("A")
+      }
+    }.runAsync, Duration.Inf)
     ()
   }
 

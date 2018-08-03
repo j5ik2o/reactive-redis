@@ -17,9 +17,9 @@ final case class SetNxRequest(id: UUID, key: String, value: String) extends Comm
 
   override def asString: String = s"""SETNX $key "$value""""
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (SetNxSucceeded(UUID.randomUUID(), id, n == 1), next)
     case (SimpleExpr(QUEUED), next) =>

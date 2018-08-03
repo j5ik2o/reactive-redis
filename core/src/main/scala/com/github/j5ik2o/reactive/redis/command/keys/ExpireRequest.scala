@@ -20,9 +20,9 @@ final case class ExpireRequest(id: UUID, key: String, seconds: FiniteDuration)
 
   override def asString: String = s"EXPIRE $key ${seconds.toSeconds}"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (ExpireSucceeded(UUID.randomUUID(), id, n == 1), next)
     case (SimpleExpr(QUEUED), next) =>

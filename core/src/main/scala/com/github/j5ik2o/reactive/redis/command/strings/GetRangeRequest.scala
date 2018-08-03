@@ -18,9 +18,9 @@ final case class GetRangeRequest(id: UUID, key: String, startAndEnd: StartAndEnd
 
   override def asString: String = s"GETRANGE $key ${startAndEnd.start} ${startAndEnd.end}"
 
-  override protected def responseParser: P[Expr] = P(bulkStringReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(bulkStringReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (StringOptExpr(s), next) =>
       (GetRangeSucceeded(UUID.randomUUID(), id, s), next)
     case (SimpleExpr(QUEUED), next) =>

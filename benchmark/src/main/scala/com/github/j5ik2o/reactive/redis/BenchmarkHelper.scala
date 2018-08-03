@@ -5,6 +5,7 @@ import java.net.InetSocketAddress
 import akka.actor.ActorSystem
 import akka.io.Inet.SO.{ ReceiveBufferSize, SendBufferSize }
 import akka.io.Tcp.SO.{ KeepAlive, TcpNoDelay }
+import akka.stream.OverflowStrategy
 import com.github.j5ik2o.reactive.redis.pool._
 import monix.eval.Task
 import monix.execution.Scheduler
@@ -30,13 +31,21 @@ trait BenchmarkHelper {
 
   def rediscalaPool: RedisClientPool = _rediscalaPool
 
-  private var _pool: RedisConnectionPool[Task] = _
+  private var _poolOfJedis: RedisConnectionPool[Task] = _
 
-  def pool: RedisConnectionPool[Task] = _pool
+  private var _poolOfDefault: RedisConnectionPool[Task] = _
+
+  def reactiveRedisPoolOfJedis: RedisConnectionPool[Task] = _poolOfJedis
+
+  def reactiveRedisPoolOfDefault: RedisConnectionPool[Task] = _poolOfDefault
 
   private var _jedisPool: JedisPool = _
 
   def jedisPool: JedisPool = _jedisPool
+
+  private var _scalaRedisPool: com.redis.RedisClientPool = _
+
+  def scalaRedisPool: com.redis.RedisClientPool = _scalaRedisPool
 
   def fixture(): Unit
 
@@ -48,20 +57,23 @@ trait BenchmarkHelper {
       PeerConfig(
         new InetSocketAddress("127.0.0.1", redisTestServer.getPort),
         options = Vector(TcpNoDelay(true), KeepAlive(true), SendBufferSize(2048), ReceiveBufferSize(2048)),
+        overflowStrategy = OverflowStrategy.dropNew,
         requestBufferSize = Int.MaxValue
       )
     // _pool = StormpotPool.ofSingle(StormpotConfig(), peerConfig, RedisConnection(_, _))
     // _pool = ScalaPool.ofSingle(ScalaPoolConfig(), peerConfig, RedisConnection(_, _))
     // _pool = FOPPool.ofSingle(FOPConfig(), peerConfig, RedisConnection(_, _))
-    _pool = CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig, RedisConnection(_, _))
     //_pool = RedisConnectionPool.ofSingleRoundRobin(sizePerPeer, peerConfig, RedisConnection(_, _))
+    _poolOfDefault = CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig, RedisConnection.apply)
+    _poolOfJedis = CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig, RedisConnection.ofJedis)
     _rediscalaPool = _root_.redis.RedisClientPool(List(RedisServer("127.0.0.1", redisTestServer.getPort)))
+    _scalaRedisPool = new com.redis.RedisClientPool("127.0.0.1", redisTestServer.getPort)
     Thread.sleep(WAIT_IN_SEC)
     fixture()
   }
 
   def tearDown(): Unit = {
-    _pool.dispose()
+    _poolOfJedis.dispose()
     redisTestServer.stop()
     Await.result(system.terminate(), Duration.Inf)
   }

@@ -23,7 +23,7 @@ trait ResponseBase {
 
   def commandRequestString: String = requestContext.commandRequest.asString
 
-  def completePromise(result: Try[CommandResponse]): requestContext.promise.type =
+  protected def completePromise(result: Try[CommandResponse]): requestContext.promise.type =
     requestContext.promise.complete(result)
 }
 
@@ -37,13 +37,17 @@ final case class ResponseContext(byteString: ByteString,
 
   def withRequestsInTx(values: Seq[CommandRequest]): ResponseContext = copy(requestsInTx = values)
 
-  def parseResponse: Either[ParseException, CommandResponse] = {
+  private def parseResponse: Either[ParseException, CommandResponse] = {
     requestContext.commandRequest match {
       case scr: CommandRequest =>
         scr.parse(ByteVector(byteString.toByteBuffer)).map(_._1)
       case tcr: TransactionalCommandRequest =>
         tcr.parse(ByteVector(byteString.toByteBuffer), requests = requestsInTx).map(_._1)
     }
+  }
+
+  def complete: requestContext.promise.type = {
+    completePromise(parseResponse.toTry)
   }
 
 }

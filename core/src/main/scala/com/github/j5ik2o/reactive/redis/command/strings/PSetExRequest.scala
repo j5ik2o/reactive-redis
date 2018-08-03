@@ -21,9 +21,9 @@ final case class PSetExRequest(id: UUID, key: String, millis: FiniteDuration, va
 
   override def asString: String = s"""PSETEX $key ${millis.toMillis} "$value""""
 
-  override protected def responseParser: P[Expr] = P(simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (SimpleExpr(OK), next) =>
       (PSetExSucceeded(UUID.randomUUID(), id), next)
     case (SimpleExpr(QUEUED), next) =>

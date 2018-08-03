@@ -16,9 +16,9 @@ final case class GetSetRequest(id: UUID, key: String, value: String) extends Com
 
   override def asString: String = s"GETSET $key $value"
 
-  override protected def responseParser: P[Expr] = P(bulkStringReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(bulkStringReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (StringOptExpr(s), next) =>
       (GetSetSucceeded(UUID.randomUUID(), id, s), next)
     case (SimpleExpr(QUEUED), next) =>

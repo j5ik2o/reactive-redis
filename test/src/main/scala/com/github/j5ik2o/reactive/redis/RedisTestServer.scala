@@ -92,28 +92,14 @@ class RedisTestServer(mode: RedisMode = RedisMode.Standalone,
     f
   }
 
-  def printlnStreamFuture(br: BufferedReader)(implicit ec: ExecutionContext): Future[Unit] = {
-    val result = Future {
-      br.readLine()
-    }.flatMap { result =>
-        if (result != null) {
-          logger.debug(result)
-          printlnStreamFuture(br)
-        } else
-          Future.successful(())
-      }
-      .recoverWith {
-        case ex =>
-          Future.successful(())
-      }
-    result.onComplete {
-      case Success(_) =>
-        br.close()
-      case Failure(ex) =>
-        logger.error("Occurred error", ex)
-        br.close()
+  protected def printlnStreamFuture(br: BufferedReader)(implicit ec: ExecutionContext): Future[Unit] = {
+    val f = Future {
+      Iterator.continually(br.readLine()).takeWhile(_ != null).foreach(logger.debug)
     }
-    result
+    f.onComplete { _ =>
+      br.close()
+    }
+    f
   }
 
   def start()(implicit ec: ExecutionContext): Unit = {

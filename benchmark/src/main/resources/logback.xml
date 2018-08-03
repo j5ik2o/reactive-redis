@@ -19,7 +19,7 @@
         <appender-ref ref="akka" />
     </appender>
 
-    <logger name="com.github.j5ik2o" level="ERROR" additivity="false">
+    <logger name="com.github.j5ik2o.reactive.redis" level="ERROR" additivity="false">
         <appender-ref ref="akka-async" />
     </logger>
 

@@ -22,9 +22,9 @@ final case class MSetRequest(id: UUID, values: Map[String, Any]) extends Command
     s"MSET $keyWithValues"
   }
 
-  override protected def responseParser: P[Expr] = P(simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (SimpleExpr(OK), next) =>
       (MSetSucceeded(UUID.randomUUID(), id), next)
     case (SimpleExpr(QUEUED), next) =>

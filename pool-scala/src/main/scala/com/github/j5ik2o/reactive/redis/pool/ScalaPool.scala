@@ -46,11 +46,11 @@ final class ScalaPool private (val connectionPoolConfig: ScalaPoolConfig,
 
   private val redisClient = RedisClient()
 
-  private def newPool(peerConfig: PeerConfig): Pool[ResettableRedisConnection] =
-    Pool[ResettableRedisConnection](
+  private def newPool(peerConfig: PeerConfig): Pool[RedisConnection] =
+    Pool[RedisConnection](
       connectionPoolConfig.sizePerPeer.getOrElse(DEFAULT_MAX_TOTAL),
       factory = { () =>
-        ResettableRedisConnection(() => newConnection(peerConfig, supervisionDecider))
+        newConnection(peerConfig, supervisionDecider)
       },
       referenceType = ReferenceType.Strong,
       maxIdleTime = connectionPoolConfig.maxIdleTime.getOrElse(DEFAULT_MAX_IDLE_TIME),

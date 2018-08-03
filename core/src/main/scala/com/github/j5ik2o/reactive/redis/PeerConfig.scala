@@ -14,7 +14,7 @@ final case class PeerConfig(remoteAddress: InetSocketAddress,
                             halfClose: Boolean = false,
                             connectTimeout: Duration = Duration.Inf,
                             idleTimeout: Duration = Duration.Inf,
-                            backoffConfig: BackoffConfig = BackoffConfig(),
+                            backoffConfig: Option[BackoffConfig] = None,
                             requestBufferSize: Int = PeerConfig.DEFAULT_MAX_REQUEST_BUFFER_SIZE,
                             overflowStrategy: OverflowStrategy = OverflowStrategy.backpressure)
 

@@ -18,9 +18,9 @@ final case class BitCountRequest(id: UUID, key: String, startAndEnd: Option[Star
 
   override def asString: String = s"BITCOUNT $key" + startAndEnd.fold("")(e => " " + e.start + " " + e.end)
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (BitCountSucceeded(UUID.randomUUID(), id, n), next)
     case (SimpleExpr(QUEUED), next) =>
@@ -33,5 +33,5 @@ final case class BitCountRequest(id: UUID, key: String, startAndEnd: Option[Star
 
 sealed trait BitCountResponse                                                    extends CommandResponse
 final case class BitCountSuspended(id: UUID, requestId: UUID)                    extends BitCountResponse
-final case class BitCountSucceeded(id: UUID, requestId: UUID, value: Int)        extends BitCountResponse
+final case class BitCountSucceeded(id: UUID, requestId: UUID, value: Long)       extends BitCountResponse
 final case class BitCountFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends BitCountResponse

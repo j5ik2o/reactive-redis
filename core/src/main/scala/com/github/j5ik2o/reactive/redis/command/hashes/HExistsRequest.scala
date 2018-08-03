@@ -15,9 +15,9 @@ final case class HExistsRequest(id: UUID, key: String, field: String) extends Co
 
   override def asString: String = s"HEXISTS $key $field"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (HExistsSucceeded(UUID.randomUUID(), id, n == 1), next)
     case (SimpleExpr(QUEUED), next) =>

@@ -81,15 +81,22 @@ val coreSettings = Seq(
   ),
   //  Global / concurrentRestrictions += Tags.limit(Tags.Test, 1),
   parallelExecution in Test := false,
-  wartremoverErrors ++= Warts.allBut(Wart.Any,
-                                     Wart.Throw,
-                                     Wart.Nothing,
-                                     Wart.Product,
-                                     Wart.NonUnitStatements,
-                                     Wart.DefaultArguments,
-                                     Wart.ImplicitParameter,
-                                     Wart.StringPlusAny,
-                                     Wart.Overloading),
+  wartremoverErrors ++= Warts.allBut(
+    Wart.Any,
+    Wart.Throw,
+    Wart.Nothing,
+    Wart.Product,
+    Wart.NonUnitStatements,
+    Wart.DefaultArguments,
+    Wart.ImplicitParameter,
+    Wart.StringPlusAny,
+    Wart.Overloading,
+    Wart.Serializable,
+    Wart.ImplicitConversion,
+    Wart.Equals,
+    Wart.EitherProjectionPartial,
+    Wart.AsInstanceOf
+  ),
   wartremoverExcluded += baseDirectory.value / "src" / "test" / "scala"
 ) ++ scalaStyleSettings
 
@@ -111,12 +118,15 @@ lazy val core = (project in file("core")).settings(
   coreSettings ++ Seq(
     name := "reactive-redis-core",
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor"     % akkaVersion,
-      "com.typesafe.akka" %% "akka-testkit"   % akkaVersion % Test,
-      "com.typesafe.akka" %% "akka-stream"    % akkaVersion,
-      "com.typesafe.akka" %% "akka-slf4j"     % akkaVersion,
-      "com.lihaoyi"       %% "fastparse"      % "1.0.0",
-      "com.lihaoyi"       %% "fastparse-byte" % "1.0.0"
+      "com.typesafe.akka"  %% "akka-actor"                          % akkaVersion,
+      "com.typesafe.akka"  %% "akka-testkit"                        % akkaVersion % Test,
+      "com.typesafe.akka"  %% "akka-stream"                         % akkaVersion,
+      "com.typesafe.akka"  %% "akka-slf4j"                          % akkaVersion,
+      "com.lihaoyi"        %% "fastparse"                           % "1.0.0",
+      "com.lihaoyi"        %% "fastparse-byte"                      % "1.0.0",
+      "redis.clients"      % "jedis"                                % "2.9.0",
+      "org.apache.commons" % "commons-lang3"                        % "3.7",
+      "com.github.j5ik2o"  %% "akka-backoff-supervisor-enhancement" % "1.0.1"
     )
   )
 ) dependsOn (test % "test")
@@ -169,7 +179,9 @@ lazy val benchmark = (project in file("benchmark"))
   .settings(
     coreSettings ++ Seq(
       name := "reactive-redis-benchmark",
-      libraryDependencies ++= Seq("com.github.etaty" %% "rediscala" % "1.8.0", "redis.clients" % "jedis" % "2.9.0")
+      libraryDependencies ++= Seq("com.github.etaty" %% "rediscala"   % "1.8.0",
+                                  "redis.clients"    % "jedis"        % "2.9.0",
+                                  "net.debasishg"    %% "redisclient" % "3.7")
     )
   )
   .enablePlugins(JmhPlugin)

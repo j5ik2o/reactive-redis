@@ -15,7 +15,7 @@ import scala.concurrent.duration.FiniteDuration
 trait KeysFeature {
   this: RedisClient =>
 
-  def del(keys: NonEmptyList[String]): ReaderTTaskRedisConnection[Result[Int]] =
+  def del(keys: NonEmptyList[String]): ReaderTTaskRedisConnection[Result[Long]] =
     send(DelRequest(UUID.randomUUID(), keys)).flatMap {
       case DelSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case DelSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))

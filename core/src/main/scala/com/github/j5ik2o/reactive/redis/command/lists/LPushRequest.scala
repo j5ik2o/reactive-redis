@@ -20,9 +20,9 @@ final case class LPushRequest(id: UUID, key: String, values: NonEmptyList[String
 
   override def asString: String = s"LPUSH $key ${values.toList.mkString(" ")}"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (LPushSucceeded(UUID.randomUUID(), id, n), next)
     case (SimpleExpr(QUEUED), next) =>
@@ -45,5 +45,5 @@ object LPushRequest {
 
 sealed trait LPushResponse                                                    extends CommandResponse
 final case class LPushSuspended(id: UUID, requestId: UUID)                    extends LPushResponse
-final case class LPushSucceeded(id: UUID, requestId: UUID, value: Int)        extends LPushResponse
+final case class LPushSucceeded(id: UUID, requestId: UUID, value: Long)       extends LPushResponse
 final case class LPushFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends LPushResponse

@@ -20,9 +20,9 @@ final case class PExpireRequest(id: UUID, key: String, milliseconds: FiniteDurat
 
   override def asString: String = s"PEXPIRE $key ${milliseconds.toMillis}"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (PExpireSucceeded(UUID.randomUUID(), id, n == 1), next)
     case (SimpleExpr(QUEUED), next) =>

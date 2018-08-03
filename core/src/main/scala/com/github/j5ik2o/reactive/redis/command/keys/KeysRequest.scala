@@ -16,9 +16,11 @@ final case class KeysRequest(id: UUID, pattern: String) extends CommandRequest w
 
   override def asString: String = s"KEYS $pattern"
 
-  override protected def responseParser: P[Expr] = P(stringArrayReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(
+    stringArrayReply | simpleStringReply | errorReply
+  )
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (ArrayExpr(values), next) =>
       (KeysSucceeded(UUID.randomUUID(), id, values.asInstanceOf[Seq[StringExpr]].map(_.value)), next)
     case (SimpleExpr(QUEUED), next) =>

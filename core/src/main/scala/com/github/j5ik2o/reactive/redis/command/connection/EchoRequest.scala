@@ -16,9 +16,9 @@ final case class EchoRequest(id: UUID, message: String) extends CommandRequest w
 
   override def asString: String = s"ECHO $message"
 
-  override protected def responseParser: P[Expr] = P(bulkStringReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(bulkStringReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (StringOptExpr(message), next) =>
       (EchoSucceeded(UUID.randomUUID(), id, message.getOrElse("")), next)
     case (SimpleExpr(QUEUED), next) =>

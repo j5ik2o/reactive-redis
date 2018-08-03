@@ -18,9 +18,9 @@ final case class PingRequest(id: UUID, message: Option[String] = None)
 
   override def asString: String = s"PING ${message.getOrElse("")}"
 
-  override protected def responseParser: P[Expr] = P(bulkStringReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(bulkStringReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (SimpleExpr(QUEUED), next) =>
       (PingSuspended(UUID.randomUUID(), id), next)
     case (SimpleExpr(message), next) =>

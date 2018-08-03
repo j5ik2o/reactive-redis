@@ -15,9 +15,9 @@ final case class AppendRequest(id: UUID, key: String, value: String) extends Com
 
   override def asString: String = s"""APPEND $key "$value""""
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (AppendSucceeded(UUID.randomUUID(), id, n), next)
     case (SimpleExpr(QUEUED), next) =>
@@ -30,5 +30,5 @@ final case class AppendRequest(id: UUID, key: String, value: String) extends Com
 
 sealed trait AppendResponse                                                    extends CommandResponse
 final case class AppendSuspended(id: UUID, requestId: UUID)                    extends AppendResponse
-final case class AppendSucceeded(id: UUID, requestId: UUID, value: Int)        extends AppendResponse
+final case class AppendSucceeded(id: UUID, requestId: UUID, value: Long)       extends AppendResponse
 final case class AppendFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends AppendResponse

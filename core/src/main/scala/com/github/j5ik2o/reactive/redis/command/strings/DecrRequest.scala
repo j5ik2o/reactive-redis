@@ -16,9 +16,9 @@ final case class DecrRequest(id: UUID, key: String) extends CommandRequest with 
 
   override def asString: String = s"DECR $key"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (DecrSucceeded(UUID.randomUUID(), id, n), next)
     case (SimpleExpr(QUEUED), next) =>
@@ -31,5 +31,5 @@ final case class DecrRequest(id: UUID, key: String) extends CommandRequest with 
 
 sealed trait DecrResponse                                                    extends CommandResponse
 final case class DecrSuspended(id: UUID, requestId: UUID)                    extends DecrResponse
-final case class DecrSucceeded(id: UUID, requestId: UUID, value: Int)        extends DecrResponse
+final case class DecrSucceeded(id: UUID, requestId: UUID, value: Long)       extends DecrResponse
 final case class DecrFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends DecrResponse

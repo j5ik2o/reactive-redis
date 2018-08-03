@@ -17,9 +17,9 @@ final case class ExistsRequest(id: UUID, keys: NonEmptyList[String]) extends Com
 
   override def asString: String = s"EXISTS ${keys.toList.mkString(" ")}"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (ExistsSucceeded(UUID.randomUUID(), id, n == 1), next)
     case (SimpleExpr(QUEUED), next) =>

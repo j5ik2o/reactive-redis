@@ -16,9 +16,9 @@ final case class AuthRequest(id: UUID, password: String) extends CommandRequest 
 
   override def asString: String = s"AUTH $password"
 
-  override protected def responseParser: P[Expr] = P(simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (SimpleExpr(OK), next) =>
       (AuthSucceeded(UUID.randomUUID(), id), next)
     case (ErrorExpr(msg), next) =>

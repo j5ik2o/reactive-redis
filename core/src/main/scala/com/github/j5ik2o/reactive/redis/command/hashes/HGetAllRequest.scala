@@ -15,9 +15,9 @@ final case class HGetAllRequest(id: UUID, key: String) extends CommandRequest wi
 
   override def asString: String = s"HGETALL $key"
 
-  override protected def responseParser: P[Expr] = P(stringArrayReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(stringArrayReply | simpleStringReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (ArrayExpr(values), next) =>
       (HGetAllSucceeded(UUID.randomUUID(), id, values.asInstanceOf[Seq[StringExpr]].map(_.value)), next)
     case (SimpleExpr(QUEUED), next) =>

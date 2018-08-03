@@ -16,9 +16,9 @@ final case class GetBitRequest(id: UUID, key: String, offset: Int) extends Comma
 
   override def asString: String = s"GETBIT $key $offset"
 
-  override protected def responseParser: P[Expr] = P(integerReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (NumberExpr(n), next) =>
       (GetBitSucceeded(UUID.randomUUID(), id, n), next)
     case (SimpleExpr(QUEUED), next) =>
@@ -31,5 +31,5 @@ final case class GetBitRequest(id: UUID, key: String, offset: Int) extends Comma
 
 sealed trait GetBitResponse                                                    extends CommandResponse
 final case class GetBitSuspended(id: UUID, requestId: UUID)                    extends GetBitResponse
-final case class GetBitSucceeded(id: UUID, requestId: UUID, value: Int)        extends GetBitResponse
+final case class GetBitSucceeded(id: UUID, requestId: UUID, value: Long)       extends GetBitResponse
 final case class GetBitFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends GetBitResponse

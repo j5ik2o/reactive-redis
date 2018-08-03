@@ -23,6 +23,10 @@
         <appender-ref ref="akka-async" />
     </logger>
 
+    <logger name="com.github.j5ik2o.reactive.redis" level="DEBUG" additivity="false">
+        <appender-ref ref="akka-async" />
+    </logger>
+
     <root level="DEBUG">
         <appender-ref ref="akka-async"/>
     </root>

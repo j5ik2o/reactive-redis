@@ -1,4 +1,4 @@
-package com.github.j5ik2o.reactive.redis.command.transactions
+package com.github.j5ik2o.reactive.redis.util
 
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
@@ -6,6 +6,7 @@ import akka.stream.stage._
 import akka.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import com.github.j5ik2o.reactive.redis.ResponseContext
 import com.github.j5ik2o.reactive.redis.command.CommandRequest
+import com.github.j5ik2o.reactive.redis.command.transactions.{ DiscardRequest, ExecRequest, MultiRequest }
 
 import scala.collection.mutable.ListBuffer
 
