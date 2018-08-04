@@ -17,6 +17,7 @@ object BitUtil {
   }
 
   def toBinaryString(b: Byte): String = {
+    // scalastyle:off
     val i  = new Array[Int](8)
     val bs = new StringBuffer
     i(0) = (b & 0x80) >>> 7
@@ -38,6 +39,7 @@ object BitUtil {
       }
     }
     bs.toString
+    // scalastyle:on
   }
 
 }
