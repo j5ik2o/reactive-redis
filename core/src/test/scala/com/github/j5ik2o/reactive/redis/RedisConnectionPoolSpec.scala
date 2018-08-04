@@ -10,7 +10,6 @@ class RedisConnectionPoolSpec extends AbstractRedisConnectionPoolSpec("RedisConn
       sizePerPeer = 10,
       peerConfigs,
       RedisConnection.apply,
-      redisConnectionMode = RedisConnectionMode.QueueMode,
       reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15))
     )
 }

@@ -20,7 +20,6 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
       sizePerPeer = 10,
       peerConfigs,
       RedisConnection.apply,
-      redisConnectionMode = RedisConnectionMode.QueueMode,
       reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15))
     )
 
@@ -41,8 +40,7 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
       slaveConnectionPoolFactory = RedisConnectionPool.ofMultipleRoundRobin(
         sizePerPeer = 5,
         peerConfigs = NonEmptyList.of(slavePeerConfigs.head, slavePeerConfigs.tail: _*),
-        newConnection = RedisConnection.apply,
-        redisConnectionMode = RedisConnectionMode.QueueMode
+        newConnection = RedisConnection.apply
       )
     )
     Thread.sleep((1000 * timeFactor).toInt)

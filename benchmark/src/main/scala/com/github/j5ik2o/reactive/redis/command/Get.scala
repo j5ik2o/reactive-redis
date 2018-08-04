@@ -17,22 +17,38 @@ import scala.concurrent.duration._
 class Get extends BenchmarkHelper {
 
   override def fixture(): Unit = {
-    Await.result(reactiveRedisPoolOfJedis.withConnectionF { con =>
+    Await.result(reactiveRedisPoolOfJedisQueue.withConnectionF { con =>
       client.set("A", "value").run(con)
     }.runAsync, Duration.Inf)
   }
 
   @Benchmark
-  def reactiveRedisOfDefault(): Unit = {
-    Await.result(reactiveRedisPoolOfDefault.withConnectionF { con =>
+  def reactiveRedisOfDefaultQueue(): Unit = {
+    Await.result(reactiveRedisPoolOfDefaultQueue.withConnectionF { con =>
       client.get("A").run(con)
     }.runAsync, Duration.Inf)
     ()
   }
 
   @Benchmark
-  def reactiveRedisOfJedis(): Unit = {
-    Await.result(reactiveRedisPoolOfJedis.withConnectionF { con =>
+  def reactiveRedisOfDefaultActor(): Unit = {
+    Await.result(reactiveRedisPoolOfDefaultActor.withConnectionF { con =>
+      client.get("A").run(con)
+    }.runAsync, Duration.Inf)
+    ()
+  }
+
+  @Benchmark
+  def reactiveRedisOfJedisQueue(): Unit = {
+    Await.result(reactiveRedisPoolOfJedisQueue.withConnectionF { con =>
+      client.get("A").run(con)
+    }.runAsync, Duration.Inf)
+    ()
+  }
+
+  @Benchmark
+  def reactiveRedisOfJedisActor(): Unit = {
+    Await.result(reactiveRedisPoolOfJedisActor.withConnectionF { con =>
       client.get("A").run(con)
     }.runAsync, Duration.Inf)
     ()

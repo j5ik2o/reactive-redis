@@ -31,12 +31,14 @@ trait BenchmarkHelper {
 
   def rediscalaPool: RedisClientPool = _rediscalaPool
 
-  private var _poolOfJedis: RedisConnectionPool[Task] = _
+  private var _poolOfJedisQueue: RedisConnectionPool[Task] = _
+  private var _poolOfJedisActor: RedisConnectionPool[Task] = _
 
   private var _poolOfDefaultQueue: RedisConnectionPool[Task] = _
   private var _poolOfDefaultActor: RedisConnectionPool[Task] = _
 
-  def reactiveRedisPoolOfJedis: RedisConnectionPool[Task] = _poolOfJedis
+  def reactiveRedisPoolOfJedisQueue: RedisConnectionPool[Task] = _poolOfJedisQueue
+  def reactiveRedisPoolOfJedisActor: RedisConnectionPool[Task] = _poolOfJedisActor
 
   def reactiveRedisPoolOfDefaultQueue: RedisConnectionPool[Task] = _poolOfDefaultQueue
   def reactiveRedisPoolOfDefaultActor: RedisConnectionPool[Task] = _poolOfDefaultActor
@@ -59,19 +61,24 @@ trait BenchmarkHelper {
       PeerConfig(
         new InetSocketAddress("127.0.0.1", redisTestServer.getPort),
         options = Vector(TcpNoDelay(true), KeepAlive(true), SendBufferSize(2048), ReceiveBufferSize(2048)),
-        overflowStrategy = OverflowStrategy.dropNew,
+        overflowStrategyOnQueueMode = OverflowStrategy.dropNew,
         requestBufferSize = Int.MaxValue
       )
     // _pool = StormpotPool.ofSingle(StormpotConfig(), peerConfig, RedisConnection(_, _))
     // _pool = ScalaPool.ofSingle(ScalaPoolConfig(), peerConfig, RedisConnection(_, _))
     // _pool = FOPPool.ofSingle(FOPConfig(), peerConfig, RedisConnection(_, _))
     //_pool = RedisConnectionPool.ofSingleRoundRobin(sizePerPeer, peerConfig, RedisConnection(_, _))
-    _poolOfDefaultQueue =
-      CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig, RedisConnection.apply, RedisConnectionMode.QueueMode)
-    _poolOfDefaultActor =
-      CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig, RedisConnection.apply, RedisConnectionMode.ActorMode)
 
-    _poolOfJedis = CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig, RedisConnection.ofJedis)
+    _poolOfDefaultQueue =
+      CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig.withQueueConnectionMode, RedisConnection.apply)
+    _poolOfDefaultActor =
+      CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig.withActorConnectionMode, RedisConnection.apply)
+
+    _poolOfJedisQueue =
+      CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig.withQueueConnectionMode, RedisConnection.ofJedis)
+    _poolOfJedisActor =
+      CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig.withActorConnectionMode, RedisConnection.ofJedis)
+
     _rediscalaPool = _root_.redis.RedisClientPool(List(RedisServer("127.0.0.1", redisTestServer.getPort)))
     _scalaRedisPool = new com.redis.RedisClientPool("127.0.0.1", redisTestServer.getPort)
     Thread.sleep(WAIT_IN_SEC)
@@ -79,7 +86,9 @@ trait BenchmarkHelper {
   }
 
   def tearDown(): Unit = {
-    _poolOfJedis.dispose()
+    _poolOfJedisQueue.dispose()
+    _poolOfDefaultQueue.dispose()
+    _poolOfDefaultActor.dispose()
     redisTestServer.stop()
     Await.result(system.terminate(), Duration.Inf)
   }

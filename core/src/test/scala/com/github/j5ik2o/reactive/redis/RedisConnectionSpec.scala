@@ -26,7 +26,6 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnection
       sizePerPeer = 10,
       peerConfigs,
       RedisConnection.apply,
-      redisConnectionMode = RedisConnectionMode.QueueMode,
       reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15))
     )
 
@@ -36,7 +35,7 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnection
       PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.getPort),
                  backoffConfig = Some(BackoffConfig(maxRestarts = 1))),
       None,
-      RedisConnectionMode.QueueMode
+      Seq.empty
     )
   }
 

@@ -18,34 +18,27 @@ object StormpotPool {
 
   def ofSingle(connectionPoolConfig: StormpotConfig,
                peerConfig: PeerConfig,
-               newConnection: (PeerConfig, Option[Supervision.Decider], RedisConnectionMode) => RedisConnection,
-               redisConnectionMode: RedisConnectionMode = RedisConnectionMode.QueueMode,
+               newConnection: NewRedisConnection,
                supervisionDecider: Option[Supervision.Decider] = None)(
       implicit system: ActorSystem,
       scheduler: Scheduler
   ): StormpotPool =
-    new StormpotPool(connectionPoolConfig,
-                     NonEmptyList.of(peerConfig),
-                     newConnection,
-                     redisConnectionMode,
-                     supervisionDecider)
+    new StormpotPool(connectionPoolConfig, NonEmptyList.of(peerConfig), newConnection, supervisionDecider)
 
   def ofMultiple(connectionPoolConfig: StormpotConfig,
                  peerConfigs: NonEmptyList[PeerConfig],
-                 newConnection: (PeerConfig, Option[Supervision.Decider], RedisConnectionMode) => RedisConnection,
-                 redisConnectionMode: RedisConnectionMode = RedisConnectionMode.QueueMode,
+                 newConnection: NewRedisConnection,
                  supervisionDecider: Option[Supervision.Decider] = None)(
       implicit system: ActorSystem,
       scheduler: Scheduler
   ): StormpotPool =
-    new StormpotPool(connectionPoolConfig, peerConfigs, newConnection, redisConnectionMode, supervisionDecider)
+    new StormpotPool(connectionPoolConfig, peerConfigs, newConnection, supervisionDecider)
 }
 
 final class StormpotPool private (
     val connectionPoolConfig: StormpotConfig,
     val peerConfigs: NonEmptyList[PeerConfig],
-    val newConnection: (PeerConfig, Option[Supervision.Decider], RedisConnectionMode) => RedisConnection,
-    val redisConnectionMode: RedisConnectionMode = RedisConnectionMode.QueueMode,
+    val newConnection: NewRedisConnection,
     val supervisionDecider: Option[Supervision.Decider] = None
 )(
     implicit system: ActorSystem,
@@ -57,7 +50,7 @@ final class StormpotPool private (
 
   private def newConfig(peerConfig: PeerConfig): Config[RedisConnectionPoolable] =
     new Config[RedisConnectionPoolable]
-      .setAllocator(RedisConnectionAllocator(peerConfig, newConnection, redisConnectionMode, supervisionDecider))
+      .setAllocator(RedisConnectionAllocator(peerConfig, newConnection, supervisionDecider))
       .setExpiration(RedisConnectionExpiration(connectionPoolConfig.validationTimeout.getOrElse(3 seconds)))
       .setSize(connectionPoolConfig.sizePerPeer.getOrElse(DEFAULT_SIZE))
       .setBackgroundExpirationEnabled(connectionPoolConfig.backgroundExpirationEnabled.getOrElse(false))

@@ -16,35 +16,28 @@ object ScalaPool {
 
   def ofSingle(connectionPoolConfig: ScalaPoolConfig,
                peerConfig: PeerConfig,
-               newConnection: (PeerConfig, Option[Supervision.Decider], RedisConnectionMode) => RedisConnection,
-               redisConnectionMode: RedisConnectionMode = RedisConnectionMode.QueueMode,
+               newConnection: NewRedisConnection,
                supervisionDecider: Option[Supervision.Decider] = None)(
       implicit system: ActorSystem,
       scheduler: Scheduler
   ): ScalaPool =
-    new ScalaPool(connectionPoolConfig,
-                  NonEmptyList.of(peerConfig),
-                  newConnection,
-                  redisConnectionMode,
-                  supervisionDecider)
+    new ScalaPool(connectionPoolConfig, NonEmptyList.of(peerConfig), newConnection, supervisionDecider)
 
   def ofMultiple(connectionPoolConfig: ScalaPoolConfig,
                  peerConfigs: NonEmptyList[PeerConfig],
-                 newConnection: (PeerConfig, Option[Supervision.Decider], RedisConnectionMode) => RedisConnection,
-                 redisConnectionMode: RedisConnectionMode = RedisConnectionMode.QueueMode,
+                 newConnection: NewRedisConnection,
                  supervisionDecider: Option[Supervision.Decider] = None)(
       implicit system: ActorSystem,
       scheduler: Scheduler
   ): ScalaPool =
-    new ScalaPool(connectionPoolConfig, peerConfigs, newConnection, redisConnectionMode, supervisionDecider)
+    new ScalaPool(connectionPoolConfig, peerConfigs, newConnection, supervisionDecider)
 
 }
 
 final class ScalaPool private (
     val connectionPoolConfig: ScalaPoolConfig,
     val peerConfigs: NonEmptyList[PeerConfig],
-    val newConnection: (PeerConfig, Option[Supervision.Decider], RedisConnectionMode) => RedisConnection,
-    val redisConnectionMode: RedisConnectionMode = RedisConnectionMode.QueueMode,
+    val newConnection: NewRedisConnection,
     val supervisionDecider: Option[Supervision.Decider] = None
 )(
     implicit system: ActorSystem,
@@ -61,7 +54,7 @@ final class ScalaPool private (
     Pool[RedisConnection](
       connectionPoolConfig.sizePerPeer.getOrElse(DEFAULT_MAX_TOTAL),
       factory = { () =>
-        newConnection(peerConfig, supervisionDecider, redisConnectionMode)
+        newConnection(peerConfig, supervisionDecider, Seq.empty)
       },
       referenceType = ReferenceType.Strong,
       maxIdleTime = connectionPoolConfig.maxIdleTime.getOrElse(DEFAULT_MAX_IDLE_TIME),

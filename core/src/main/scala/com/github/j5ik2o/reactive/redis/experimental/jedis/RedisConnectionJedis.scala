@@ -1,21 +1,27 @@
 package com.github.j5ik2o.reactive.redis.experimental.jedis
 
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 import akka.NotUsed
 import akka.actor.{ ActorRef, ActorSystem }
 import akka.event.Logging
 import akka.stream._
-import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, RestartFlow, Sink, Unzip, Zip }
-import akka.util.Timeout
+import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, RestartFlow, Sink, Source, SourceQueueWithComplete, Unzip, Zip }
+import com.github.j5ik2o.reactive.redis._
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequestBase, CommandResponse }
 import com.github.j5ik2o.reactive.redis.util.ActorSource
-import com.github.j5ik2o.reactive.redis.{ PeerConfig, RedisConnection }
 import monix.eval.Task
 
 import scala.concurrent.duration._
 import scala.concurrent.{ Future, Promise }
 
+@SuppressWarnings(
+  Array("org.wartremover.warts.Null",
+        "org.wartremover.warts.Var",
+        "org.wartremover.warts.Serializable",
+        "org.wartremover.warts.MutableDataStructures")
+)
 private[redis] class RedisConnectionJedis(val peerConfig: PeerConfig, supervisionDecider: Option[Supervision.Decider])(
     implicit system: ActorSystem
 ) extends RedisConnection {
@@ -67,7 +73,67 @@ private[redis] class RedisConnectionJedis(val peerConfig: PeerConfig, supervisio
       FlowShape(unzip.in, zip.out)
     })
 
-  private lazy val (sourceActorRefFuture: Future[ActorRef], killSwitch: UniqueKillSwitch) =
+  private def sendToActor[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = {
+    val promise = Promise[CommandResponse]()
+    Task
+      .deferFutureAction { implicit ec =>
+        requestActor.flatMap { ref =>
+          ref ! (cmd, promise)
+          promise.future.asInstanceOf[Future[cmd.Response]]
+        }
+      }
+      .timeout(
+        if (peerConfig.requestTimeout.isFinite())
+          Duration(peerConfig.requestTimeout.length, peerConfig.requestTimeout.unit)
+        else Duration(Long.MaxValue, TimeUnit.NANOSECONDS)
+      )
+  }
+
+  private def sendToQueue[C <: CommandRequestBase](cmd: C): Task[cmd.Response] =
+    Task
+      .deferFutureAction { implicit ec =>
+        val promise = Promise[CommandResponse]()
+        requestQueue
+          .offer((cmd, promise))
+          .flatMap {
+            case QueueOfferResult.Enqueued =>
+              promise.future.map(_.asInstanceOf[cmd.Response])
+            case QueueOfferResult.Failure(t) =>
+              Future.failed(RedisRequestException("Failed to send request", Some(t)))
+            case QueueOfferResult.Dropped =>
+              Future.failed(
+                RedisRequestException(
+                  s"Failed to send request, the queue buffer was full."
+                )
+              )
+            case QueueOfferResult.QueueClosed =>
+              Future.failed(RedisRequestException("Failed to send request, the queue was closed"))
+          }
+      }
+      .timeout(
+        if (peerConfig.requestTimeout.isFinite())
+          Duration(peerConfig.requestTimeout.length, peerConfig.requestTimeout.unit)
+        else Duration(Long.MaxValue, TimeUnit.NANOSECONDS)
+      )
+
+  private var requestQueue: SourceQueueWithComplete[(CommandRequestBase, Promise[CommandResponse])] = _
+  private var requestActor: Future[ActorRef]                                                        = _
+  private var killSwitch: UniqueKillSwitch                                                          = _
+
+  private lazy val sourceQueueWithKillSwitchRunnableGraph =
+    Source
+      .queue[(CommandRequestBase, Promise[CommandResponse])](peerConfig.requestBufferSize,
+                                                             peerConfig.overflowStrategyOnQueueMode)
+      .via(requestFlow)
+      .map {
+        case (res, promise) =>
+          promise.success(res)
+      }
+      .viaMat(KillSwitches.single)(Keep.both)
+      .toMat(Sink.ignore)(Keep.left)
+      .withAttributes(ActorAttributes.dispatcher("reactive-redis.dispatcher"))
+
+  private lazy val sourceActorWithKillSwitchRunnableGraph =
     ActorSource[(CommandRequestBase, Promise[CommandResponse])](peerConfig.requestBufferSize)
       .via(requestFlow)
       .map {
@@ -77,16 +143,24 @@ private[redis] class RedisConnectionJedis(val peerConfig: PeerConfig, supervisio
       .viaMat(KillSwitches.single)(Keep.both)
       .toMat(Sink.ignore)(Keep.left)
       .withAttributes(ActorAttributes.dispatcher("reactive-redis.dispatcher"))
-      .run()
+
+  peerConfig.redisConnectionMode match {
+    case RedisConnectionMode.QueueMode =>
+      val result = sourceQueueWithKillSwitchRunnableGraph.run()
+      requestQueue = result._1
+      killSwitch = result._2
+    case RedisConnectionMode.ActorMode =>
+      val result = sourceActorWithKillSwitchRunnableGraph.run()
+      requestActor = result._1
+      killSwitch = result._2
+  }
 
   override def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = {
-    val promise = Promise[CommandResponse]()
-    Task.deferFutureAction { implicit ec =>
-      sourceActorRefFuture.flatMap { ref =>
-        implicit val to: Timeout = Timeout(10 seconds)
-        ref ! (cmd, promise)
-        promise.future.asInstanceOf[Future[cmd.Response]]
-      }
+    peerConfig.redisConnectionMode match {
+      case RedisConnectionMode.QueueMode =>
+        sendToQueue(cmd)
+      case RedisConnectionMode.ActorMode =>
+        sendToActor(cmd)
     }
   }
 }

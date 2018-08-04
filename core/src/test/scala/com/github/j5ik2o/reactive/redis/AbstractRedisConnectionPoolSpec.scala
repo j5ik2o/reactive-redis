@@ -17,7 +17,7 @@ abstract class AbstractRedisConnectionPoolSpec(systemName: String) extends Abstr
     val peerConfigs = NonEmptyList.of(
       PeerConfig(
         remoteAddress = new InetSocketAddress("127.0.0.1", redisMasterServer.getPort),
-        backoffConfig = Some(BackoffConfig(maxRestarts = 1))
+        backoffConfig = None ///Some(BackoffConfig(maxRestarts = 1))
       )
     )
     pool = createConnectionPool(peerConfigs)

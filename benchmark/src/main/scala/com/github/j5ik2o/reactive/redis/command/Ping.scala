@@ -17,8 +17,32 @@ class Ping extends BenchmarkHelper {
   override def fixture(): Unit = {}
 
   @Benchmark
-  def reactiveRedis: Unit = {
-    Await.result(reactiveRedisPoolOfJedis.withConnectionF { con =>
+  def reactiveRedisOfDefaultQueue(): Unit = {
+    Await.result(reactiveRedisPoolOfDefaultQueue.withConnectionF { con =>
+      client.ping().run(con)
+    }.runAsync, Duration.Inf)
+    ()
+  }
+
+  @Benchmark
+  def reactiveRedisOfDefaultActor(): Unit = {
+    Await.result(reactiveRedisPoolOfDefaultActor.withConnectionF { con =>
+      client.ping().run(con)
+    }.runAsync, Duration.Inf)
+    ()
+  }
+
+  @Benchmark
+  def reactiveRedisOfJedisQueue(): Unit = {
+    Await.result(reactiveRedisPoolOfJedisQueue.withConnectionF { con =>
+      client.ping().run(con)
+    }.runAsync, Duration.Inf)
+    ()
+  }
+
+  @Benchmark
+  def reactiveRedisOfJedisActor(): Unit = {
+    Await.result(reactiveRedisPoolOfJedisActor.withConnectionF { con =>
       client.ping().run(con)
     }.runAsync, Duration.Inf)
     ()

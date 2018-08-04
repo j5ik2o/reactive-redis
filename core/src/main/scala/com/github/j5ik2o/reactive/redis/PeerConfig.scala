@@ -16,8 +16,12 @@ final case class PeerConfig(remoteAddress: InetSocketAddress,
                             idleTimeout: Duration = Duration.Inf,
                             requestTimeout: Duration = Duration.Inf,
                             backoffConfig: Option[BackoffConfig] = None,
+                            redisConnectionMode: RedisConnectionMode = RedisConnectionMode.QueueMode,
                             requestBufferSize: Int = PeerConfig.DEFAULT_MAX_REQUEST_BUFFER_SIZE,
-                            overflowStrategy: OverflowStrategy = OverflowStrategy.backpressure)
+                            overflowStrategyOnQueueMode: OverflowStrategy = OverflowStrategy.backpressure) {
+  def withQueueConnectionMode: PeerConfig = copy(redisConnectionMode = RedisConnectionMode.QueueMode)
+  def withActorConnectionMode: PeerConfig = copy(redisConnectionMode = RedisConnectionMode.ActorMode)
+}
 
 object PeerConfig {
   val DEFAULT_MAX_REQUEST_BUFFER_SIZE: Int = 1024
