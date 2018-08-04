@@ -126,7 +126,7 @@ lazy val core = (project in file("core")).settings(
       "com.lihaoyi"        %% "fastparse-byte"                      % "1.0.0",
       "redis.clients"      % "jedis"                                % "2.9.0",
       "org.apache.commons" % "commons-lang3"                        % "3.7",
-      "com.github.j5ik2o"  %% "akka-backoff-supervisor-enhancement" % "1.0.1"
+      "com.github.j5ik2o"  %% "akka-backoff-supervisor-enhancement" % "1.0.2"
     )
   )
 ) dependsOn (test % "test")
