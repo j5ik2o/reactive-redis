@@ -22,17 +22,21 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnection
   val redisClient: RedisClient    = RedisClient()
 
   override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
-    RedisConnectionPool.ofMultipleRoundRobin(sizePerPeer = 10,
-                                             peerConfigs,
-                                             RedisConnection(_, _),
-                                             reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
+    RedisConnectionPool.ofMultipleRoundRobin(
+      sizePerPeer = 10,
+      peerConfigs,
+      RedisConnection.apply,
+      redisConnectionMode = RedisConnectionMode.QueueMode,
+      reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15))
+    )
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     connection = RedisConnection(
       PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.getPort),
                  backoffConfig = Some(BackoffConfig(maxRestarts = 1))),
-      None
+      None,
+      RedisConnectionMode.QueueMode
     )
   }
 

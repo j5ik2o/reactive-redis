@@ -64,7 +64,8 @@ trait BenchmarkHelper {
     // _pool = ScalaPool.ofSingle(ScalaPoolConfig(), peerConfig, RedisConnection(_, _))
     // _pool = FOPPool.ofSingle(FOPConfig(), peerConfig, RedisConnection(_, _))
     //_pool = RedisConnectionPool.ofSingleRoundRobin(sizePerPeer, peerConfig, RedisConnection(_, _))
-    _poolOfDefault = CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig, RedisConnection.apply)
+    _poolOfDefault =
+      CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig, RedisConnection.apply, RedisConnectionMode.ActorMode)
     _poolOfJedis = CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig, RedisConnection.ofJedis)
     _rediscalaPool = _root_.redis.RedisClientPool(List(RedisServer("127.0.0.1", redisTestServer.getPort)))
     _scalaRedisPool = new com.redis.RedisClientPool("127.0.0.1", redisTestServer.getPort)

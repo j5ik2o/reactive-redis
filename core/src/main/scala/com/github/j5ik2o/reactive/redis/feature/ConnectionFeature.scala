@@ -31,8 +31,12 @@ trait ConnectionFeature {
       case PingFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
+  def quit(): ReaderTTaskRedisConnection[Unit] = send(QuitRequest(UUID.randomUUID())).flatMap {
+    case QuitSucceeded(_, _)  => ReaderTTask.pure(())
+    case QuitFailed(_, _, ex) => ReaderTTask.raiseError(ex)
+  }
+
   /**
-  * QUIT
   * SELECT
   * SWAPDB
   */

@@ -19,10 +19,13 @@ class RedisConnectionPoolFlowSpec extends AbstractActorSpec(ActorSystem("RedisCo
   var pool: RedisConnectionPool[Task] = _
 
   override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
-    RedisConnectionPool.ofMultipleRoundRobin(sizePerPeer = 10,
-                                             peerConfigs,
-                                             RedisConnection(_, _),
-                                             reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
+    RedisConnectionPool.ofMultipleRoundRobin(
+      sizePerPeer = 10,
+      peerConfigs,
+      RedisConnection.apply,
+      redisConnectionMode = RedisConnectionMode.QueueMode,
+      reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15))
+    )
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()

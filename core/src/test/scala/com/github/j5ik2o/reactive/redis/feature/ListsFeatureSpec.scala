@@ -18,7 +18,7 @@ class ListsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("ListsFeature
   override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
     RedisConnectionPool.ofMultipleRoundRobin(sizePerPeer = 10,
                                              peerConfigs,
-                                             RedisConnection(_, _),
+                                             RedisConnection.apply,
                                              reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
 
   "ListsFeature" - {

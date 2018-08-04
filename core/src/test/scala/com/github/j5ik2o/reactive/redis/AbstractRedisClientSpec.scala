@@ -5,6 +5,7 @@ import java.net.InetSocketAddress
 import akka.actor.ActorSystem
 import cats.data.NonEmptyList
 import monix.eval.Task
+import scala.concurrent.duration._
 
 abstract class AbstractRedisClientSpec(system: ActorSystem) extends AbstractActorSpec(system) {
 
@@ -16,7 +17,9 @@ abstract class AbstractRedisClientSpec(system: ActorSystem) extends AbstractActo
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    val peerConfigs = NonEmptyList.of(PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.getPort)))
+    val peerConfigs = NonEmptyList.of(
+      PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.getPort), requestTimeout = 3 seconds)
+    )
     _connectionPool = createConnectionPool(peerConfigs)
     _redisClient = RedisClient()(system)
   }

@@ -16,7 +16,7 @@ final case class PingRequest(id: UUID, message: Option[String] = None)
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"PING ${message.getOrElse("")}"
+  override def asString: String = s"PING${message.fold("")(v => s" $v")}"
 
   override protected lazy val responseParser: P[Expr] = fastParse(bulkStringReply | simpleStringReply | errorReply)
 

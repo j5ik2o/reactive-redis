@@ -2,19 +2,22 @@ package com.github.j5ik2o.reactive.redis
 
 import java.time.ZonedDateTime
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 import akka.NotUsed
 import akka.actor.{ ActorRef, ActorSystem }
 import akka.event.{ LogSource, Logging }
 import akka.stream._
 import akka.stream.scaladsl._
-import akka.util.{ ByteString, Timeout }
+import akka.util.ByteString
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequestBase, CommandResponse }
 import com.github.j5ik2o.reactive.redis.experimental.jedis.RedisConnectionJedis
 import com.github.j5ik2o.reactive.redis.util.{ ActorSource, InTxRequestsAggregationFlow }
+import enumeratum._
 import monix.eval.Task
 import monix.execution.Scheduler
 
+import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.concurrent.{ Future, Promise }
 
@@ -32,12 +35,16 @@ object RedisConnection {
   }
 
   def ofJedis(peerConfig: PeerConfig,
-              supervisionDecider: Option[Supervision.Decider])(implicit system: ActorSystem): RedisConnection =
+              supervisionDecider: Option[Supervision.Decider],
+              redisConnectionMode: RedisConnectionMode)(implicit system: ActorSystem): RedisConnection =
     new RedisConnectionJedis(peerConfig, supervisionDecider)
 
   def apply(peerConfig: PeerConfig,
-            supervisionDecider: Option[Supervision.Decider])(implicit system: ActorSystem): RedisConnection =
-    new RedisConnectionImpl(peerConfig, supervisionDecider)
+            supervisionDecider: Option[Supervision.Decider],
+            redisConnectionMode: RedisConnectionMode)(
+      implicit system: ActorSystem
+  ): RedisConnection =
+    new RedisConnectionImpl(peerConfig, supervisionDecider, redisConnectionMode)
 
 }
 
@@ -58,7 +65,23 @@ trait RedisConnection {
     }
 }
 
-private[redis] class RedisConnectionImpl(val peerConfig: PeerConfig, supervisionDecider: Option[Supervision.Decider])(
+sealed trait RedisConnectionMode extends EnumEntry
+
+object RedisConnectionMode extends Enum[RedisConnectionMode] {
+  override def values: immutable.IndexedSeq[RedisConnectionMode] = findValues
+  case object QueueMode extends RedisConnectionMode
+  case object ActorMode extends RedisConnectionMode
+}
+
+@SuppressWarnings(
+  Array("org.wartremover.warts.Null",
+        "org.wartremover.warts.Var",
+        "org.wartremover.warts.Serializable",
+        "org.wartremover.warts.MutableDataStructures")
+)
+private[redis] class RedisConnectionImpl(val peerConfig: PeerConfig,
+                                         val supervisionDecider: Option[Supervision.Decider],
+                                         val redisConnectionMode: RedisConnectionMode)(
     implicit system: ActorSystem
 ) extends RedisConnection {
 
@@ -117,27 +140,107 @@ private[redis] class RedisConnectionImpl(val peerConfig: PeerConfig, supervision
       FlowShape(requestFlow.in, responseFlow.out)
     })
 
-  protected lazy val (sourceActorRefFuture: Future[ActorRef], killSwitch: UniqueKillSwitch) =
+  private def sendBySourceActorRef[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = {
+    val promise = Promise[CommandResponse]()
+    Task
+      .deferFutureAction { implicit ec =>
+        requestActorRef.flatMap { ref =>
+          ref ! RequestContext(cmd, promise, ZonedDateTime.now())
+          val result = promise.future.asInstanceOf[Future[cmd.Response]]
+          result
+        }
+      }
+      .timeout(
+        if (peerConfig.requestTimeout.isFinite())
+          Duration(peerConfig.requestTimeout.length, peerConfig.requestTimeout.unit)
+        else Duration(Long.MaxValue, TimeUnit.NANOSECONDS)
+      )
+  }
+
+  private def sendByQueue[C <: CommandRequestBase](cmd: C): Task[cmd.Response] =
+    Task
+      .deferFutureAction { implicit ec =>
+        val promise = Promise[CommandResponse]()
+        requestQueue
+          .offer(RequestContext(cmd, promise, ZonedDateTime.now()))
+          .flatMap {
+            case QueueOfferResult.Enqueued =>
+              promise.future.map(_.asInstanceOf[cmd.Response])
+            case QueueOfferResult.Failure(t) =>
+              Future.failed(BufferOfferException("Failed to send request", Some(t)))
+            case QueueOfferResult.Dropped =>
+              Future.failed(
+                BufferOfferException(
+                  s"Failed to send request, the queue buffer was full."
+                )
+              )
+            case QueueOfferResult.QueueClosed =>
+              Future.failed(BufferOfferException("Failed to send request, the queue was closed"))
+          }
+      }
+      .timeout(
+        if (peerConfig.requestTimeout.isFinite())
+          Duration(peerConfig.requestTimeout.length, peerConfig.requestTimeout.unit)
+        else Duration(Long.MaxValue, TimeUnit.NANOSECONDS)
+      )
+
+  private var requestQueue: SourceQueueWithComplete[RequestContext] = _
+  private var requestActorRef: Future[ActorRef]                     = _
+  private var killSwitch: UniqueKillSwitch                          = _
+
+  protected lazy val sourceQueueWithKillSwitchRunnableGraph
+    : RunnableGraph[(SourceQueueWithComplete[RequestContext], UniqueKillSwitch)] =
+    Source
+      .queue[RequestContext](requestBufferSize, overflowStrategy)
+      .via(connectionFlow)
+      .via(InTxRequestsAggregationFlow())
+      .async
+      .map { res =>
+        val result = res.complete
+        if (res.isQuit) shutdown()
+        result
+      }
+      .viaMat(KillSwitches.single)(Keep.both)
+      .toMat(Sink.ignore)(Keep.left)
+      .withAttributes(ActorAttributes.dispatcher("reactive-redis.dispatcher"))
+
+  protected lazy val sourceActorWithKillSwitchRunnableGraph: RunnableGraph[(Future[ActorRef], UniqueKillSwitch)] =
     ActorSource[RequestContext](requestBufferSize)
       .via(connectionFlow)
       .via(InTxRequestsAggregationFlow())
       .async
-      .map(_.complete)
+      .map { res =>
+        val result = res.complete
+        if (res.isQuit) shutdown()
+        result
+      }
       .viaMat(KillSwitches.single)(Keep.both)
       .toMat(Sink.ignore)(Keep.left)
       .withAttributes(ActorAttributes.dispatcher("reactive-redis.dispatcher"))
-      .run()
 
-  def shutdown(): Unit = killSwitch.shutdown()
+  redisConnectionMode match {
+    case RedisConnectionMode.QueueMode =>
+      val result = sourceQueueWithKillSwitchRunnableGraph.run()
+      requestQueue = result._1
+      killSwitch = result._2
+    case RedisConnectionMode.ActorMode =>
+      val result = sourceActorWithKillSwitchRunnableGraph.run()
+      requestActorRef = result._1
+      killSwitch = result._2
+  }
+
+  def shutdown(): Unit = {
+    log.debug("shutdown: start")
+    killSwitch.shutdown()
+    log.debug("shutdown: finished")
+  }
 
   def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = {
-    val promise = Promise[CommandResponse]()
-    Task.deferFutureAction { implicit ec =>
-      sourceActorRefFuture.flatMap { ref =>
-        implicit val to: Timeout = Timeout(10 seconds)
-        ref ! RequestContext(cmd, promise, ZonedDateTime.now())
-        promise.future.asInstanceOf[Future[cmd.Response]]
-      }
+    redisConnectionMode match {
+      case RedisConnectionMode.QueueMode =>
+        sendByQueue(cmd)
+      case RedisConnectionMode.ActorMode =>
+        sendBySourceActorRef(cmd)
     }
   }
 

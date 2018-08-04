@@ -6,8 +6,11 @@ import monix.eval.Task
 
 class RedisConnectionPoolSpec extends AbstractRedisConnectionPoolSpec("RedisConnectionPoolSpec") {
   override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
-    RedisConnectionPool.ofMultipleRoundRobin(sizePerPeer = 10,
-                                             peerConfigs,
-                                             RedisConnection(_, _),
-                                             reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
+    RedisConnectionPool.ofMultipleRoundRobin(
+      sizePerPeer = 10,
+      peerConfigs,
+      RedisConnection.apply,
+      redisConnectionMode = RedisConnectionMode.QueueMode,
+      reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15))
+    )
 }

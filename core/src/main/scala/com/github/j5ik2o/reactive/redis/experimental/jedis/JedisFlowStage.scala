@@ -110,24 +110,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case bo: BitOpRequest =>
               bitOp(bo)
             case bp: BitPosRequest =>
-              run(bp) {
-                bp.startAndEnd match {
-                  case None =>
-                    jedis.bitpos(bp.key, bp.bit == 1)
-                  case Some(v) =>
-                    val bpr = v match {
-                      case BitPosRequest.StartAndEnd(s, None) =>
-                        new BitPosParams(s)
-                      case BitPosRequest.StartAndEnd(s, Some(e)) =>
-                        new BitPosParams(s, e)
-                    }
-                    jedis.bitpos(bp.key, bp.bit == 1, bpr)
-                }
-              } { result =>
-                BitPosSucceeded(UUID.randomUUID(), bp.id, result)
-              } { t =>
-                BitPosFailed(UUID.randomUUID(), bp.id, RedisIOException(Some(t.getMessage), Some(t)))
-              }()
+              bitPos(bp)
             case s: SetRequest =>
               set(s)
             case s: SetNxRequest =>
@@ -144,7 +127,55 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def bitOp(bo: BitOpRequest) = {
+      private def bitPos(bp: BitPosRequest): Unit = {
+        transaction match {
+          case Some(tc) =>
+            run(bp) {
+              bp.startAndEnd match {
+                case None =>
+                  tc.bitpos(bp.key, bp.bit == 1)
+                case Some(v) =>
+                  val bpr = v match {
+                    case BitPosRequest.StartAndEnd(s, None) =>
+                      new BitPosParams(s)
+                    case BitPosRequest.StartAndEnd(s, Some(e)) =>
+                      new BitPosParams(s, e)
+                  }
+                  tc.bitpos(bp.key, bp.bit == 1, bpr)
+              }
+            } { result =>
+              txState.append(
+                ResponseF[java.lang.Long](result, { p =>
+                  BitPosSucceeded(UUID.randomUUID(), bp.id, result.get)
+                })
+              )
+              BitPosSuspended(UUID.randomUUID(), bp.id)
+            } { t =>
+              BitPosFailed(UUID.randomUUID(), bp.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(bp) {
+              bp.startAndEnd match {
+                case None =>
+                  jedis.bitpos(bp.key, bp.bit == 1)
+                case Some(v) =>
+                  val bpr = v match {
+                    case BitPosRequest.StartAndEnd(s, None) =>
+                      new BitPosParams(s)
+                    case BitPosRequest.StartAndEnd(s, Some(e)) =>
+                      new BitPosParams(s, e)
+                  }
+                  jedis.bitpos(bp.key, bp.bit == 1, bpr)
+              }
+            } { result =>
+              BitPosSucceeded(UUID.randomUUID(), bp.id, result)
+            } { t =>
+              BitPosFailed(UUID.randomUUID(), bp.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def bitOp(bo: BitOpRequest): Unit = {
         transaction match {
           case Some(tc) =>
             val op = BitOP.valueOf(bo.operand.entryName)
@@ -166,7 +197,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def bitField(bf: BitFieldRequest) = {
+      private def bitField(bf: BitFieldRequest): Unit = {
         transaction match {
           case Some(tc) =>
             run(bf)(tc.bitfield(bf.key, bf.options.flatMap(_.asString.split(" ")): _*)) { result =>
@@ -186,14 +217,16 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def keys(k: KeysRequest) = {
+      private def keys(k: KeysRequest): Unit = {
         import k._
         transaction match {
           case Some(tc) =>
             run(k)(tc.keys(pattern)) { result =>
-              txState.append(ResponseF[util.Set[String]](result, { r =>
-                KeysSucceeded(UUID.randomUUID(), id, r.get.asScala.toSeq)
-              }))
+              txState.append(
+                ResponseF[util.Set[String]](result, { r =>
+                  KeysSucceeded(UUID.randomUUID(), id, r.get.asScala.toSeq)
+                })
+              )
               KeysSuspended(UUID.randomUUID(), id)
             } { t =>
               KeysFailed(UUID.randomUUID(), id, RedisIOException(Some(t.getMessage), Some(t)))
@@ -228,7 +261,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def exec(e: ExecRequest) = {
+      private def exec(e: ExecRequest): Unit = {
         run(e)(transaction.fold(throw new Exception)(_.exec())) { _ =>
           ExecSucceeded(UUID.randomUUID(), e.id, txState.map(_.apply).result)
         } { t =>
@@ -239,7 +272,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def dicard(d: DiscardRequest) = {
+      private def dicard(d: DiscardRequest): Unit = {
         run(d)(transaction.fold(throw new Exception)(_.discard())) { _ =>
           DiscardSucceeded(UUID.randomUUID(), d.id)
         } { t =>
@@ -251,7 +284,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def append(a: AppendRequest) = {
+      private def append(a: AppendRequest): Unit = {
         import a._
         transaction match {
           case Some(v) =>
@@ -270,7 +303,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def bitCount(b: BitCountRequest) = {
+      private def bitCount(b: BitCountRequest): Unit = {
         import b._
         transaction match {
           case Some(tc) =>
@@ -322,7 +355,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def setNx(s: SetNxRequest) = {
+      private def setNx(s: SetNxRequest): Unit = {
         import s._
         transaction match {
           case Some(tc) =>
@@ -341,7 +374,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def setEx(s: SetExRequest) = {
+      private def setEx(s: SetExRequest): Unit = {
         import s._
         transaction match {
           case Some(tc) =>
@@ -488,13 +521,6 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
       setHandler(
         out,
         new OutHandler {
-
-          //          override def onDownstreamFinish(): Unit = {
-          //            log.debug("onDownstreamFinish")
-          //            completionState = Some(Success(()))
-          //            checkForCompletion()
-          //          }
-
           override def onPull(): Unit = {
             log.debug("onPull")
             tryToExecute()

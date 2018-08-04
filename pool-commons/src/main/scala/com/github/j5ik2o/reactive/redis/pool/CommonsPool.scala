@@ -26,11 +26,14 @@ final case class RedisConnectionPoolable(index: Int, redisConnection: RedisConne
 }
 
 @SuppressWarnings(Array("org.wartremover.warts.Equals"))
-final class CommonsPool private (val connectionPoolConfig: CommonsPoolConfig,
-                                 val peerConfigs: NonEmptyList[PeerConfig],
-                                 val newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
-                                 val supervisionDecider: Option[Supervision.Decider] = None,
-                                 val validationTimeout: FiniteDuration = 3 seconds)(
+final class CommonsPool private (
+    val connectionPoolConfig: CommonsPoolConfig,
+    val peerConfigs: NonEmptyList[PeerConfig],
+    val newConnection: (PeerConfig, Option[Supervision.Decider], RedisConnectionMode) => RedisConnection,
+    val redisConnectionMode: RedisConnectionMode = RedisConnectionMode.QueueMode,
+    val supervisionDecider: Option[Supervision.Decider] = None,
+    val validationTimeout: FiniteDuration = 3 seconds
+)(
     implicit system: ActorSystem,
     scheduler: Scheduler
 ) extends RedisConnectionPool[Task] {
@@ -103,7 +106,12 @@ final class CommonsPool private (val connectionPoolConfig: CommonsPoolConfig,
 
   private def underlyingConnectionPool(index: Int, peerConfig: PeerConfig): GenericObjectPool[RedisConnectionPoolable] =
     new GenericObjectPool[RedisConnectionPoolable](
-      new RedisConnectionPoolFactory(index, peerConfig, supervisionDecider, newConnection, validationTimeout),
+      new RedisConnectionPoolFactory(index,
+                                     peerConfig,
+                                     newConnection,
+                                     validationTimeout,
+                                     redisConnectionMode,
+                                     supervisionDecider),
       underlyingPoolConfig
     )
 
@@ -183,7 +191,8 @@ object CommonsPool {
 
   def ofSingle(connectionPoolConfig: CommonsPoolConfig,
                peerConfig: PeerConfig,
-               newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+               newConnection: (PeerConfig, Option[Supervision.Decider], RedisConnectionMode) => RedisConnection,
+               redisConnectionMode: RedisConnectionMode = RedisConnectionMode.QueueMode,
                supervisionDecider: Option[Supervision.Decider] = None,
                validationTimeout: FiniteDuration = 3 seconds)(
       implicit system: ActorSystem,
@@ -192,24 +201,34 @@ object CommonsPool {
     new CommonsPool(connectionPoolConfig,
                     NonEmptyList.of(peerConfig),
                     newConnection,
+                    redisConnectionMode,
                     supervisionDecider,
                     validationTimeout)
 
   def ofMultiple(connectionPoolConfig: CommonsPoolConfig,
                  peerConfigs: NonEmptyList[PeerConfig],
-                 newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                 newConnection: (PeerConfig, Option[Supervision.Decider], RedisConnectionMode) => RedisConnection,
+                 redisConnectionMode: RedisConnectionMode = RedisConnectionMode.QueueMode,
                  supervisionDecider: Option[Supervision.Decider] = None,
                  validationTimeout: FiniteDuration = 3 seconds)(
       implicit system: ActorSystem,
       scheduler: Scheduler
   ): CommonsPool =
-    new CommonsPool(connectionPoolConfig, peerConfigs, newConnection, supervisionDecider, validationTimeout)
+    new CommonsPool(connectionPoolConfig,
+                    peerConfigs,
+                    newConnection,
+                    redisConnectionMode,
+                    supervisionDecider,
+                    validationTimeout)
 
-  private class RedisConnectionPoolFactory(index: Int,
-                                           peerConfig: PeerConfig,
-                                           supervisionDecider: Option[Supervision.Decider],
-                                           newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
-                                           validationTimeout: FiniteDuration)(
+  private class RedisConnectionPoolFactory(
+      index: Int,
+      peerConfig: PeerConfig,
+      newConnection: (PeerConfig, Option[Supervision.Decider], RedisConnectionMode) => RedisConnection,
+      validationTimeout: FiniteDuration,
+      redisConnectionMode: RedisConnectionMode = RedisConnectionMode.QueueMode,
+      supervisionDecider: Option[Supervision.Decider] = None
+  )(
       implicit system: ActorSystem,
       scheduler: Scheduler
   ) extends BasePooledObjectFactory[RedisConnectionPoolable] {
@@ -224,7 +243,7 @@ object CommonsPool {
     private val redisClient = RedisClient()
 
     override def create(): RedisConnectionPoolable =
-      RedisConnectionPoolable(index, newConnection(peerConfig, supervisionDecider))
+      RedisConnectionPoolable(index, newConnection(peerConfig, supervisionDecider, redisConnectionMode))
 
     override def destroyObject(p: PooledObject[RedisConnectionPoolable]): Unit =
       p.getObject.shutdown()
