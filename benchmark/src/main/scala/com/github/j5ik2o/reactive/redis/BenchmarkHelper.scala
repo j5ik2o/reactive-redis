@@ -33,11 +33,13 @@ trait BenchmarkHelper {
 
   private var _poolOfJedis: RedisConnectionPool[Task] = _
 
-  private var _poolOfDefault: RedisConnectionPool[Task] = _
+  private var _poolOfDefaultQueue: RedisConnectionPool[Task] = _
+  private var _poolOfDefaultActor: RedisConnectionPool[Task] = _
 
   def reactiveRedisPoolOfJedis: RedisConnectionPool[Task] = _poolOfJedis
 
-  def reactiveRedisPoolOfDefault: RedisConnectionPool[Task] = _poolOfDefault
+  def reactiveRedisPoolOfDefaultQueue: RedisConnectionPool[Task] = _poolOfDefaultQueue
+  def reactiveRedisPoolOfDefaultActor: RedisConnectionPool[Task] = _poolOfDefaultActor
 
   private var _jedisPool: JedisPool = _
 
@@ -64,8 +66,11 @@ trait BenchmarkHelper {
     // _pool = ScalaPool.ofSingle(ScalaPoolConfig(), peerConfig, RedisConnection(_, _))
     // _pool = FOPPool.ofSingle(FOPConfig(), peerConfig, RedisConnection(_, _))
     //_pool = RedisConnectionPool.ofSingleRoundRobin(sizePerPeer, peerConfig, RedisConnection(_, _))
-    _poolOfDefault =
+    _poolOfDefaultQueue =
+      CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig, RedisConnection.apply, RedisConnectionMode.QueueMode)
+    _poolOfDefaultActor =
       CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig, RedisConnection.apply, RedisConnectionMode.ActorMode)
+
     _poolOfJedis = CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig, RedisConnection.ofJedis)
     _rediscalaPool = _root_.redis.RedisClientPool(List(RedisServer("127.0.0.1", redisTestServer.getPort)))
     _scalaRedisPool = new com.redis.RedisClientPool("127.0.0.1", redisTestServer.getPort)
