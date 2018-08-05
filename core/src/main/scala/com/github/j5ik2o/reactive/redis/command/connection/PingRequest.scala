@@ -11,6 +11,7 @@ import fastparse.all._
 final case class PingRequest(id: UUID, message: Option[String] = None)
     extends CommandRequest
     with StringParsersSupport {
+  require(!message.contains(""))
 
   override type Response = PingResponse
 
