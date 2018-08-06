@@ -1,28 +1,18 @@
 package com.github.j5ik2o.reactive.redis
 
-import java.time.ZonedDateTime
 import java.util.UUID
-import java.util.concurrent.{ TimeUnit, TimeoutException }
 
 import akka.NotUsed
-import akka.actor.{ Actor, ActorLogging, ActorRef, ActorSystem, PoisonPill, Props }
+import akka.actor.{ ActorSystem, SupervisorStrategy }
 import akka.event.LogSource
-import akka.pattern.{ ask, AskTimeoutException }
 import akka.stream._
 import akka.stream.scaladsl._
-import akka.util.{ ByteString, Timeout }
-import com.github.j5ik2o.akka.backoff.enhancement.{ Backoff, BackoffSupervisor }
-import com.github.j5ik2o.reactive.redis.RedisConnection.Event
-import com.github.j5ik2o.reactive.redis.command.{ CommandRequestBase, CommandResponse }
-import com.github.j5ik2o.reactive.redis.experimental.jedis.RedisConnectionJedis
-import com.github.j5ik2o.reactive.redis.util.{ ActorSource, InTxRequestsAggregationFlow }
-import enumeratum._
+import com.github.j5ik2o.reactive.redis.command.CommandRequestBase
+import com.github.j5ik2o.reactive.redis.experimental.jedis.RedisConnectionOfJedis
 import monix.eval.Task
 import monix.execution.Scheduler
 
-import scala.collection.immutable
 import scala.concurrent.duration._
-import scala.concurrent.{ Future, Promise }
 
 object RedisConnection {
 
@@ -32,15 +22,27 @@ object RedisConnection {
     override def getClazz(o: RedisConnection): Class[_] = o.getClass
   }
 
-  final val DEFAULT_DECIDER: Supervision.Decider = {
-    case _: StreamTcpException => Supervision.Restart
-    case _                     => Supervision.Stop
+  final val DEFAULT_SUPERVISION_DECIDER: Supervision.Decider = {
+    case _: StreamTcpException =>
+      Supervision.Stop
+    case _: Throwable =>
+      Supervision.Stop
   }
+
+  final val DEFAULT_SUPERVISOR_STRATEGY_DECIDER: SupervisorStrategy.Decider =
+    ({
+      case _: Throwable => SupervisorStrategy.Stop
+    }: SupervisorStrategy.Decider).orElse(SupervisorStrategy.defaultDecider)
 
   def ofJedis(peerConfig: PeerConfig, supervisionDecider: Option[Supervision.Decider], listeners: Seq[EventHandler])(
       implicit system: ActorSystem
   ): RedisConnection =
-    new RedisConnectionJedis(peerConfig, supervisionDecider)
+    new RedisConnectionOfJedis(peerConfig, supervisionDecider, listeners)
+
+  def ofDefault(peerConfig: PeerConfig, supervisionDecider: Option[Supervision.Decider], listeners: Seq[EventHandler])(
+      implicit system: ActorSystem
+  ): RedisConnection =
+    apply(peerConfig, supervisionDecider, listeners)
 
   def apply(peerConfig: PeerConfig, supervisionDecider: Option[Supervision.Decider], listeners: Seq[EventHandler])(
       implicit system: ActorSystem
@@ -51,11 +53,16 @@ object RedisConnection {
 
   val DEFAULT_REQUEST_TIMEOUT: FiniteDuration = 10 seconds
 
+  val RETRY_MAX: Int = Int.MaxValue
+
   type EventHandler = Event => Unit
+
   sealed trait Event
 
-  case object Stop  extends Event
+  case object Stop extends Event
+
   case object Start extends Event
+
 }
 
 trait RedisConnection {
@@ -73,226 +80,4 @@ trait RedisConnection {
     Flow[C].mapAsync(parallelism) { cmd =>
       send(cmd).runAsync
     }
-}
-
-sealed trait RedisConnectionMode extends EnumEntry
-
-object RedisConnectionMode extends Enum[RedisConnectionMode] {
-  override def values: immutable.IndexedSeq[RedisConnectionMode] = findValues
-  case object QueueMode extends RedisConnectionMode
-  case object ActorMode extends RedisConnectionMode
-}
-
-@SuppressWarnings(
-  Array("org.wartremover.warts.Null",
-        "org.wartremover.warts.Var",
-        "org.wartremover.warts.Serializable",
-        "org.wartremover.warts.MutableDataStructures")
-)
-private[redis] class RedisConnectionImpl(val peerConfig: PeerConfig,
-                                         val supervisionDecider: Option[Supervision.Decider],
-                                         val listeners: Seq[Event => Unit])(
-    implicit system: ActorSystem
-) extends RedisConnection {
-
-  import RedisConnection._
-
-  lazy val id: UUID = UUID.randomUUID()
-
-  import peerConfig._
-
-//  private lazy val log = Logging(system, this)
-
-  private class InternalActor extends Actor with ActorLogging {
-
-    private implicit lazy val mat: ActorMaterializer = ActorMaterializer(
-      ActorMaterializerSettings(system).withSupervisionStrategy(
-        supervisionDecider.getOrElse(RedisConnection.DEFAULT_DECIDER)
-      )
-    )(context.system)
-
-    protected lazy val tcpFlow: Flow[ByteString, ByteString, NotUsed] = {
-      backoffConfig match {
-        case Some(_backoffConfig) =>
-          RestartFlow.withBackoff(_backoffConfig.minBackoff,
-                                  _backoffConfig.maxBackoff,
-                                  _backoffConfig.randomFactor,
-                                  _backoffConfig.maxRestarts) { () =>
-            Tcp()
-              .outgoingConnection(remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout)
-          }
-        case None =>
-          Tcp()
-            .outgoingConnection(remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout)
-            .mapMaterializedValue(_ => NotUsed)
-      }
-    }
-
-    protected lazy val connectionFlow: Flow[RequestContext, ResponseContext, NotUsed] =
-      Flow.fromGraph(GraphDSL.create() { implicit b =>
-        import GraphDSL.Implicits._
-        val requestFlow = b.add(
-          Flow[RequestContext]
-            .map { rc =>
-              if (log.isDebugEnabled)
-                log.debug(s"request = [{}]", rc.commandRequestString)
-              (ByteString.fromString(rc.commandRequest.asString + "\r\n"), rc)
-            }
-        )
-        val responseFlow = b.add(Flow[(ByteString, RequestContext)].map {
-          case (byteString, requestContext) =>
-            if (log.isDebugEnabled)
-              log.debug(s"response = [{}]", byteString.utf8String)
-            ResponseContext(byteString, requestContext)
-        })
-        val unzip = b.add(Unzip[ByteString, RequestContext]())
-        val zip   = b.add(Zip[ByteString, RequestContext]())
-        requestFlow.out ~> unzip.in
-        unzip.out0 ~> tcpFlow ~> zip.in0
-        unzip.out1 ~> zip.in1
-        zip.out ~> responseFlow.in
-        FlowShape(requestFlow.in, responseFlow.out)
-      })
-
-    private var requestQueue: SourceQueueWithComplete[RequestContext] = _
-    private var requestActorRef: Future[ActorRef]                     = _
-    private var killSwitch: UniqueKillSwitch                          = _
-
-    protected lazy val sourceQueueWithKillSwitchRunnableGraph
-      : RunnableGraph[(SourceQueueWithComplete[RequestContext], UniqueKillSwitch)] =
-      Source
-        .queue[RequestContext](requestBufferSize, overflowStrategyOnQueueMode)
-        .via(connectionFlow)
-        .via(InTxRequestsAggregationFlow())
-        .async
-        .map { res =>
-          val result = res.complete
-          if (res.isQuit) self ! ShutdownConnection
-          result
-        }
-        .viaMat(KillSwitches.single)(Keep.both)
-        .toMat(Sink.ignore)(Keep.left)
-        .withAttributes(ActorAttributes.dispatcher("reactive-redis.dispatcher"))
-
-    protected lazy val sourceActorWithKillSwitchRunnableGraph: RunnableGraph[(Future[ActorRef], UniqueKillSwitch)] =
-      ActorSource[RequestContext](requestBufferSize)
-        .via(connectionFlow)
-        .via(InTxRequestsAggregationFlow())
-        .async
-        .map { res =>
-          val result = res.complete
-          if (res.isQuit) self ! ShutdownConnection
-          result
-        }
-        .viaMat(KillSwitches.single)(Keep.both)
-        .toMat(Sink.ignore)(Keep.left)
-        .withAttributes(ActorAttributes.dispatcher("reactive-redis.dispatcher"))
-
-    redisConnectionMode match {
-      case RedisConnectionMode.QueueMode =>
-        val result = sourceQueueWithKillSwitchRunnableGraph.run()
-        requestQueue = result._1
-        killSwitch = result._2
-      case RedisConnectionMode.ActorMode =>
-        val result = sourceActorWithKillSwitchRunnableGraph.run()
-        requestActorRef = result._1
-        killSwitch = result._2
-    }
-
-    private def sendToActor[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = {
-      val promise = Promise[CommandResponse]()
-      Task
-        .deferFutureAction { implicit ec =>
-          requestActorRef.flatMap { ref =>
-            ref ! RequestContext(cmd, promise, ZonedDateTime.now())
-            val result = promise.future.asInstanceOf[Future[cmd.Response]]
-            result
-          }
-        }
-        .timeout(
-          if (peerConfig.requestTimeout.isFinite())
-            Duration(peerConfig.requestTimeout.length, peerConfig.requestTimeout.unit)
-          else DEFAULT_REQUEST_TIMEOUT
-        )
-    }
-
-    private def sendToQueue[C <: CommandRequestBase](cmd: C): Task[cmd.Response] =
-      Task
-        .deferFutureAction { implicit ec =>
-          val promise = Promise[CommandResponse]()
-          requestQueue
-            .offer(RequestContext(cmd, promise, ZonedDateTime.now()))
-            .flatMap {
-              case QueueOfferResult.Enqueued =>
-                promise.future.map(_.asInstanceOf[cmd.Response])
-              case QueueOfferResult.Failure(t) =>
-                Future.failed(RedisRequestException("Failed to send request", Some(t)))
-              case QueueOfferResult.Dropped =>
-                Future.failed(
-                  RedisRequestException(
-                    s"Failed to send request, the queue buffer was full."
-                  )
-                )
-              case QueueOfferResult.QueueClosed =>
-                Future.failed(RedisRequestException("Failed to send request, the queue was closed"))
-            }
-        }
-        .timeout(
-          if (peerConfig.requestTimeout.isFinite())
-            Duration(peerConfig.requestTimeout.length, peerConfig.requestTimeout.unit)
-          else DEFAULT_REQUEST_TIMEOUT
-        )
-
-    override def preStart(): Unit = {
-      listeners.foreach(_(Start))
-    }
-
-    override def postStop(): Unit = {
-      listeners.foreach(_(Stop))
-    }
-
-    override def receive: Receive = {
-      case cmd: CommandRequestBase =>
-        redisConnectionMode match {
-          case RedisConnectionMode.QueueMode =>
-            sender() ! sendToQueue(cmd)
-          case RedisConnectionMode.ActorMode =>
-            sender() ! sendToActor(cmd)
-        }
-      case ShutdownConnection =>
-        killSwitch.shutdown()
-        context.stop(self)
-    }
-
-  }
-
-  private val childProps = Props(new InternalActor)
-
-  private val connectionRef = peerConfig.backoffConfig match {
-    case Some(bf) =>
-      val stopBackOffOptions =
-        Backoff.onFailure(childProps, "backoff-connection", bf.minBackoff, bf.maxBackoff, bf.randomFactor)
-      system.actorOf(BackoffSupervisor.props(stopBackOffOptions))
-    case None =>
-      system.actorOf(childProps)
-  }
-
-  def shutdown(): Unit = {
-    connectionRef ! ShutdownConnection
-  }
-
-  implicit val to: Timeout =
-    if (peerConfig.requestTimeout.isFinite()) Duration(peerConfig.requestTimeout.length, peerConfig.requestTimeout.unit)
-    else DEFAULT_REQUEST_TIMEOUT
-
-  def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = {
-    val result: Future[Task[cmd.Response]] = (connectionRef ? cmd).mapTo[Task[cmd.Response]]
-    Task.fromFuture(result).flatten.onErrorRecoverWith {
-      case ex: AskTimeoutException =>
-        Task.raiseError(RedisRequestException("ask timeout", Some(ex)))
-      case ex: TimeoutException =>
-        Task.raiseError(RedisRequestException("task timeout", Some(ex)))
-    }
-  }
-
 }

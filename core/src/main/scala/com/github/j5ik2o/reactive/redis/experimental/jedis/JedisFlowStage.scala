@@ -6,11 +6,14 @@ import java.{ lang, util }
 import akka.stream.stage._
 import akka.stream.{ Attributes, FlowShape, Inlet, Outlet }
 import com.github.j5ik2o.reactive.redis.RedisIOException
-import com.github.j5ik2o.reactive.redis.command.connection.{ PingFailed, PingRequest, PingSucceeded, PingSuspended }
+import com.github.j5ik2o.reactive.redis.command.connection._
+import com.github.j5ik2o.reactive.redis.command.hashes._
 import com.github.j5ik2o.reactive.redis.command.keys.{ KeysFailed, KeysRequest, KeysSucceeded, KeysSuspended }
+import com.github.j5ik2o.reactive.redis.command.lists._
 import com.github.j5ik2o.reactive.redis.command.strings.{ BitPosRequest, _ }
 import com.github.j5ik2o.reactive.redis.command.transactions._
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequestBase, CommandResponse }
+import redis.clients.jedis.Protocol.Command
 import redis.clients.jedis._
 import redis.clients.jedis.exceptions.JedisConnectionException
 
@@ -29,6 +32,7 @@ object JedisFlowStage {
   }
 
 }
+
 @SuppressWarnings(
   Array("org.wartremover.warts.Null",
         "org.wartremover.warts.Var",
@@ -40,7 +44,9 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
 ) extends GraphStageWithMaterializedValue[FlowShape[CommandRequestBase, CommandResponse], Future[Jedis]] {
   private val in  = Inlet[CommandRequestBase]("JedisFlow.in")
   private val out = Outlet[CommandResponse]("JedisFlow.out")
+
   import JedisFlowStage._
+
   override def shape: FlowShape[CommandRequestBase, CommandResponse] = FlowShape(in, out)
 
   // scalastyle:off
@@ -55,7 +61,15 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
       private var completionState: Option[Try[Unit]]               = _
       private var resultCallback: AsyncCallback[RequestWithResult] = _
 
-      private var jedis: Jedis = _
+      trait PingArgIF {
+        def pingArg(arg: Option[String]): String
+      }
+
+      trait PingArgTxIF {
+        def pingArg(arg: Option[String]): Response[String]
+      }
+
+      private var jedis: Jedis with PingArgIF = _
 
       private val DC = () => ()
 
@@ -63,8 +77,10 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
           req: CommandRequestBase
       )(
           cmd: => A
-      )(onSuccess: A => CommandResponse)(onFailure: Throwable => CommandResponse)(closer: () => Unit = DC) = {
-        Future(cmd)
+      )(
+          onSuccess: A => CommandResponse
+      )(onFailure: Throwable => CommandResponse)(closer: () => Unit = DC): Future[CommandResponse] = {
+        val f = Future(cmd)
           .map(result => onSuccess(result))
           .recover {
             case t: JedisConnectionException =>
@@ -72,15 +88,17 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case t: Throwable =>
               onFailure(t)
           }
-          .onComplete { tried =>
-            closer()
-            tried.foreach { r =>
-              push(out, r)
-            }
-            val requestWithResult =
-              RequestWithResult(req, tried)
-            resultCallback.invoke(requestWithResult)
+
+        f.onComplete { tried =>
+          closer()
+          tried.foreach { r =>
+            push(out, r)
           }
+          val requestWithResult =
+            RequestWithResult(req, tried)
+          resultCallback.invoke(requestWithResult)
+        }
+        f
       }
 
       private var transaction: Option[Transaction] = None
@@ -93,41 +111,498 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
           inFlight += 1
           val request = requests.dequeue()
           request match {
-            case p: PingRequest =>
-              ping(p)
-            case m: MultiRequest =>
-              multi(m)
-            case e: ExecRequest =>
-              exec(e)
-            case d: DiscardRequest =>
-              dicard(d)
-            case a: AppendRequest =>
-              append(a)
-            case bc: BitCountRequest =>
-              bitCount(bc)
-            case bf: BitFieldRequest =>
-              bitField(bf)
-            case bo: BitOpRequest =>
-              bitOp(bo)
-            case bp: BitPosRequest =>
-              bitPos(bp)
-            case s: SetRequest =>
-              set(s)
-            case s: SetNxRequest =>
-              setNx(s)
-            case s: SetExRequest =>
-              setEx(s)
-            case p: PSetExRequest =>
-              pSetEx(p)
-            case g: GetRequest =>
-              get(g)
-            case k: KeysRequest =>
-              keys(k)
+            case q: QuitRequest => quit(q)
+            case a: AuthRequest => auth(a)
+            case p: PingRequest => ping(p)
+            case e: EchoRequest => echo(e)
+            // ---
+            case m: MultiRequest   => multi(m)
+            case e: ExecRequest    => exec(e)
+            case d: DiscardRequest => dicard(d)
+            // --- strings
+            case a: AppendRequest    => append(a)
+            case bc: BitCountRequest => bitCount(bc)
+            case bf: BitFieldRequest => bitField(bf)
+            case bo: BitOpRequest    => bitOp(bo)
+            case bp: BitPosRequest   => bitPos(bp)
+            case d: DecrRequest      => decr(d)
+            case d: DecrByRequest    => decrBy(d)
+            case g: GetRequest       => get(g)
+            case g: GetBitRequest    => getBit(g)
+            case gr: GetRangeRequest => getRange(gr)
+            case gs: GetSetRequest   => getSet(gs)
+            case i: IncrRequest      => incr(i)
+
+            //            case i: IncrByRequest      =>
+            //            case i: IncrByFloatRequest =>
+            //            case mg: MGetRequest       =>
+            //            case ms: MSetRequest       =>
+            //            case ms: MSetNxRequest     =>
+            case p: PSetExRequest => pSetEx(p)
+            case s: SetRequest    => set(s)
+            case s: SetBitRequest => setBit(s)
+            case s: SetExRequest  => setEx(s)
+            case s: SetNxRequest  => setNx(s)
+            //            case s: SetRangeRequest    =>
+            case s: StrLenRequest => strLen(s)
+            // ---
+            case k: KeysRequest => keys(k)
+
+            // -- Lits
+            case b: BLPopRequest => blpop(b)
+            case b: BRPopRequest => brpop(b)
+            case l: LPopRequest  => lpop(l)
+            case l: LPushRequest => lpush(l)
+            // --- Hashes
+            case h: HDelRequest    => hdel(h)
+            case h: HExistsRequest => hexists(h)
+            case h: HGetRequest    => hget(h)
+            case h: HGetAllRequest => hgetall(h)
+            case h: HSetRequest    => hset(h)
+            case h: HSetNxRequest  => hsetnx(h)
           }
         }
       }
 
-      private def bitPos(bp: BitPosRequest): Unit = {
+//      private def lpop(l: LPopRequest) = {
+//        transaction match {
+//          case Some(tc) =>
+//            run(l)(tc.lpop(l.key)) { result =>
+//              txState.append(ResponseF[String](result, { p =>
+//                LPopSucceeded(UUID.randomUUID(), l.id, Option(p.get))
+//              }))
+//              LPopSuspended(UUID.randomUUID(), l.id)
+//            } { t =>
+//              LPopFailed(UUID.randomUUID(), l.id, RedisIOException(Some(t.getMessage), Some(t)))
+//            }()
+//          case None =>
+//            run(l)(jedis.lpop(l.key)) { result =>
+//              LPopSucceeded(UUID.randomUUID(), l.id, Option(result))
+//            } { t =>
+//              LPopFailed(UUID.randomUUID(), l.id, RedisIOException(Some(t.getMessage), Some(t)))
+//            }()
+//        }
+//      }
+
+      private def lpush(l: LPushRequest) = {
+        transaction match {
+          case Some(tc) =>
+            run(l)(tc.lpush(l.key, l.key)) { result =>
+              txState.append(ResponseF[lang.Long](result, { p =>
+                LPushSucceeded(UUID.randomUUID(), l.id, p.get)
+              }))
+              LPushSuspended(UUID.randomUUID(), l.id)
+            } { t =>
+              LPushFailed(UUID.randomUUID(), l.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(l)(jedis.lpush(l.key, l.key)) { result =>
+              LPushSucceeded(UUID.randomUUID(), l.id, result)
+            } { t =>
+              LPushFailed(UUID.randomUUID(), l.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def lpop(l: LPopRequest) = {
+        transaction match {
+          case Some(tc) =>
+            run(l)(tc.lpop(l.key)) { result =>
+              txState.append(ResponseF[String](result, { p =>
+                LPopSucceeded(UUID.randomUUID(), l.id, Option(p.get))
+              }))
+              LPopSuspended(UUID.randomUUID(), l.id)
+            } { t =>
+              LPopFailed(UUID.randomUUID(), l.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(l)(jedis.lpop(l.key)) { result =>
+              LPopSucceeded(UUID.randomUUID(), l.id, Option(result))
+            } { t =>
+              LPopFailed(UUID.randomUUID(), l.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def hsetnx(h: HSetNxRequest) = {
+        transaction match {
+          case Some(tc) =>
+            run(h)(tc.hsetnx(h.key, h.field, h.value)) { result =>
+              txState.append(ResponseF[lang.Long](result, { p =>
+                HSetNxSucceeded(UUID.randomUUID(), h.id, p.get == 1L)
+              }))
+              HSetNxSuspended(UUID.randomUUID(), h.id)
+            } { t =>
+              HSetNxFailed(UUID.randomUUID(), h.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(h)(jedis.hsetnx(h.key, h.field, h.value)) { result =>
+              HSetNxSucceeded(UUID.randomUUID(), h.id, result == 1L)
+            } { t =>
+              HSetNxFailed(UUID.randomUUID(), h.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def hset(h: HSetRequest) = {
+        transaction match {
+          case Some(tc) =>
+            run(h)(tc.hset(h.key, h.field, h.value)) { result =>
+              txState.append(ResponseF[lang.Long](result, { p =>
+                HSetSucceeded(UUID.randomUUID(), h.id, p.get == 1L)
+              }))
+              HSetSuspended(UUID.randomUUID(), h.id)
+            } { t =>
+              HSetFailed(UUID.randomUUID(), h.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(h)(jedis.hset(h.key, h.field, h.value)) { result =>
+              HSetSucceeded(UUID.randomUUID(), h.id, result == 1L)
+            } { t =>
+              HSetFailed(UUID.randomUUID(), h.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def hgetall(h: HGetAllRequest) = {
+        transaction match {
+          case Some(tc) =>
+            run(h)(tc.hgetAll(h.key)) { result =>
+              txState.append(ResponseF[util.Map[String, String]](result, { p =>
+                HGetAllSucceeded(UUID.randomUUID(), h.id, p.get.asScala.toSeq.flatMap(v => Seq(v._1, v._2)))
+              }))
+              HGetAllSuspended(UUID.randomUUID(), h.id)
+            } { t =>
+              HGetAllFailed(UUID.randomUUID(), h.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(h)(jedis.hgetAll(h.key)) { result =>
+              HGetAllSucceeded(UUID.randomUUID(), h.id, result.asScala.toSeq.flatMap(v => Seq(v._1, v._2)))
+            } { t =>
+              HGetAllFailed(UUID.randomUUID(), h.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def hget(h: HGetRequest) = {
+        transaction match {
+          case Some(tc) =>
+            run(h)(tc.hget(h.key, h.field)) { result =>
+              txState.append(ResponseF[String](result, { p =>
+                HGetSucceeded(UUID.randomUUID(), h.id, Option(p.get))
+              }))
+              HGetSuspended(UUID.randomUUID(), h.id)
+            } { t =>
+              HGetFailed(UUID.randomUUID(), h.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(h)(jedis.hget(h.key, h.field)) { result =>
+              HGetSucceeded(UUID.randomUUID(), h.id, Option(result))
+            } { t =>
+              HGetFailed(UUID.randomUUID(), h.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def brpop(b: BRPopRequest) = {
+        transaction match {
+          case Some(tc) =>
+            def command =
+              if (b.timeout.isFinite())
+                tc.brpop(b.timeout.toSeconds.toInt, b.keys.toList: _*)
+              else
+                tc.brpop(b.keys.toList: _*)
+
+            run(b)(command) { result =>
+              txState.append(ResponseF[util.List[String]](result, { p =>
+                BRPopSucceeded(UUID.randomUUID(), b.id, p.get.asScala)
+              }))
+              BRPopSuspended(UUID.randomUUID(), b.id)
+            } { t =>
+              BRPopFailed(UUID.randomUUID(), b.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            def command =
+              if (b.timeout.isFinite())
+                jedis.brpop(b.timeout.toSeconds.toInt, b.keys.toList: _*)
+              else
+                jedis.brpop(b.keys.toList: _*)
+
+            run(b)(command) { result =>
+              BRPopSucceeded(UUID.randomUUID(), b.id, result.asScala)
+            } { t =>
+              BRPopFailed(UUID.randomUUID(), b.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def hexists(h: HExistsRequest) = {
+        transaction match {
+          case Some(tc) =>
+            run(h)(tc.hexists(h.key, h.field)) { result =>
+              txState.append(ResponseF[lang.Boolean](result, { p =>
+                HExistsSucceeded(UUID.randomUUID(), h.id, p.get)
+              }))
+              HExistsSuspended(UUID.randomUUID(), h.id)
+            } { t =>
+              HExistsFailed(UUID.randomUUID(), h.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(h)(jedis.hexists(h.key, h.field)) { result =>
+              HExistsSucceeded(UUID.randomUUID(), h.id, result)
+            } { t =>
+              HExistsFailed(UUID.randomUUID(), h.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def hdel(h: HDelRequest) = {
+        transaction match {
+          case Some(tc) =>
+            run(h)(tc.hdel(h.key, h.fields.toList: _*)) { result =>
+              txState.append(ResponseF[lang.Long](result, { p =>
+                HDelSucceeded(UUID.randomUUID(), h.id, result.get)
+              }))
+              HDelSuspended(UUID.randomUUID(), h.id)
+            } { t =>
+              HDelFailed(UUID.randomUUID(), h.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(h)(jedis.hdel(h.key, h.fields.toList: _*)) { result =>
+              HDelSucceeded(UUID.randomUUID(), h.id, result)
+            } { t =>
+              HDelFailed(UUID.randomUUID(), h.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def blpop(b: BLPopRequest) = {
+        transaction match {
+          case Some(tc) =>
+            def command =
+              if (b.timeout.isFinite())
+                tc.blpop(b.timeout.toSeconds.toInt, b.keys.toList: _*)
+              else
+                tc.blpop(b.keys.toList: _*)
+
+            run(b)(command) { result =>
+              txState.append(ResponseF[util.List[String]](result, { p =>
+                BLPopSucceeded(UUID.randomUUID(), b.id, p.get.asScala)
+              }))
+              BLPopSuspended(UUID.randomUUID(), b.id)
+            } { t =>
+              BLPopFailed(UUID.randomUUID(), b.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            def command =
+              if (b.timeout.isFinite())
+                jedis.blpop(b.timeout.toSeconds.toInt, b.keys.toList: _*)
+              else
+                jedis.blpop(b.keys.toList: _*)
+
+            run(b)(command) { result =>
+              BLPopSucceeded(UUID.randomUUID(), b.id, result.asScala)
+            } { t =>
+              BLPopFailed(UUID.randomUUID(), b.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def strLen(s: StrLenRequest): Future[CommandResponse] = {
+        transaction match {
+          case Some(tc) =>
+            run(s)(tc.strlen(s.key)) { result =>
+              txState.append(ResponseF[lang.Long](result, { p =>
+                StrLenSucceeded(UUID.randomUUID(), s.id, p.get)
+              }))
+              StrLenSuspended(UUID.randomUUID(), s.id)
+            } { t =>
+              StrLenFailed(UUID.randomUUID(), s.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(s)(jedis.strlen(s.key)) { result =>
+              StrLenSucceeded(UUID.randomUUID(), s.id, result)
+            } { t =>
+              StrLenFailed(UUID.randomUUID(), s.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def getSet(gs: GetSetRequest): Future[CommandResponse] = {
+        transaction match {
+          case Some(tc) =>
+            run(gs)(tc.getSet(gs.key, gs.value)) { result =>
+              txState.append(ResponseF[String](result, { p =>
+                GetSetSucceeded(UUID.randomUUID(), gs.id, Option(p.get))
+              }))
+              GetSetSuspended(UUID.randomUUID(), gs.id)
+            } { t =>
+              GetSetFailed(UUID.randomUUID(), gs.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(gs)(jedis.getSet(gs.key, gs.value)) { result =>
+              GetSetSucceeded(UUID.randomUUID(), gs.id, Option(result))
+            } { t =>
+              GetSetFailed(UUID.randomUUID(), gs.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def incr(i: IncrRequest): Future[CommandResponse] = {
+        transaction match {
+          case Some(tc) =>
+            run(i)(tc.incr(i.key)) { result =>
+              txState.append(ResponseF[lang.Long](result, { p =>
+                IncrSucceeded(UUID.randomUUID(), i.id, p.get)
+              }))
+              IncrSuspended(UUID.randomUUID(), i.id)
+            } { t =>
+              IncrFailed(UUID.randomUUID(), i.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(i)(jedis.incr(i.key)) { result =>
+              IncrSucceeded(UUID.randomUUID(), i.id, result)
+            } { t =>
+              IncrFailed(UUID.randomUUID(), i.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def getRange(gr: GetRangeRequest): Future[CommandResponse] = {
+        transaction match {
+          case Some(tc) =>
+            run(gr)(tc.getrange(gr.key, gr.startAndEnd.start, gr.startAndEnd.end)) { result =>
+              txState.append(ResponseF[String](result, { p =>
+                GetRangeSucceeded(UUID.randomUUID(), gr.id, Option(p.get))
+              }))
+              GetRangeSuspended(UUID.randomUUID(), gr.id)
+            } { t =>
+              GetRangeFailed(UUID.randomUUID(), gr.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(gr)(jedis.getrange(gr.key, gr.startAndEnd.start, gr.startAndEnd.end)) { result =>
+              GetRangeSucceeded(UUID.randomUUID(), gr.id, Option(result))
+            } { t =>
+              GetRangeFailed(UUID.randomUUID(), gr.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def decrBy(d: DecrByRequest): Future[CommandResponse] = {
+        transaction match {
+          case Some(tc) =>
+            run(d)(tc.decrBy(d.key, d.value)) { result =>
+              txState.append(ResponseF[lang.Long](result, { p =>
+                DecrBySucceeded(UUID.randomUUID(), d.id, p.get)
+              }))
+              DecrBySuspended(UUID.randomUUID(), d.id)
+            } { t =>
+              DecrByFailed(UUID.randomUUID(), d.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(d)(jedis.decrBy(d.key, d.value)) { result =>
+              DecrBySucceeded(UUID.randomUUID(), d.id, result)
+            } { t =>
+              DecrByFailed(UUID.randomUUID(), d.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def setBit(s: SetBitRequest): Future[CommandResponse] = {
+        transaction match {
+          case Some(tc) =>
+            run(s)(tc.setbit(s.key, s.offset, if (s.value == 1L) true else false)) { result =>
+              txState.append(ResponseF[lang.Boolean](result, { p =>
+                SetBitSucceeded(UUID.randomUUID(), s.id, if (p.get) 1 else 0)
+              }))
+              SetBitSuspended(UUID.randomUUID(), s.id)
+            } { t =>
+              SetBitFailed(UUID.randomUUID(), s.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(s)(jedis.setbit(s.key, s.offset, if (s.value == 1L) true else false)) { result =>
+              SetBitSucceeded(UUID.randomUUID(), s.id, if (result) 1 else 0)
+            } { t =>
+              SetBitFailed(UUID.randomUUID(), s.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def getBit(g: GetBitRequest): Future[CommandResponse] = {
+        transaction match {
+          case Some(tc) =>
+            run(g)(tc.getbit(g.key, g.offset)) { result =>
+              txState.append(ResponseF[lang.Boolean](result, { p =>
+                GetBitSucceeded(UUID.randomUUID(), g.id, if (p.get) 1 else 0)
+              }))
+              GetBitSuspended(UUID.randomUUID(), g.id)
+            } { t =>
+              GetBitFailed(UUID.randomUUID(), g.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(g)(jedis.getbit(g.key, g.offset)) { result =>
+              GetBitSucceeded(UUID.randomUUID(), g.id, if (result) 1 else 0)
+            } { t =>
+              GetBitFailed(UUID.randomUUID(), g.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def decr(d: DecrRequest): Future[CommandResponse] = {
+        transaction match {
+          case Some(tc) =>
+            run(d)(tc.decr(d.key)) { result =>
+              txState.append(ResponseF[lang.Long](result, { p =>
+                DecrSucceeded(UUID.randomUUID(), d.id, p.get)
+              }))
+              DecrSuspended(UUID.randomUUID(), d.id)
+            } { t =>
+              DecrFailed(UUID.randomUUID(), d.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(d)(jedis.decr(d.key)) { result =>
+              DecrSucceeded(UUID.randomUUID(), d.id, result)
+            } { t =>
+              DecrFailed(UUID.randomUUID(), d.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def echo(e: EchoRequest): Future[CommandResponse] = {
+        transaction match {
+          case Some(tc) =>
+            run(e)(tc.echo(e.message)) { result =>
+              txState.append(ResponseF[String](result, { p =>
+                EchoSucceeded(UUID.randomUUID(), e.id, p.get)
+              }))
+              EchoSuspended(UUID.randomUUID(), e.id)
+            } { t =>
+              EchoFailed(UUID.randomUUID(), e.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(e)(jedis.echo(e.message)) { result =>
+              EchoSucceeded(UUID.randomUUID(), e.id, result)
+            } { t =>
+              EchoFailed(UUID.randomUUID(), e.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def auth(a: AuthRequest): Future[CommandResponse] = {
+        run(a)(jedis.auth(a.password)) { _ =>
+          AuthSucceeded(UUID.randomUUID(), a.id)
+        } { t =>
+          AuthFailed(UUID.randomUUID(), a.id, RedisIOException(Some(t.getMessage), Some(t)))
+        }()
+      }
+
+      private def quit(q: QuitRequest): Future[CommandResponse] = {
+        run(q)(jedis.quit())(result => QuitSucceeded(UUID.randomUUID(), q.id))(
+          t => QuitFailed(UUID.randomUUID(), q.id, RedisIOException(Some(t.getMessage), Some(t)))
+        )()
+      }
+
+      private def bitPos(bp: BitPosRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(bp) {
@@ -175,7 +650,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def bitOp(bo: BitOpRequest): Unit = {
+      private def bitOp(bo: BitOpRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             val op = BitOP.valueOf(bo.operand.entryName)
@@ -197,7 +672,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def bitField(bf: BitFieldRequest): Unit = {
+      private def bitField(bf: BitFieldRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(bf)(tc.bitfield(bf.key, bf.options.flatMap(_.asString.split(" ")): _*)) { result =>
@@ -217,7 +692,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def keys(k: KeysRequest): Unit = {
+      private def keys(k: KeysRequest): Future[CommandResponse] = {
         import k._
         transaction match {
           case Some(tc) =>
@@ -240,7 +715,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def pSetEx(p: PSetExRequest) = {
+      private def pSetEx(p: PSetExRequest): Future[CommandResponse] = {
         import p._
         transaction match {
           case Some(tc) =>
@@ -261,7 +736,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def exec(e: ExecRequest): Unit = {
+      private def exec(e: ExecRequest): Future[CommandResponse] = {
         run(e)(transaction.fold(throw new Exception)(_.exec())) { _ =>
           ExecSucceeded(UUID.randomUUID(), e.id, txState.map(_.apply).result)
         } { t =>
@@ -284,7 +759,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def append(a: AppendRequest): Unit = {
+      private def append(a: AppendRequest): Future[CommandResponse] = {
         import a._
         transaction match {
           case Some(v) =>
@@ -303,7 +778,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def bitCount(b: BitCountRequest): Unit = {
+      private def bitCount(b: BitCountRequest): Future[CommandResponse] = {
         import b._
         transaction match {
           case Some(tc) =>
@@ -314,8 +789,8 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
                 case Some(v) =>
                   tc.bitcount(key, v.start, v.end)
               }
-            } { r =>
-              txState.append(ResponseF[java.lang.Long](r, { p =>
+            } { result =>
+              txState.append(ResponseF[java.lang.Long](result, { p =>
                 BitCountSucceeded(UUID.randomUUID(), id, p.get)
               }))
               BitCountSuspended(UUID.randomUUID(), id)
@@ -336,7 +811,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def set(s: SetRequest): Unit = {
+      private def set(s: SetRequest): Future[CommandResponse] = {
         import s._
         transaction match {
           case Some(tc) =>
@@ -355,7 +830,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def setNx(s: SetNxRequest): Unit = {
+      private def setNx(s: SetNxRequest): Future[CommandResponse] = {
         import s._
         transaction match {
           case Some(tc) =>
@@ -374,12 +849,12 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def setEx(s: SetExRequest): Unit = {
+      private def setEx(s: SetExRequest): Future[CommandResponse] = {
         import s._
         transaction match {
           case Some(tc) =>
-            run(s)(tc.setex(key, expires.toSeconds.toInt, value)) { r =>
-              txState.append(ResponseF[String](r, { _ =>
+            run(s)(tc.setex(key, expires.toSeconds.toInt, value)) { result =>
+              txState.append(ResponseF[String](result, { _ =>
                 SetExSucceeded(UUID.randomUUID(), id)
               }))
               SetExSuspended(UUID.randomUUID(), id)
@@ -391,13 +866,13 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def get(g: GetRequest): Unit = {
+      private def get(g: GetRequest): Future[CommandResponse] = {
         import g._
         transaction match {
           case Some(tc) =>
             run(g)(tc.get(key)) { result =>
-              txState.append(ResponseF[String](result, { r =>
-                GetSucceeded(UUID.randomUUID(), id, Option(r.get))
+              txState.append(ResponseF[String](result, { result =>
+                GetSucceeded(UUID.randomUUID(), id, Option(result.get))
               }))
               GetSuspended(UUID.randomUUID(), id)
             }(
@@ -410,7 +885,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def multi(m: MultiRequest): Unit = {
+      private def multi(m: MultiRequest): Future[CommandResponse] = {
         run(m)(jedis.multi()) { result =>
           transaction = Some(result)
           MultiSucceeded(UUID.randomUUID(), m.id)
@@ -419,11 +894,11 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }()
       }
 
-      private def ping(p: PingRequest): Unit = {
+      private def ping(p: PingRequest): Future[CommandResponse] = {
         import p._
         transaction match {
-          case Some(v) =>
-            run(p)(v.ping) { r =>
+          case Some(tc: Transaction with PingArgTxIF) =>
+            run(p)(tc.pingArg(p.message)) { r =>
               txState.append(ResponseF[String](r, { r =>
                 PingSucceeded(UUID.randomUUID(), id, r.get)
               }))
@@ -432,7 +907,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
               PingFailed(UUID.randomUUID(), id, RedisIOException(Some(t.getMessage), Some(t)))
             }()
           case None =>
-            run(p)(jedis.ping) {
+            run(p)(jedis.pingArg(p.message)) {
               PingSucceeded(UUID.randomUUID(), id, _)
             } { t =>
               PingFailed(UUID.randomUUID(), id, RedisIOException(Some(t.getMessage), Some(t)))
@@ -474,14 +949,94 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         resultCallback = getAsyncCallback[RequestWithResult](handleResult)
         jedis = (connectionTimeout, socketTimeout) match {
           case (Some(ct), None) =>
-            new Jedis(host, port, if (ct.isFinite()) ct.toSeconds.toInt else 0)
+            new Jedis(host, port, if (ct.isFinite()) ct.toSeconds.toInt else 0) with PingArgIF {
+
+              val custom = new Client(host, port) {
+                def pingArg(argOpt: Option[String]): Unit = {
+                  argOpt match {
+                    case None =>
+                      ping()
+                    case Some(arg) =>
+                      sendCommand(Command.PING, arg.getBytes)
+                  }
+                }
+              }
+
+              override def multi(): Transaction = {
+                this.custom.multi()
+                new Transaction(this.custom) with PingArgTxIF {
+                  override def pingArg(arg: Option[String]): Response[String] = {
+                    custom.pingArg(arg)
+                    getResponse(BuilderFactory.STRING)
+                  }
+                }
+              }
+
+              def pingArg(arg: Option[String]): String = {
+                custom.pingArg(arg)
+                custom.getStatusCodeReply
+              }
+            }
           case (Some(ct), Some(st)) =>
             new Jedis(host,
                       port,
                       if (ct.isFinite()) ct.toSeconds.toInt else 0,
-                      if (st.isFinite()) st.toSeconds.toInt else 0)
+                      if (st.isFinite()) st.toSeconds.toInt else 0) with PingArgIF {
+              val custom = new Client(host, port) {
+                def pingArg(argOpt: Option[String]): Unit = {
+                  argOpt match {
+                    case None =>
+                      ping()
+                    case Some(arg) =>
+                      sendCommand(Command.PING, arg.getBytes)
+                  }
+                }
+              }
+
+              override def multi(): Transaction = {
+                this.custom.multi()
+                new Transaction(this.custom) with PingArgTxIF {
+                  override def pingArg(arg: Option[String]): Response[String] = {
+                    custom.pingArg(arg)
+                    getResponse(BuilderFactory.STRING)
+                  }
+                }
+              }
+
+              def pingArg(arg: Option[String]): String = {
+                custom.pingArg(arg)
+                custom.getStatusCodeReply
+              }
+            }
           case _ =>
-            new Jedis(host, port)
+            new Jedis(host, port) with PingArgIF {
+              val custom = new Client(host, port) {
+                def pingArg(argOpt: Option[String]): Unit = {
+                  argOpt match {
+                    case None =>
+                      ping()
+                    case Some(arg) =>
+                      sendCommand(Command.PING, arg.getBytes)
+
+                  }
+                }
+              }
+
+              override def multi(): Transaction = {
+                this.custom.multi()
+                new Transaction(this.custom) with PingArgTxIF {
+                  override def pingArg(arg: Option[String]): Response[String] = {
+                    custom.pingArg(arg)
+                    getResponse(BuilderFactory.STRING)
+                  }
+                }
+              }
+
+              def pingArg(arg: Option[String]): String = {
+                custom.pingArg(arg)
+                custom.getStatusCodeReply
+              }
+            }
         }
         promise.success(jedis)
         pull(in)
@@ -521,6 +1076,13 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
       setHandler(
         out,
         new OutHandler {
+
+          override def onDownstreamFinish(): Unit = {
+            log.debug("onDownstreamFinish")
+            completionState = Some(Success(()))
+            checkForCompletion()
+          }
+
           override def onPull(): Unit = {
             log.debug("onPull")
             tryToExecute()

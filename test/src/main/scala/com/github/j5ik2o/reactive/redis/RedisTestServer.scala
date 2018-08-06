@@ -102,11 +102,11 @@ class RedisTestServer(mode: RedisMode = RedisMode.Standalone,
     f
   }
 
-  def start()(implicit ec: ExecutionContext): Unit = {
+  def start(_port: Option[Int] = None)(implicit ec: ExecutionContext): Unit = {
     assertRedisBinaryPresent()
     findAddress()
     logger.info("redis test server will be started")
-    val port = getPort
+    val port = _port.getOrElse(getPort)
     val conf = createConfigFile(port, masterPortOpt).getAbsolutePath
     val cmd: Seq[String] = if (mode == RedisMode.Sentinel) {
       Seq(path, conf, "--sentinel")
@@ -132,9 +132,9 @@ class RedisTestServer(mode: RedisMode = RedisMode.Standalone,
     }
   }
 
-  def restart()(implicit ec: ExecutionContext): Unit = {
+  def restart(_port: Option[Int] = None)(implicit ec: ExecutionContext): Unit = {
     stop()
-    start()
+    start(_port)
   }
 
 }

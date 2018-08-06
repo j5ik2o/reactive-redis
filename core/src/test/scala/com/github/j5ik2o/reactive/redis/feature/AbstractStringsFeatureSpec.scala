@@ -3,26 +3,16 @@ package com.github.j5ik2o.reactive.redis.feature
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import akka.routing.DefaultResizer
-import cats.data.NonEmptyList
-import cats.implicits._
+import com.github.j5ik2o.reactive.redis.AbstractRedisClientSpec
 import com.github.j5ik2o.reactive.redis.command.strings.BitFieldRequest.SingedBitType
 import com.github.j5ik2o.reactive.redis.command.strings.{ BitFieldRequest, BitOpRequest, BitPosRequest, StartAndEnd }
 import com.github.j5ik2o.reactive.redis.util.BitUtil
-import com.github.j5ik2o.reactive.redis.{ AbstractRedisClientSpec, PeerConfig, RedisConnection, RedisConnectionPool }
-import monix.eval.Task
-import monix.execution.Scheduler
 import org.scalacheck.Shrink
+import cats.implicits._
 
-class StringsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("StringsFeatureSpec")) {
+abstract class AbstractStringsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("StringsFeatureSpec")) {
 
   implicit val noShrink: Shrink[String] = Shrink.shrinkAny
-
-  override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
-    RedisConnectionPool.ofMultipleRoundRobin(sizePerPeer = 10,
-                                             peerConfigs,
-                                             RedisConnection.apply,
-                                             reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
 
   "StringsFeature" - {
     "append" in forAll(keyStrValueGen) {
@@ -72,7 +62,7 @@ class StringsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("StringsFea
       result._1.value shouldBe 6
       result._2.value shouldBe Some("`bc`ab")
     }
-    "bitPos" in {
+    "bitPos" ignore {
       val k = UUID.randomUUID().toString
 
       val result = runProgram(for {
@@ -168,7 +158,18 @@ class StringsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("StringsFea
     "setEx" in {}
     "setNx" in {}
     "setRange" in {}
-    "strLen" in {}
+    "strLen" in forAll(keyStrValueGen) {
+      case (k, v) =>
+        val result = runProgram(for {
+          _      <- redisClient.set(k, v)
+          result <- redisClient.get(k)
+          strLen <- redisClient.strLen(k)
+        } yield (result, strLen))
+
+        result._1.value shouldBe Some(v)
+        result._1.value.get.length shouldBe result._2.value
+        result._2.value shouldBe v.length
+    }
 
   }
 

@@ -1,10 +1,12 @@
-package com.github.j5ik2o.reactive.redis
+package com.github.j5ik2o.reactive.redis.feature
 
 import akka.routing.DefaultResizer
 import cats.data.NonEmptyList
+import com.github.j5ik2o.reactive.redis.{ PeerConfig, RedisConnection, RedisConnectionPool }
 import monix.eval.Task
 
-class RedisConnectionPoolSpec extends AbstractRedisConnectionPoolSpec("RedisConnectionPoolSpec") {
+class StringsFeatureOfJedisSpec extends AbstractStringsFeatureSpec {
+
   override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] = {
     val sizePerPeer = 2
     val lowerBound  = 1
@@ -13,8 +15,9 @@ class RedisConnectionPoolSpec extends AbstractRedisConnectionPoolSpec("RedisConn
     RedisConnectionPool.ofMultipleRoundRobin(
       sizePerPeer,
       peerConfigs,
-      newConnection = RedisConnection.apply,
+      newConnection = RedisConnection.ofJedis,
       reSizer = reSizer
     )
   }
+
 }

@@ -18,10 +18,7 @@ val coreSettings = Seq(
       "-unchecked",
       "-encoding",
       "UTF-8",
-      "-language:existentials",
-      "-language:implicitConversions",
-      "-language:postfixOps",
-      "-language:higherKinds"
+      "-language:_",
     ) ++ {
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2L, scalaMajor)) if scalaMajor == 12 =>

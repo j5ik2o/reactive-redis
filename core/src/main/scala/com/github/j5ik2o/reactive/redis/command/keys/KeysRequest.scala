@@ -22,7 +22,7 @@ final case class KeysRequest(id: UUID, pattern: String) extends CommandRequest w
 
   override protected lazy val parseResponse: Handler = {
     case (ArrayExpr(values), next) =>
-      (KeysSucceeded(UUID.randomUUID(), id, values.asInstanceOf[Seq[StringExpr]].map(_.value)), next)
+      (KeysSucceeded(UUID.randomUUID(), id, values.asInstanceOf[Seq[StringExpr]].map(_.value).sorted), next)
     case (SimpleExpr(QUEUED), next) =>
       (KeysSuspended(UUID.randomUUID(), id), next)
     case (ErrorExpr(msg), next) =>

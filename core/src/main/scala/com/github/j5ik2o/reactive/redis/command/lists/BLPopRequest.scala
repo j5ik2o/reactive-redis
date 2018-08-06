@@ -21,7 +21,7 @@ final case class BLPopRequest(id: UUID, keys: NonEmptyList[String], timeout: Dur
 
   private def timetoutToSeconds: Long = if (timeout.isFinite()) timeout.toSeconds else 0
 
-  override def asString: String = s"BLPOP ${keys.toList.mkString(" ")} ${timetoutToSeconds}"
+  override def asString: String = s"BLPOP ${keys.toList.mkString(" ")} $timetoutToSeconds"
 
   override protected lazy val responseParser: P[Expr] = fastParse(stringArrayReply | simpleStringReply)
 
