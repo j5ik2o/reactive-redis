@@ -19,7 +19,7 @@ final case class MSetRequest(id: UUID, values: Map[String, Any]) extends Command
       case (r, (k, v)) =>
         r + s""" $k "$v""""
     }
-    s"MSET $keyWithValues"
+    s"MSET$keyWithValues"
   }
 
   override protected lazy val responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)

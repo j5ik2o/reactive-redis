@@ -19,6 +19,8 @@ final case class WatchRequest(id: UUID, keys: Set[String]) extends CommandReques
   override protected lazy val responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
 
   override protected lazy val parseResponse: Handler = {
+    case (SimpleExpr(QUEUED), next) =>
+      (WatchSuspended(UUID.randomUUID(), id), next)
     case (SimpleExpr(OK), next) =>
       (WatchSucceeded(UUID.randomUUID(), id), next)
     case (ErrorExpr(msg), next) =>
@@ -29,4 +31,5 @@ final case class WatchRequest(id: UUID, keys: Set[String]) extends CommandReques
 
 sealed trait WatchResponse                                                    extends CommandResponse
 final case class WatchSucceeded(id: UUID, requestId: UUID)                    extends WatchResponse
+final case class WatchSuspended(id: UUID, requestId: UUID)                    extends WatchResponse
 final case class WatchFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends WatchResponse

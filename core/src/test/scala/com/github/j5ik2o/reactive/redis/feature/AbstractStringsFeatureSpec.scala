@@ -41,9 +41,9 @@ abstract class AbstractStringsFeatureSpec extends AbstractRedisClientSpec(ActorS
     }
     "bitField" in {
       val k = UUID.randomUUID().toString
-
       val result = runProgram(for {
-        br <- redisClient.bitField(k, BitFieldRequest.IncrBy(SingedBitType(5), 100, 1))
+        br <- redisClient
+          .bitField(k, BitFieldRequest.IncrBy(bitType = SingedBitType(bit = 5), offset = 100, increment = 1))
       } yield br)
 
       result.value shouldBe List(1)
@@ -62,23 +62,23 @@ abstract class AbstractStringsFeatureSpec extends AbstractRedisClientSpec(ActorS
       result._1.value shouldBe 6
       result._2.value shouldBe Some("`bc`ab")
     }
-    "bitPos" ignore {
+    "bitPos" in {
       val k = UUID.randomUUID().toString
 
       val result = runProgram(for {
-        _   <- redisClient.set(k, "\\xff\\xf0\\x00")
-        br1 <- redisClient.bitPos(k, 0)
-        _   <- redisClient.set(k, "\\x00\\xff\\xf0")
-        br2 <- redisClient.bitPos(k, 1, Some(BitPosRequest.StartAndEnd(0)))
-        br3 <- redisClient.bitPos(k, 1, Some(BitPosRequest.StartAndEnd(2)))
-        _   <- redisClient.set(k, "\\x00\\x00\\x00")
-        br4 <- redisClient.bitPos(k, 1, None)
-      } yield (br1, br2, br3, br4))
+        _   <- redisClient.set(k, String.valueOf(0))
+        _   <- redisClient.setBit(k, 3, 1)
+        _   <- redisClient.setBit(k, 7, 1)
+        _   <- redisClient.setBit(k, 13, 1)
+        _   <- redisClient.setBit(k, 39, 1)
+        br1 <- redisClient.bitPos(k, 1)
+        br2 <- redisClient.bitPos(k, 0)
+        br3 <- redisClient.bitPos(k, 1, Some(BitPosRequest.StartAndEnd(1)))
+      } yield (br1, br2, br3))
 
-      result._1.value shouldBe 12
-      result._2.value shouldBe 8
-      result._3.value shouldBe 16
-      result._4.value shouldBe -1
+      result._1.value shouldBe 2
+      result._2.value shouldBe 0
+      result._3.value shouldBe 13
     }
     "decr" in forAll(keyNumValueGen) {
       case (k, v) =>

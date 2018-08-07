@@ -9,13 +9,13 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-final case class ExistsRequest(id: UUID, keys: NonEmptyList[String]) extends CommandRequest with StringParsersSupport {
+final case class ExistsRequest(id: UUID, key: String) extends CommandRequest with StringParsersSupport {
 
   override type Response = ExistsResponse
 
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = s"EXISTS ${keys.toList.mkString(" ")}"
+  override def asString: String = s"EXISTS $key"
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
