@@ -4,7 +4,7 @@ import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.command.CommandResponse
 import com.github.j5ik2o.reactive.redis.command.transactions._
-import com.github.j5ik2o.reactive.redis.{ ReaderTTask, ReaderTTaskRedisConnection, RedisClient }
+import com.github.j5ik2o.reactive.redis._
 
 /**
   * https://redis.io/commands#transactions
@@ -14,7 +14,7 @@ trait TransactionsAPI[M[_]] {
   def exec(): M[Seq[CommandResponse]]
   def multi(): M[Unit]
   def unwatch(): M[Unit]
-  def watch(keys: Set[String]): M[Unit]
+  def watch(keys: Set[String]): M[Result[Unit]]
 }
 
 trait TransactionsFeature extends TransactionsAPI[ReaderTTaskRedisConnection] {
@@ -40,9 +40,10 @@ trait TransactionsFeature extends TransactionsAPI[ReaderTTaskRedisConnection] {
     case UnwatchFailed(_, _, ex) => ReaderTTask.raiseError(ex)
   }
 
-  override def watch(keys: Set[String]): ReaderTTaskRedisConnection[Unit] =
+  override def watch(keys: Set[String]): ReaderTTaskRedisConnection[Result[Unit]] =
     send(WatchRequest(UUID.randomUUID(), keys)).flatMap {
-      case WatchSucceeded(_, _)  => ReaderTTask.pure(())
+      case WatchSuspended(_, _)  => ReaderTTask.pure(Suspended)
+      case WatchSucceeded(_, _)  => ReaderTTask.pure(Provided(()))
       case WatchFailed(_, _, ex) => ReaderTTask.raiseError(ex)
     }
 
