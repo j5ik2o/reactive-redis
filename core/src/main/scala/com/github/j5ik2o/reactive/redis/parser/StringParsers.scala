@@ -31,13 +31,18 @@ object StringParsers {
       NumberExpr(minus.map(_ => -1).getOrElse(1) * n.toInt)
   }
 
-  private val arrayPrefix: P[Int] = P("*" ~/ digit.rep(1).!).map(_.toInt)
+  private val arrayPrefix: P[Int] = P("*" ~/ "-".!.? ~/ digit.rep(1).!).map {
+    case (minus, n) =>
+      minus.map(_ => -1).getOrElse(1) * n.toInt
+  }
 
   private def array[A <: Expr](elementExpr: P[A]): P[ArrayExpr[A]] =
     P(arrayPrefixWithCrLf ~/ elementExpr.rep(sep = crlf)).map {
+      case (ArraySizeExpr(-1), _) =>
+        ArrayExpr(Seq.empty)
       case (size, values) =>
         require(size.value == values.size)
-        ArrayExpr(values)
+        ArrayExpr(values.toVector)
     }
 
   private val stringOptArrayElement: P[StringOptExpr] = P(length ~/ crlf).flatMap { l =>

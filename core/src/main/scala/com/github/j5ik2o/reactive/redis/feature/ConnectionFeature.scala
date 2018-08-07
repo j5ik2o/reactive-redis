@@ -13,6 +13,7 @@ trait ConnectionAPI[M[_]] {
   def echo(message: String): M[Result[String]]
   def ping(message: Option[String] = None): M[Result[String]]
   def quit(): M[Unit]
+  def select(index: Int): M[Result[Unit]]
 }
 
 trait ConnectionFeature extends ConnectionAPI[ReaderTTaskRedisConnection] {
@@ -43,8 +44,14 @@ trait ConnectionFeature extends ConnectionAPI[ReaderTTaskRedisConnection] {
     case QuitFailed(_, _, ex) => ReaderTTask.raiseError(ex)
   }
 
+  override def select(index: Int): ReaderTTaskRedisConnection[Result[Unit]] =
+    send(SelectRequest(UUID.randomUUID(), index)).flatMap {
+      case SelectSuspended(_, _)  => ReaderTTask.pure(Suspended)
+      case SelectSucceeded(_, _)  => ReaderTTask.pure(Provided(()))
+      case SelectFailed(_, _, ex) => ReaderTTask.raiseError(ex)
+    }
+
   /**
-  * SELECT
   * SWAPDB
   */
 

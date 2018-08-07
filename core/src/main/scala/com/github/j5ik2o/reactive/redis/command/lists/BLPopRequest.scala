@@ -11,7 +11,7 @@ import fastparse.all._
 
 import scala.concurrent.duration.Duration
 
-final case class BLPopRequest(id: UUID, keys: NonEmptyList[String], timeout: Duration)
+final class BLPopRequest(val id: UUID, val keys: NonEmptyList[String], val timeout: Duration)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -23,7 +23,7 @@ final case class BLPopRequest(id: UUID, keys: NonEmptyList[String], timeout: Dur
 
   override def asString: String = s"BLPOP ${keys.toList.mkString(" ")} $timetoutToSeconds"
 
-  override protected lazy val responseParser: P[Expr] = fastParse(stringArrayReply | simpleStringReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(stringArrayReply | simpleStringReply | errorReply)
 
   override protected lazy val parseResponse: Handler = {
     case (ArrayExpr(values), next) =>
@@ -34,6 +34,12 @@ final case class BLPopRequest(id: UUID, keys: NonEmptyList[String], timeout: Dur
       (BLPopFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
+}
+
+object BLPopRequest {
+  def apply(id: UUID, key: String, timeout: Duration): BLPopRequest =
+    new BLPopRequest(id, NonEmptyList.one(key), timeout)
+  def apply(id: UUID, keys: NonEmptyList[String], timeout: Duration): BLPopRequest = new BLPopRequest(id, keys, timeout)
 }
 
 sealed trait BLPopResponse                                                      extends CommandResponse

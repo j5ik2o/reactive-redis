@@ -21,7 +21,7 @@ abstract class AbstractRedisClientSpec(system: ActorSystem) extends AbstractActo
     super.beforeAll()
     val peerConfigs = NonEmptyList.of(
       PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.getPort),
-                 requestTimeout = 3 second,
+                 requestTimeout = 5 second,
                  connectionBackoffConfig = Some(BackoffConfig()))
     )
     _connectionPool = createConnectionPool(peerConfigs)

@@ -11,7 +11,7 @@ import fastparse.all._
 
 import scala.concurrent.duration.Duration
 
-final case class BRPopRequest(id: UUID, keys: NonEmptyList[String], timeout: Duration)
+final class BRPopRequest(val id: UUID, val keys: NonEmptyList[String], val timeout: Duration)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -34,7 +34,19 @@ final case class BRPopRequest(id: UUID, keys: NonEmptyList[String], timeout: Dur
   }
 }
 
-sealed trait BRPopResponse                                                      extends CommandResponse
-final case class BRPopSuspended(id: UUID, requestId: UUID)                      extends BRPopResponse
+object BRPopRequest {
+
+  def apply(id: UUID, key: String, timeout: Duration): BRPopRequest =
+    new BRPopRequest(id, NonEmptyList.one(key), timeout)
+
+  def apply(id: UUID, keys: NonEmptyList[String], timeout: Duration): BRPopRequest = new BRPopRequest(id, keys, timeout)
+
+}
+
+sealed trait BRPopResponse extends CommandResponse
+
+final case class BRPopSuspended(id: UUID, requestId: UUID) extends BRPopResponse
+
 final case class BRPopSucceeded(id: UUID, requestId: UUID, values: Seq[String]) extends BRPopResponse
-final case class BRPopFailed(id: UUID, requestId: UUID, ex: RedisIOException)   extends BRPopResponse
+
+final case class BRPopFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends BRPopResponse

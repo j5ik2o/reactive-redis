@@ -13,9 +13,9 @@ import scala.concurrent.duration.FiniteDuration
   * https://redis.io/commands#generics
   */
 trait KeysAPI[M[_]] {
-  def del(keys: NonEmptyList[String]): M[Result[Long]]
+  def del(key: String): M[Result[Long]]
   def dump(key: String): M[Result[Option[Array[Byte]]]]
-  def exists(keys: NonEmptyList[String]): M[Result[Boolean]]
+  def exists(key: String): M[Result[Boolean]]
   def expire(key: String, seconds: FiniteDuration): M[Result[Boolean]]
   def expireAt(key: String, expiresAt: ZonedDateTime): M[Result[Boolean]]
   def keys(pattern: String): M[Result[Seq[String]]]
@@ -30,8 +30,8 @@ trait KeysAPI[M[_]] {
 trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
   this: RedisClient =>
 
-  override def del(keys: NonEmptyList[String]): ReaderTTaskRedisConnection[Result[Long]] =
-    send(DelRequest(UUID.randomUUID(), keys)).flatMap {
+  override def del(key: String): ReaderTTaskRedisConnection[Result[Long]] =
+    send(DelRequest(UUID.randomUUID(), key)).flatMap {
       case DelSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case DelSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
       case DelFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
@@ -44,8 +44,8 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
       case DumpFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
-  override def exists(keys: NonEmptyList[String]): ReaderTTaskRedisConnection[Result[Boolean]] =
-    send(ExistsRequest(UUID.randomUUID(), keys)).flatMap {
+  override def exists(key: String): ReaderTTaskRedisConnection[Result[Boolean]] =
+    send(ExistsRequest(UUID.randomUUID(), key)).flatMap {
       case ExistsSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case ExistsSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
       case ExistsFailed(_, _, ex)        => ReaderTTask.raiseError(ex)

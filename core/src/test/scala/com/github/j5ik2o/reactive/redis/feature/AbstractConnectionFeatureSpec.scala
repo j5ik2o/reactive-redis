@@ -39,6 +39,11 @@ abstract class AbstractConnectionFeatureSpec extends AbstractRedisClientSpec(Act
         } yield r)
         result.value shouldBe value
     }
+    "select" in {
+      runProgram(for {
+        _ <- redisClient.select(1)
+      } yield ())
+    }
     "quit" in {
       an[RedisRequestException] should be thrownBy {
         runProgram(for {

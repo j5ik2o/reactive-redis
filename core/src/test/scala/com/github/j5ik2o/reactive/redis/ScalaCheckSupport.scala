@@ -12,10 +12,13 @@ trait ScalaCheckSupport {
     value <- Gen.listOf(Gen.alphaNumChar).map(_.mkString).suchThat(_.nonEmpty)
   } yield (key, value)
 
-  val keyStrValuesGen: Gen[(String, List[String])] = for {
-    key    <- Gen.listOf(Gen.alphaNumChar).map(_.mkString).suchThat(_.nonEmpty)
-    values <- Gen.listOf(Gen.listOf(Gen.alphaNumChar).map(_.mkString).suchThat(_.nonEmpty)).suchThat(_.nonEmpty)
-  } yield (key, values)
+  def keyStrValuesGen(valuesMinSize: Int = 1): Gen[(String, List[String])] =
+    for {
+      key <- Gen.listOf(Gen.alphaNumChar).map(_.mkString).suchThat(_.nonEmpty)
+      values <- Gen
+        .listOfN(valuesMinSize, Gen.listOf(Gen.alphaNumChar).map(_.mkString).suchThat(_.nonEmpty))
+        .suchThat(_.nonEmpty)
+    } yield (key, values)
 
   val keyFieldStrValueGen: Gen[(String, String, String)] = for {
     key   <- Gen.listOf(Gen.alphaNumChar).map(_.mkString).suchThat(_.nonEmpty)
