@@ -161,8 +161,8 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             //            case m: MigrateRequest   =>
             //            case m: MoveRequest      =>
             //            case p: PersistRequest   =>
-            case p: PExpireRequest => pexpire(p)
-            //            case p: PExpireAtRequest =>
+            case p: PExpireRequest   => pexpire(p)
+            case p: PExpireAtRequest => pexpireAt(p)
             // -- Lits
             case b: BLPopRequest  => blpop(b)
             case b: BRPopRequest  => brpop(b)
@@ -179,6 +179,27 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case h: HSetRequest    => hset(h)
             case h: HSetNxRequest  => hsetnx(h)
           }
+        }
+      }
+
+      private def pexpireAt(p: PExpireAtRequest) = {
+        transaction match {
+          case Some(tc) =>
+            run(p)(tc.pexpireAt(p.key, p.millisecondsTimestamp.toInstant.toEpochMilli)) { result =>
+              txState.append(ResponseF[lang.Long](result, { s =>
+                PExpireAtSucceeded(UUID.randomUUID(), p.id, s.get == 1)
+              }))
+              PExpireAtSuspended(UUID.randomUUID(), p.id)
+            } { t =>
+              PExpireAtFailed(UUID.randomUUID(), p.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(p)(jedis.pexpireAt(p.key, p.millisecondsTimestamp.toInstant.toEpochMilli)) { result =>
+              PExpireAtSucceeded(UUID.randomUUID(), p.id, result == 1)
+            } { t =>
+              PExpireAtFailed(UUID.randomUUID(), p.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+
         }
       }
 

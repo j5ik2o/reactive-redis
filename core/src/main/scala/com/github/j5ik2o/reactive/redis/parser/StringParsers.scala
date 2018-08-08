@@ -42,7 +42,7 @@ object StringParsers {
         ArrayExpr(Seq.empty)
       case (size, values) =>
         require(size.value == values.size)
-        ArrayExpr(values.toVector)
+        ArrayExpr(values)
     }
 
   private val stringOptArrayElement: P[StringOptExpr] = P(length ~/ crlf).flatMap { l =>

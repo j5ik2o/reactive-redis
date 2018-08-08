@@ -45,8 +45,8 @@ class RedisTestServer(mode: RedisMode = RedisMode.Standalone,
 
   private[this] def assertRedisBinaryPresent()(implicit ec: ExecutionContext): Unit = {
     val p = new ProcessBuilder(path, "--help").start()
-    printlnStreamFuture(new BufferedReader(new InputStreamReader(p.getInputStream)))
-    printlnStreamFuture(new BufferedReader(new InputStreamReader(p.getErrorStream)))
+    logStreamFuture(new BufferedReader(new InputStreamReader(p.getInputStream)), output = false)
+    logStreamFuture(new BufferedReader(new InputStreamReader(p.getErrorStream)), output = false)
     p.waitFor()
     val exitValue = p.exitValue()
     require(exitValue == 0 || exitValue == 1, "redis-server binary must be present.")
@@ -92,9 +92,10 @@ class RedisTestServer(mode: RedisMode = RedisMode.Standalone,
     f
   }
 
-  protected def printlnStreamFuture(br: BufferedReader)(implicit ec: ExecutionContext): Future[Unit] = {
+  protected def logStreamFuture(br: BufferedReader,
+                                output: Boolean = true)(implicit ec: ExecutionContext): Future[Unit] = {
     val f = Future {
-      Iterator.continually(br.readLine()).takeWhile(_ != null).foreach(logger.debug)
+      Iterator.continually(br.readLine()).takeWhile(_ != null).foreach(msg => if (output) logger.debug(msg))
     }
     f.onComplete { _ =>
       br.close()
@@ -116,8 +117,8 @@ class RedisTestServer(mode: RedisMode = RedisMode.Standalone,
     val builder  = new ProcessBuilder(cmd.asJava)
     val _process = builder.start()
     Thread.sleep(200)
-    printlnStreamFuture(new BufferedReader(new InputStreamReader(_process.getInputStream)))
-    printlnStreamFuture(new BufferedReader(new InputStreamReader(_process.getErrorStream)))
+    logStreamFuture(new BufferedReader(new InputStreamReader(_process.getInputStream)))
+    logStreamFuture(new BufferedReader(new InputStreamReader(_process.getErrorStream)))
     process = Some(_process)
     Thread.sleep(200)
     logger.info("redis test server has started")
