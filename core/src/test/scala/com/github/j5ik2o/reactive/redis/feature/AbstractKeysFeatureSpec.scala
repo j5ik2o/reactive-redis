@@ -36,7 +36,7 @@ abstract class AbstractKeysFeatureSpec extends AbstractRedisClientSpec(ActorSyst
         val result1 = runProgram(for {
           _  <- redisClient.set(k, v)
           r1 <- redisClient.expire(k, 1 seconds)
-          _  <- ReaderTTask.pure(Thread.sleep(1000))
+          _  <- ReaderTTask.pure(Thread.sleep((1000 * timeFactor).toInt))
           r2 <- redisClient.exists(k)
         } yield (r1, r2))
         result1._1.value shouldBe true
@@ -47,7 +47,7 @@ abstract class AbstractKeysFeatureSpec extends AbstractRedisClientSpec(ActorSyst
         val result1 = runProgram(for {
           _  <- redisClient.set(k, v)
           r1 <- redisClient.expireAt(k, ZonedDateTime.now.plusSeconds(1))
-          _  <- ReaderTTask.pure(Thread.sleep(1000))
+          _  <- ReaderTTask.pure(Thread.sleep((1000 * timeFactor).toInt))
           r2 <- redisClient.exists(k)
         } yield (r1, r2))
         result1._1.value shouldBe true
@@ -69,7 +69,7 @@ abstract class AbstractKeysFeatureSpec extends AbstractRedisClientSpec(ActorSyst
         val result1 = runProgram(for {
           _  <- redisClient.set(k, v)
           r1 <- redisClient.pExpire(k, 1 seconds)
-          _  <- ReaderTTask.pure(Thread.sleep(1500))
+          _  <- ReaderTTask.pure(Thread.sleep((1500 * timeFactor).toInt))
           r2 <- redisClient.exists(k)
         } yield (r1, r2))
         result1._1.value shouldBe true
@@ -80,7 +80,7 @@ abstract class AbstractKeysFeatureSpec extends AbstractRedisClientSpec(ActorSyst
         val result1 = runProgram(for {
           _  <- redisClient.set(k, v)
           r1 <- redisClient.pExpireAt(k, ZonedDateTime.now.plusSeconds(1))
-          _  <- ReaderTTask.pure(Thread.sleep(1000))
+          _  <- ReaderTTask.pure(Thread.sleep((1500 * timeFactor).toInt))
           r2 <- redisClient.exists(k)
         } yield (r1, r2))
         result1._1.value shouldBe true

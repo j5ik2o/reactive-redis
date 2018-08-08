@@ -170,6 +170,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case l: LPushRequest  => lpush(l)
             case r: RPushRequest  => rpush(r)
             case l: LRangeRequest => lrange(l)
+            case l: LLenRequest   => llen(l)
 
             // --- Hashes
             case h: HDelRequest    => hdel(h)
@@ -182,6 +183,25 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
+      private def llen(l: LLenRequest) = {
+        transaction match {
+          case Some(tc) =>
+            run(l)(tc.llen(l.key)) { result =>
+              txState.append(ResponseF[lang.Long](result, { p =>
+                LLenSucceeded(UUID.randomUUID(), l.id, p.get)
+              }))
+              LLenSuspended(UUID.randomUUID(), l.id)
+            } { t =>
+              LLenFailed(UUID.randomUUID(), l.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(l)(jedis.llen(l.key)) { result =>
+              LLenSucceeded(UUID.randomUUID(), l.id, result)
+            } { t =>
+              LLenFailed(UUID.randomUUID(), l.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
       private def pexpireAt(p: PExpireAtRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
