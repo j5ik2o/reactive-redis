@@ -11,12 +11,18 @@ import scala.concurrent.duration._
 final case class PeerConfig(remoteAddress: InetSocketAddress,
                             localAddress: Option[InetSocketAddress] = None,
                             options: immutable.Seq[SocketOption] = immutable.Seq.empty,
-                            halfClose: Boolean = false,
+                            halfClose: Boolean = true,
                             connectTimeout: Duration = Duration.Inf,
                             idleTimeout: Duration = Duration.Inf,
-                            backoffConfig: Option[BackoffConfig] = None,
+                            connectionBackoffConfig: Option[BackoffConfig] = None,
+                            requestTimeout: Duration = Duration.Inf,
+                            requestBackoffConfig: Option[BackoffConfig] = None,
                             requestBufferSize: Int = PeerConfig.DEFAULT_MAX_REQUEST_BUFFER_SIZE,
-                            overflowStrategy: OverflowStrategy = OverflowStrategy.backpressure)
+                            redisConnectionMode: RedisConnectionMode = RedisConnectionMode.QueueMode,
+                            overflowStrategyOnQueueMode: OverflowStrategy = OverflowStrategy.backpressure) {
+  def withQueueConnectionMode: PeerConfig = copy(redisConnectionMode = RedisConnectionMode.QueueMode)
+  def withActorConnectionMode: PeerConfig = copy(redisConnectionMode = RedisConnectionMode.ActorMode)
+}
 
 object PeerConfig {
   val DEFAULT_MAX_REQUEST_BUFFER_SIZE: Int = 1024

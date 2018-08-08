@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-final case class SetBitRequest(id: UUID, key: String, offset: Int, value: Int)
+final case class SetBitRequest(id: UUID, key: String, offset: Long, value: Long)
     extends CommandRequest
     with StringParsersSupport {
 

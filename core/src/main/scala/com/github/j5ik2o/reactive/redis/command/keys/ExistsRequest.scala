@@ -9,7 +9,9 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-final case class ExistsRequest(id: UUID, keys: NonEmptyList[String]) extends CommandRequest with StringParsersSupport {
+final class ExistsRequest(val id: UUID, val keys: NonEmptyList[String])
+    extends CommandRequest
+    with StringParsersSupport {
 
   override type Response = ExistsResponse
 
@@ -28,6 +30,11 @@ final case class ExistsRequest(id: UUID, keys: NonEmptyList[String]) extends Com
       (ExistsFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
+}
+
+object ExistsRequest {
+  def apply(id: UUID, keys: NonEmptyList[String]): ExistsRequest = new ExistsRequest(id, keys)
+  def apply(id: UUID, key: String, keys: String*): ExistsRequest = apply(id, NonEmptyList.of(key, keys: _*))
 }
 
 sealed trait ExistsResponse                                                    extends CommandResponse

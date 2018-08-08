@@ -10,7 +10,11 @@ import com.github.j5ik2o.reactive.redis.command.server.{
   FlushAllSuspended
 }
 
-trait ServerFeature {
+trait ServerAPI[M[_]] {
+  def flushAll(async: Boolean = false): M[Unit]
+}
+
+trait ServerFeature extends ServerAPI[ReaderTTaskRedisConnection] {
   this: RedisClient =>
 
   /*
@@ -35,7 +39,7 @@ trait ServerFeature {
    * DEBUG SEGFAULT
    */
 
-  def flushAll(async: Boolean = false): ReaderTTaskRedisConnection[Unit] =
+  override def flushAll(async: Boolean = false): ReaderTTaskRedisConnection[Unit] =
     send(FlushAllRequest(UUID.randomUUID(), async)).flatMap {
       case FlushAllSuspended(_, _)  => ReaderTTask.pure(Suspended)
       case FlushAllSucceeded(_, _)  => ReaderTTask.pure(Provided(()))

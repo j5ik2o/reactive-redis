@@ -3,26 +3,16 @@ package com.github.j5ik2o.reactive.redis.feature
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import akka.routing.DefaultResizer
-import cats.data.NonEmptyList
-import cats.implicits._
+import com.github.j5ik2o.reactive.redis.AbstractRedisClientSpec
 import com.github.j5ik2o.reactive.redis.command.strings.BitFieldRequest.SingedBitType
 import com.github.j5ik2o.reactive.redis.command.strings.{ BitFieldRequest, BitOpRequest, BitPosRequest, StartAndEnd }
 import com.github.j5ik2o.reactive.redis.util.BitUtil
-import com.github.j5ik2o.reactive.redis.{ AbstractRedisClientSpec, PeerConfig, RedisConnection, RedisConnectionPool }
-import monix.eval.Task
-import monix.execution.Scheduler
 import org.scalacheck.Shrink
+import cats.implicits._
 
-class StringsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("StringsFeatureSpec")) {
+abstract class AbstractStringsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("StringsFeatureSpec")) {
 
   implicit val noShrink: Shrink[String] = Shrink.shrinkAny
-
-  override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
-    RedisConnectionPool.ofMultipleRoundRobin(sizePerPeer = 10,
-                                             peerConfigs,
-                                             RedisConnection(_, _),
-                                             reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
 
   "StringsFeature" - {
     "append" in forAll(keyStrValueGen) {
@@ -51,9 +41,9 @@ class StringsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("StringsFea
     }
     "bitField" in {
       val k = UUID.randomUUID().toString
-
       val result = runProgram(for {
-        br <- redisClient.bitField(k, BitFieldRequest.IncrBy(SingedBitType(5), 100, 1))
+        br <- redisClient
+          .bitField(k, BitFieldRequest.IncrBy(bitType = SingedBitType(bit = 5), offset = 100, increment = 1))
       } yield br)
 
       result.value shouldBe List(1)
@@ -76,19 +66,19 @@ class StringsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("StringsFea
       val k = UUID.randomUUID().toString
 
       val result = runProgram(for {
-        _   <- redisClient.set(k, "\\xff\\xf0\\x00")
-        br1 <- redisClient.bitPos(k, 0)
-        _   <- redisClient.set(k, "\\x00\\xff\\xf0")
-        br2 <- redisClient.bitPos(k, 1, Some(BitPosRequest.StartAndEnd(0)))
-        br3 <- redisClient.bitPos(k, 1, Some(BitPosRequest.StartAndEnd(2)))
-        _   <- redisClient.set(k, "\\x00\\x00\\x00")
-        br4 <- redisClient.bitPos(k, 1, None)
-      } yield (br1, br2, br3, br4))
+        _   <- redisClient.set(k, String.valueOf(0))
+        _   <- redisClient.setBit(k, 3, 1)
+        _   <- redisClient.setBit(k, 7, 1)
+        _   <- redisClient.setBit(k, 13, 1)
+        _   <- redisClient.setBit(k, 39, 1)
+        br1 <- redisClient.bitPos(k, 1)
+        br2 <- redisClient.bitPos(k, 0)
+        br3 <- redisClient.bitPos(k, 1, Some(BitPosRequest.StartAndEnd(1)))
+      } yield (br1, br2, br3))
 
-      result._1.value shouldBe 12
-      result._2.value shouldBe 8
-      result._3.value shouldBe 16
-      result._4.value shouldBe -1
+      result._1.value shouldBe 2
+      result._2.value shouldBe 0
+      result._3.value shouldBe 13
     }
     "decr" in forAll(keyNumValueGen) {
       case (k, v) =>
@@ -168,7 +158,18 @@ class StringsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("StringsFea
     "setEx" in {}
     "setNx" in {}
     "setRange" in {}
-    "strLen" in {}
+    "strLen" in forAll(keyStrValueGen) {
+      case (k, v) =>
+        val result = runProgram(for {
+          _      <- redisClient.set(k, v)
+          result <- redisClient.get(k)
+          strLen <- redisClient.strLen(k)
+        } yield (result, strLen))
+
+        result._1.value shouldBe Some(v)
+        result._1.value.get.length shouldBe result._2.value
+        result._2.value shouldBe v.length
+    }
 
   }
 

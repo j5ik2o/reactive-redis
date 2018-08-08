@@ -13,7 +13,13 @@ object RedisConnectionPoolActor {
 
 }
 
-class RedisConnectionPoolActor(pool: Pool, connectionProps: NonEmptyList[Props]) extends Actor with ActorLogging {
+@SuppressWarnings(
+  Array("org.wartremover.warts.Null",
+        "org.wartremover.warts.Var",
+        "org.wartremover.warts.Serializable",
+        "org.wartremover.warts.MutableDataStructures")
+)
+final class RedisConnectionPoolActor(pool: Pool, connectionProps: NonEmptyList[Props]) extends Actor with ActorLogging {
 
   private val index = new AtomicLong(0L)
 

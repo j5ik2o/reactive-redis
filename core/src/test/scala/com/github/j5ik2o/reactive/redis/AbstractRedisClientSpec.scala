@@ -6,6 +6,9 @@ import akka.actor.ActorSystem
 import cats.data.NonEmptyList
 import monix.eval.Task
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
 abstract class AbstractRedisClientSpec(system: ActorSystem) extends AbstractActorSpec(system) {
 
   private var _redisClient: RedisClient                  = _
@@ -16,7 +19,11 @@ abstract class AbstractRedisClientSpec(system: ActorSystem) extends AbstractActo
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    val peerConfigs = NonEmptyList.of(PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.getPort)))
+    val peerConfigs = NonEmptyList.of(
+      PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.getPort),
+                 requestTimeout = (5 * timeFactor) second,
+                 connectionBackoffConfig = Some(BackoffConfig()))
+    )
     _connectionPool = createConnectionPool(peerConfigs)
     _redisClient = RedisClient()(system)
   }
@@ -27,12 +34,9 @@ abstract class AbstractRedisClientSpec(system: ActorSystem) extends AbstractActo
   }
 
   protected def runProgram[A](program: ReaderTTaskRedisConnection[A]): A = {
-    connectionPool
-      .withConnectionF { con =>
-        program.run(con)
-      }
-      .runAsync
-      .futureValue
+    Await.result(connectionPool.withConnectionF { con =>
+      program.run(con)
+    }.runAsync, Duration.Inf)
   }
 
 }

@@ -5,9 +5,16 @@ import cats.data.NonEmptyList
 import monix.eval.Task
 
 class RedisConnectionPoolSpec extends AbstractRedisConnectionPoolSpec("RedisConnectionPoolSpec") {
-  override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
-    RedisConnectionPool.ofMultipleRoundRobin(sizePerPeer = 10,
-                                             peerConfigs,
-                                             RedisConnection(_, _),
-                                             reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
+  override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] = {
+    val sizePerPeer = 2
+    val lowerBound  = 1
+    val upperBound  = 5
+    val reSizer     = Some(DefaultResizer(lowerBound, upperBound))
+    RedisConnectionPool.ofMultipleRoundRobin(
+      sizePerPeer,
+      peerConfigs,
+      newConnection = RedisConnection.apply,
+      reSizer = reSizer
+    )
+  }
 }

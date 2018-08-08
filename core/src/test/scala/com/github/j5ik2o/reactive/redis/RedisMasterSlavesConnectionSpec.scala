@@ -15,12 +15,18 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
 
   val redisClient = RedisClient()
 
-  override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
-    RedisConnectionPool.ofMultipleRoundRobin(sizePerPeer = 10,
-                                             peerConfigs,
-                                             RedisConnection(_, _),
-                                             reSizer = Some(DefaultResizer(lowerBound = 5, upperBound = 15)))
-
+  override protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] = {
+    val sizePerPeer = 2
+    val lowerBound  = 1
+    val upperBound  = 5
+    val reSizer     = Some(DefaultResizer(lowerBound, upperBound))
+    RedisConnectionPool.ofMultipleRoundRobin(
+      sizePerPeer,
+      peerConfigs,
+      newConnection = RedisConnection.apply,
+      reSizer = reSizer
+    )
+  }
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     startSlaveServers(1)
@@ -34,11 +40,12 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
         .toList
 
     connection = new RedisMasterSlavesConnection(
-      masterConnectionPoolFactory = RedisConnectionPool.ofSingleRoundRobin(3, masterPeerConfig, RedisConnection(_, _)),
-      slaveConnectionPoolFactory =
-        RedisConnectionPool.ofMultipleRoundRobin(5,
-                                                 NonEmptyList.of(slavePeerConfigs.head, slavePeerConfigs.tail: _*),
-                                                 RedisConnection(_, _))
+      masterConnectionPoolFactory = RedisConnectionPool.ofSingleRoundRobin(3, masterPeerConfig, RedisConnection.apply),
+      slaveConnectionPoolFactory = RedisConnectionPool.ofMultipleRoundRobin(
+        sizePerPeer = 5,
+        peerConfigs = NonEmptyList.of(slavePeerConfigs.head, slavePeerConfigs.tail: _*),
+        newConnection = RedisConnection.apply
+      )
     )
     Thread.sleep((1000 * timeFactor).toInt)
   }

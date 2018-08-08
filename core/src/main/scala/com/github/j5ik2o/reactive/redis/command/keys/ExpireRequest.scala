@@ -6,6 +6,7 @@ import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
+import scala.concurrent.duration._
 import fastparse.all._
 
 import scala.concurrent.duration.FiniteDuration
@@ -13,6 +14,8 @@ import scala.concurrent.duration.FiniteDuration
 final case class ExpireRequest(id: UUID, key: String, seconds: FiniteDuration)
     extends CommandRequest
     with StringParsersSupport {
+
+  require(seconds.gteq(1 seconds))
 
   override type Response = ExpireResponse
 

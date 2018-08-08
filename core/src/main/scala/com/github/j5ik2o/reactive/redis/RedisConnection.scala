@@ -1,22 +1,18 @@
 package com.github.j5ik2o.reactive.redis
 
-import java.time.ZonedDateTime
 import java.util.UUID
 
 import akka.NotUsed
-import akka.actor.{ ActorRef, ActorSystem }
-import akka.event.{ LogSource, Logging }
+import akka.actor.{ ActorSystem, SupervisorStrategy }
+import akka.event.LogSource
 import akka.stream._
 import akka.stream.scaladsl._
-import akka.util.{ ByteString, Timeout }
-import com.github.j5ik2o.reactive.redis.command.{ CommandRequestBase, CommandResponse }
-import com.github.j5ik2o.reactive.redis.experimental.jedis.RedisConnectionJedis
-import com.github.j5ik2o.reactive.redis.util.{ ActorSource, InTxRequestsAggregationFlow }
+import com.github.j5ik2o.reactive.redis.command.CommandRequestBase
+import com.github.j5ik2o.reactive.redis.experimental.jedis.RedisConnectionOfJedis
 import monix.eval.Task
 import monix.execution.Scheduler
 
 import scala.concurrent.duration._
-import scala.concurrent.{ Future, Promise }
 
 object RedisConnection {
 
@@ -26,18 +22,46 @@ object RedisConnection {
     override def getClazz(o: RedisConnection): Class[_] = o.getClass
   }
 
-  final val DEFAULT_DECIDER: Supervision.Decider = {
-    case _: StreamTcpException => Supervision.Restart
-    case _                     => Supervision.Stop
+  final val DEFAULT_SUPERVISION_DECIDER: Supervision.Decider = {
+    case _: StreamTcpException =>
+      Supervision.Stop
+    case _: Throwable =>
+      Supervision.Stop
   }
 
-  def ofJedis(peerConfig: PeerConfig,
-              supervisionDecider: Option[Supervision.Decider])(implicit system: ActorSystem): RedisConnection =
-    new RedisConnectionJedis(peerConfig, supervisionDecider)
+  final val DEFAULT_SUPERVISOR_STRATEGY_DECIDER: SupervisorStrategy.Decider =
+    ({
+      case _: Throwable => SupervisorStrategy.Stop
+    }: SupervisorStrategy.Decider).orElse(SupervisorStrategy.defaultDecider)
 
-  def apply(peerConfig: PeerConfig,
-            supervisionDecider: Option[Supervision.Decider])(implicit system: ActorSystem): RedisConnection =
-    new RedisConnectionImpl(peerConfig, supervisionDecider)
+  def ofJedis(peerConfig: PeerConfig, supervisionDecider: Option[Supervision.Decider], listeners: Seq[EventHandler])(
+      implicit system: ActorSystem
+  ): RedisConnection =
+    new RedisConnectionOfJedis(peerConfig, supervisionDecider, listeners)
+
+  def ofDefault(peerConfig: PeerConfig, supervisionDecider: Option[Supervision.Decider], listeners: Seq[EventHandler])(
+      implicit system: ActorSystem
+  ): RedisConnection =
+    apply(peerConfig, supervisionDecider, listeners)
+
+  def apply(peerConfig: PeerConfig, supervisionDecider: Option[Supervision.Decider], listeners: Seq[EventHandler])(
+      implicit system: ActorSystem
+  ): RedisConnection =
+    new RedisConnectionImpl(peerConfig, supervisionDecider, listeners)
+
+  private[redis] case object ShutdownConnection
+
+  val DEFAULT_REQUEST_TIMEOUT: FiniteDuration = 10 seconds
+
+  val RETRY_MAX: Int = Int.MaxValue
+
+  type EventHandler = Event => Unit
+
+  sealed trait Event
+
+  case object Stop extends Event
+
+  case object Start extends Event
 
 }
 
@@ -56,89 +80,4 @@ trait RedisConnection {
     Flow[C].mapAsync(parallelism) { cmd =>
       send(cmd).runAsync
     }
-}
-
-private[redis] class RedisConnectionImpl(val peerConfig: PeerConfig, supervisionDecider: Option[Supervision.Decider])(
-    implicit system: ActorSystem
-) extends RedisConnection {
-
-  lazy val id: UUID = UUID.randomUUID()
-
-  import peerConfig._
-
-  private lazy val log = Logging(system, this)
-
-  private implicit lazy val mat: ActorMaterializer = ActorMaterializer(
-    ActorMaterializerSettings(system).withSupervisionStrategy(
-      supervisionDecider.getOrElse(RedisConnection.DEFAULT_DECIDER)
-    )
-  )
-
-  protected lazy val tcpFlow: Flow[ByteString, ByteString, NotUsed] = {
-    backoffConfig match {
-      case Some(_backoffConfig) =>
-        RestartFlow.withBackoff(_backoffConfig.minBackoff,
-                                _backoffConfig.maxBackoff,
-                                _backoffConfig.randomFactor,
-                                _backoffConfig.maxRestarts) { () =>
-          Tcp()
-            .outgoingConnection(remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout)
-        }
-      case None =>
-        Tcp()
-          .outgoingConnection(remoteAddress, localAddress, options, halfClose, connectTimeout, idleTimeout)
-          .mapMaterializedValue(_ => NotUsed)
-    }
-  }
-
-  protected lazy val connectionFlow: Flow[RequestContext, ResponseContext, NotUsed] =
-    Flow.fromGraph(GraphDSL.create() { implicit b =>
-      import GraphDSL.Implicits._
-      val requestFlow = b.add(
-        Flow[RequestContext]
-          .map { rc =>
-            if (log.isDebugEnabled)
-              log.debug(s"request = [{}]", rc.commandRequestString)
-            (ByteString.fromString(rc.commandRequest.asString + "\r\n"), rc)
-          }
-      )
-      val responseFlow = b.add(Flow[(ByteString, RequestContext)].map {
-        case (byteString, requestContext) =>
-          if (log.isDebugEnabled)
-            log.debug(s"response = [{}]", byteString.utf8String)
-          ResponseContext(byteString, requestContext)
-      })
-      val unzip = b.add(Unzip[ByteString, RequestContext]())
-      val zip   = b.add(Zip[ByteString, RequestContext]())
-      requestFlow.out ~> unzip.in
-      unzip.out0 ~> tcpFlow ~> zip.in0
-      unzip.out1 ~> zip.in1
-      zip.out ~> responseFlow.in
-      FlowShape(requestFlow.in, responseFlow.out)
-    })
-
-  protected lazy val (sourceActorRefFuture: Future[ActorRef], killSwitch: UniqueKillSwitch) =
-    ActorSource[RequestContext](requestBufferSize)
-      .via(connectionFlow)
-      .via(InTxRequestsAggregationFlow())
-      .async
-      .map(_.complete)
-      .viaMat(KillSwitches.single)(Keep.both)
-      .toMat(Sink.ignore)(Keep.left)
-      .withAttributes(ActorAttributes.dispatcher("reactive-redis.dispatcher"))
-      .run()
-
-  def shutdown(): Unit = killSwitch.shutdown()
-
-  def send[C <: CommandRequestBase](cmd: C): Task[cmd.Response] = {
-    val promise = Promise[CommandResponse]()
-    Task.deferFutureAction { implicit ec =>
-      sourceActorRefFuture.flatMap { ref =>
-        implicit val to: Timeout = Timeout(10 seconds)
-        ref ! RequestContext(cmd, promise, ZonedDateTime.now())
-        promise.future.asInstanceOf[Future[cmd.Response]]
-      }
-    }
-  }
-
 }

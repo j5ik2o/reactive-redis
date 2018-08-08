@@ -11,5 +11,5 @@ import monix.eval.Task
 
 class FOPPoolSpec extends AbstractRedisConnectionPoolSpec("FOPPoolSpec") {
   override protected def createConnectionPool(connectionConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
-    FOPPool.ofMultiple(FOPConfig(), connectionConfigs, RedisConnection(_, _))
+    FOPPool.ofMultiple(FOPConfig(), connectionConfigs, RedisConnection.apply)
 }

@@ -11,5 +11,5 @@ import monix.eval.Task
 
 class CommonsPoolSpec extends AbstractRedisConnectionPoolSpec("CommonsPoolSpec") {
   override protected def createConnectionPool(connectionConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
-    CommonsPool.ofMultiple(CommonsPoolConfig(), connectionConfigs, RedisConnection(_, _))
+    CommonsPool.ofMultiple(CommonsPoolConfig(), connectionConfigs, RedisConnection.apply)
 }

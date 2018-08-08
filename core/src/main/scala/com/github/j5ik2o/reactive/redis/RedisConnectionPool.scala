@@ -6,6 +6,7 @@ import akka.stream.Supervision
 import akka.util.Timeout
 import cats.data.{ NonEmptyList, ReaderT }
 import cats.{ Monad, MonadError }
+import com.github.j5ik2o.reactive.redis.RedisConnection.{ Event, EventHandler }
 import com.github.j5ik2o.reactive.redis.pool.RedisConnectionActor.{ BorrowConnection, ConnectionGotten }
 import com.github.j5ik2o.reactive.redis.pool.{ RedisConnectionActor, RedisConnectionPoolActor }
 import monix.eval.Task
@@ -38,7 +39,7 @@ object RedisConnectionPool {
   def ofSingleRoundRobin(
       sizePerPeer: Int,
       peerConfig: PeerConfig,
-      newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+      newConnection: NewRedisConnection,
       reSizer: Option[Resizer] = None,
       supervisionDecider: Option[Supervision.Decider] = None,
       passingTimeout: FiniteDuration = 5 seconds
@@ -55,7 +56,7 @@ object RedisConnectionPool {
   def ofMultipleRoundRobin(
       sizePerPeer: Int,
       peerConfigs: NonEmptyList[PeerConfig],
-      newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+      newConnection: NewRedisConnection,
       reSizer: Option[Resizer] = None,
       supervisionDecider: Option[Supervision.Decider] = None,
       passingTimeout: FiniteDuration = 5 seconds
@@ -65,11 +66,13 @@ object RedisConnectionPool {
       scheduler
     )
 
-  def ofSingleBalancing(sizePerPeer: Int,
-                        peerConfig: PeerConfig,
-                        newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
-                        supervisionDecider: Option[Supervision.Decider] = None,
-                        passingTimeout: FiniteDuration = 5 seconds)(
+  def ofSingleBalancing(
+      sizePerPeer: Int,
+      peerConfig: PeerConfig,
+      newConnection: NewRedisConnection,
+      supervisionDecider: Option[Supervision.Decider] = None,
+      passingTimeout: FiniteDuration = 5 seconds
+  )(
       implicit system: ActorSystem,
       scheduler: Scheduler,
       ME: MonadError[Task, Throwable]
@@ -79,11 +82,13 @@ object RedisConnectionPool {
       scheduler
     )
 
-  def ofMultipleBalancing(sizePerPeer: Int,
-                          peerConfigs: NonEmptyList[PeerConfig],
-                          newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
-                          supervisionDecider: Option[Supervision.Decider] = None,
-                          passingTimeout: FiniteDuration = 5 seconds)(
+  def ofMultipleBalancing(
+      sizePerPeer: Int,
+      peerConfigs: NonEmptyList[PeerConfig],
+      newConnection: NewRedisConnection,
+      supervisionDecider: Option[Supervision.Decider] = None,
+      passingTimeout: FiniteDuration = 5 seconds
+  )(
       implicit system: ActorSystem,
       scheduler: Scheduler,
       ME: MonadError[Task, Throwable]
@@ -95,7 +100,7 @@ object RedisConnectionPool {
 
   def apply(pool: Pool,
             peerConfigs: NonEmptyList[PeerConfig],
-            newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+            newConnection: NewRedisConnection,
             supervisionDecider: Option[Supervision.Decider] = None,
             passingTimeout: FiniteDuration = 3 seconds)(
       implicit system: ActorSystem,
@@ -106,7 +111,7 @@ object RedisConnectionPool {
   private class AkkaPool(
       pool: Pool,
       val peerConfigs: NonEmptyList[PeerConfig],
-      newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+      newConnection: NewRedisConnection,
       supervisionDecider: Option[Supervision.Decider] = None,
       passingTimeout: FiniteDuration = 3 seconds
   )(implicit system: ActorSystem, scheduler: Scheduler)
@@ -116,7 +121,9 @@ object RedisConnectionPool {
       system.actorOf(
         RedisConnectionPoolActor.props(
           pool,
-          peerConfigs.map(v => RedisConnectionActor.props(v, newConnection, supervisionDecider, passingTimeout))
+          peerConfigs.map(
+            v => RedisConnectionActor.props(v, newConnection, supervisionDecider, passingTimeout)
+          )
         )
       )
 

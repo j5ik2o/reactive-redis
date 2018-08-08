@@ -26,15 +26,16 @@ object FOPPool {
 
   def ofSingle(connectionPoolConfig: FOPConfig,
                peerConfig: PeerConfig,
-               newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+               newConnection: NewRedisConnection,
                supervisionDecider: Option[Supervision.Decider] = None)(
       implicit system: ActorSystem,
       scheduler: Scheduler
-  ): FOPPool = new FOPPool(connectionPoolConfig, NonEmptyList.of(peerConfig), newConnection, supervisionDecider)
+  ): FOPPool =
+    new FOPPool(connectionPoolConfig, NonEmptyList.of(peerConfig), newConnection, supervisionDecider)
 
   def ofMultiple(connectionPoolConfig: FOPConfig,
                  peerConfigs: NonEmptyList[PeerConfig],
-                 newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+                 newConnection: NewRedisConnection,
                  supervisionDecider: Option[Supervision.Decider] = None)(
       implicit system: ActorSystem,
       scheduler: Scheduler
@@ -44,13 +45,13 @@ object FOPPool {
       index: Int,
       connectionPoolConfig: FOPConfig,
       peerConfig: PeerConfig,
-      newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
+      newConnection: NewRedisConnection,
       supervisionDecider: Option[Supervision.Decider]
   )(implicit system: ActorSystem, scheduler: Scheduler): ObjectFactory[RedisConnection] =
     new ObjectFactory[RedisConnection] {
       val redisClient = RedisClient()
       override def create(): RedisConnection =
-        FOPConnectionWithIndex(index, newConnection(peerConfig, supervisionDecider))
+        FOPConnectionWithIndex(index, newConnection(peerConfig, supervisionDecider, Seq.empty))
 
       override def destroy(t: RedisConnection): Unit = {
         t.shutdown()
@@ -63,10 +64,12 @@ object FOPPool {
 
 }
 
-final class FOPPool private (val connectionPoolConfig: FOPConfig,
-                             val peerConfigs: NonEmptyList[PeerConfig],
-                             val newConnection: (PeerConfig, Option[Supervision.Decider]) => RedisConnection,
-                             val supervisionDecider: Option[Supervision.Decider] = None)(
+final class FOPPool private (
+    val connectionPoolConfig: FOPConfig,
+    val peerConfigs: NonEmptyList[PeerConfig],
+    val newConnection: NewRedisConnection,
+    val supervisionDecider: Option[Supervision.Decider] = None
+)(
     implicit system: ActorSystem,
     scheduler: Scheduler
 ) extends RedisConnectionPool[Task] {
@@ -86,7 +89,8 @@ final class FOPPool private (val connectionPoolConfig: FOPConfig,
 
   private val objectPools = peerConfigs.toList.zipWithIndex.map {
     case (e, index) =>
-      val factory = FOPPool.createFactory(index, connectionPoolConfig, e, newConnection, supervisionDecider)
+      val factory =
+        FOPPool.createFactory(index, connectionPoolConfig, e, newConnection, supervisionDecider)
       new ObjectPool(poolConfig, factory)
   }
 

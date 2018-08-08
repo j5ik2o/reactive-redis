@@ -11,5 +11,5 @@ import monix.eval.Task
 
 class ScalaPoolSpec extends AbstractRedisConnectionPoolSpec("ScalaPoolSpec") {
   override protected def createConnectionPool(connectionConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task] =
-    ScalaPool.ofMultiple(ScalaPoolConfig(), connectionConfigs, RedisConnection(_, _))
+    ScalaPool.ofMultiple(ScalaPoolConfig(), connectionConfigs, RedisConnection.apply)
 }

@@ -23,6 +23,8 @@ trait ResponseBase {
 
   def commandRequestString: String = requestContext.commandRequest.asString
 
+  def isQuit: Boolean = requestContext.isQuit
+
   protected def completePromise(result: Try[CommandResponse]): requestContext.promise.type =
     requestContext.promise.complete(result)
 }
