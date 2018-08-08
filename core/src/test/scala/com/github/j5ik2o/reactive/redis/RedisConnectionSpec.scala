@@ -14,6 +14,7 @@ import com.github.j5ik2o.reactive.redis.command.transactions._
 import com.github.j5ik2o.reactive.redis.util.BitUtil
 import monix.eval.Task
 import org.scalacheck.Shrink
+import cats.implicits._
 
 class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnectionSpec")) {
   implicit val noShrink: Shrink[String] = Shrink.shrinkAny
