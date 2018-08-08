@@ -32,7 +32,7 @@ trait StringsAPI[M[_]] {
   def mSet(values: Map[String, Any]): M[Result[Unit]]
   def mSetNx(values: Map[String, Any]): M[Result[Boolean]]
   def pSetEx[A: Show](key: String, millis: FiniteDuration, value: A): M[Result[Unit]]
-  def set[A: Show](key: String, value: A): M[Result[Unit]]
+  def set[A: Show](key: String, value: A, expiration: Option[SetExpiration] = None, setOption: Option[SetOption] = None): M[Result[Unit]]
   def setBit(key: String, offset: Int, value: Int): M[Result[Long]]
   def setEx[A: Show](key: String, expires: FiniteDuration, value: A): M[Result[Unit]]
   def setNx[A: Show](key: String, value: A): M[Result[Boolean]]
@@ -181,8 +181,8 @@ trait StringsFeature extends StringsAPI[ReaderTTaskRedisConnection] {
       case PSetExFailed(_, _, ex) => ReaderTTask.raiseError(ex)
     }
 
-  override def set[A: Show](key: String, value: A): ReaderTTaskRedisConnection[Result[Unit]] =
-    send(SetRequest(UUID.randomUUID(), key, value)).flatMap {
+  override def set[A: Show](key: String, value: A, expiration: Option[SetExpiration], setOption: Option[SetOption]): ReaderTTaskRedisConnection[Result[Unit]] =
+    send(SetRequest(UUID.randomUUID(), key, value, expiration, setOption)).flatMap {
       case SetSuspended(_, _)  => ReaderTTask.pure(Suspended)
       case SetSucceeded(_, _)  => ReaderTTask.pure(Provided(()))
       case SetFailed(_, _, ex) => ReaderTTask.raiseError(ex)

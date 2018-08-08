@@ -13,6 +13,7 @@ import com.github.j5ik2o.reactive.redis.command.strings.{ GetRequest, SetRequest
 import monix.eval.Task
 
 import scala.collection.immutable
+import cats.implicits._
 
 class RedisConnectionPoolFlowSpec extends AbstractActorSpec(ActorSystem("RedisConnectionPoolFlowSpec")) {
 
