@@ -2,13 +2,11 @@ package com.github.j5ik2o.reactive.redis.feature
 
 import akka.actor.ActorSystem
 import cats.data.NonEmptyList
+import cats.implicits._
 import com.github.j5ik2o.reactive.redis.AbstractRedisClientSpec
 import org.scalacheck.Shrink
 
 import scala.concurrent.duration._
-import cats.implicits._
-
-import scala.concurrent.Future
 
 abstract class AbstractListsFeatureSpec extends AbstractRedisClientSpec(ActorSystem("ListsFeatureSpec")) {
 
