@@ -10,6 +10,7 @@ import com.github.j5ik2o.reactive.redis.command.connection._
 import com.github.j5ik2o.reactive.redis.command.hashes._
 import com.github.j5ik2o.reactive.redis.command.keys._
 import com.github.j5ik2o.reactive.redis.command.lists._
+import com.github.j5ik2o.reactive.redis.command.sets.{ SAddFailed, SAddRequest, SAddSucceeded, SAddSuspended }
 import com.github.j5ik2o.reactive.redis.command.strings.{ BitPosRequest, _ }
 import com.github.j5ik2o.reactive.redis.command.transactions._
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequestBase, CommandResponse }
@@ -179,7 +180,29 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case h: HGetAllRequest => hgetall(h)
             case h: HSetRequest    => hset(h)
             case h: HSetNxRequest  => hsetnx(h)
+            // --- Sets
+            case s: SAddRequest => sadd(s)
           }
+        }
+      }
+
+      private def sadd(s: SAddRequest) = {
+        transaction match {
+          case Some(tc) =>
+            run(s)(tc.sadd(s.key, s.values.toList: _*)) { result =>
+              txState.append(ResponseF[lang.Long](result, { p =>
+                SAddSucceeded(UUID.randomUUID(), s.id, p.get)
+              }))
+              SAddSuspended(UUID.randomUUID(), s.id)
+            } { t =>
+              SAddFailed(UUID.randomUUID(), s.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(s)(jedis.sadd(s.key, s.values.toList: _*)) { result =>
+              SAddSucceeded(UUID.randomUUID(), s.id, result)
+            } { t =>
+              SAddFailed(UUID.randomUUID(), s.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
         }
       }
 
