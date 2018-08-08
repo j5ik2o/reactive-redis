@@ -2,19 +2,20 @@ package com.github.j5ik2o.reactive.redis.command.strings
 
 import java.util.UUID
 
+import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model._
 import fastparse.all._
 
-final case class MGetRequest(id: UUID, keys: Seq[String]) extends CommandRequest with StringParsersSupport {
+final class MGetRequest(val id: UUID, val keys: NonEmptyList[String]) extends CommandRequest with StringParsersSupport {
 
   override type Response = MGetResponse
 
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = s"MGET ${keys.mkString(" ")}"
+  override def asString: String = s"MGET ${keys.toList.mkString(" ")}"
 
   override protected lazy val responseParser: P[Expr] = fastParse(
     stringArrayReply | simpleStringReply | errorReply
@@ -28,6 +29,13 @@ final case class MGetRequest(id: UUID, keys: Seq[String]) extends CommandRequest
     case (ErrorExpr(msg), next) =>
       (MGetFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+}
+
+object MGetRequest {
+
+  def apply(id: UUID, keys: NonEmptyList[String]): MGetRequest = new MGetRequest(id, keys)
+  def apply(id: UUID, key: String, keys: String*): MGetRequest = apply(id, NonEmptyList.of(key, keys: _*))
 
 }
 

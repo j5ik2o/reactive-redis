@@ -2,19 +2,22 @@ package com.github.j5ik2o.reactive.redis.command.transactions
 
 import java.util.UUID
 
+import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 import fastparse.all._
 
-final case class WatchRequest(id: UUID, keys: Set[String]) extends CommandRequest with StringParsersSupport {
+final class WatchRequest(val id: UUID, val keys: NonEmptyList[String])
+    extends CommandRequest
+    with StringParsersSupport {
 
   override type Response = WatchResponse
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"WATCH ${keys.mkString(" ")}"
+  override def asString: String = s"WATCH ${keys.toList.mkString(" ")}"
 
   override protected lazy val responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
 
@@ -27,6 +30,11 @@ final case class WatchRequest(id: UUID, keys: Set[String]) extends CommandReques
       (WatchFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
+}
+
+object WatchRequest {
+  def apply(id: UUID, key: String, keys: String*): WatchRequest = new WatchRequest(id, NonEmptyList.of(key, keys: _*))
+  def apply(id: UUID, keys: NonEmptyList[String]): WatchRequest = new WatchRequest(id, keys)
 }
 
 sealed trait WatchResponse                                                    extends CommandResponse

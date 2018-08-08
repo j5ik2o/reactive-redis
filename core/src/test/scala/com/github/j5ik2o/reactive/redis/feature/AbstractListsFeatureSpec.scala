@@ -54,9 +54,9 @@ abstract class AbstractListsFeatureSpec extends AbstractRedisClientSpec(ActorSys
     "blpop" in forAll(keyStrValueGen) {
       case (key, value) =>
         val result = runProgram(for {
-          r1 <- redisClient.blpop(key, 1 seconds)
+          r1 <- redisClient.blpop(1 seconds, key)
           _  <- redisClient.lpush(key, value)
-          r2 <- redisClient.blpop(key, 1 seconds)
+          r2 <- redisClient.blpop(1 seconds, key)
         } yield (r1, r2))
         result._1.value shouldBe Seq.empty
         result._2.value should not be Seq.empty

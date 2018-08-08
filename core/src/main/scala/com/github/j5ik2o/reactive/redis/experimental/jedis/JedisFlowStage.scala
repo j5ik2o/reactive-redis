@@ -182,7 +182,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def pexpireAt(p: PExpireAtRequest) = {
+      private def pexpireAt(p: PExpireAtRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(p)(tc.pexpireAt(p.key, p.millisecondsTimestamp.toInstant.toEpochMilli)) { result =>
@@ -203,7 +203,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def lrange(l: LRangeRequest) = {
+      private def lrange(l: LRangeRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(l)(tc.lrange(l.key, l.start, l.stop)) { result =>
@@ -223,7 +223,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def rpush(r: RPushRequest) = {
+      private def rpush(r: RPushRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(r)(tc.rpush(r.key, r.values.toList: _*)) { result =>
@@ -243,7 +243,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def pexpire(p: PExpireRequest) = {
+      private def pexpire(p: PExpireRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(p)(tc.pexpire(p.key, p.milliseconds.toMillis)) { result =>
@@ -263,7 +263,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def select(s: SelectRequest) = {
+      private def select(s: SelectRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(s)(tc.select(s.index)) { result =>
@@ -283,7 +283,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def expireAt(e: ExpireAtRequest) = {
+      private def expireAt(e: ExpireAtRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(e)(tc.expireAt(e.key, e.expiresAt.toInstant.getEpochSecond)) { result =>
@@ -303,7 +303,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def dump(d: DumpRequest) = {
+      private def dump(d: DumpRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(d)(tc.dump(d.key)) { result =>
@@ -323,7 +323,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def expire(e: ExpireRequest) = {
+      private def expire(e: ExpireRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(e)(tc.expire(e.key, e.seconds.toSeconds.toInt)) { result =>
@@ -343,10 +343,10 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def exists(e: ExistsRequest) = {
+      private def exists(e: ExistsRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
-            run(e)(tc.exists(Array(e.key): _*)) { result =>
+            run(e)(tc.exists(e.keys.toList: _*)) { result =>
               txState.append(ResponseF[lang.Long](result, { p =>
                 ExistsSucceeded(UUID.randomUUID(), e.id, p.get == 1L)
               }))
@@ -355,18 +355,18 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
               ExistsFailed(UUID.randomUUID(), e.id, RedisIOException(Some(t.getMessage), Some(t)))
             }()
           case None =>
-            run(e)(jedis.exists(e.key)) { result =>
-              ExistsSucceeded(UUID.randomUUID(), e.id, result)
+            run(e)(jedis.exists(e.keys.toList: _*)) { result =>
+              ExistsSucceeded(UUID.randomUUID(), e.id, result == 1L)
             } { t =>
               ExistsFailed(UUID.randomUUID(), e.id, RedisIOException(Some(t.getMessage), Some(t)))
             }()
         }
       }
 
-      private def del(d: DelRequest) = {
+      private def del(d: DelRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
-            run(d)(tc.del(Array(d.key): _*)) { result =>
+            run(d)(tc.del(d.keys.toList: _*)) { result =>
               txState.append(ResponseF[lang.Long](result, { p =>
                 DelSucceeded(UUID.randomUUID(), d.id, p.get)
               }))
@@ -375,7 +375,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
               DelFailed(UUID.randomUUID(), d.id, RedisIOException(Some(t.getMessage), Some(t)))
             }()
           case None =>
-            run(d)(jedis.del(d.key)) { result =>
+            run(d)(jedis.del(d.keys.toList: _*)) { result =>
               DelSucceeded(UUID.randomUUID(), d.id, result)
             } { t =>
               DelFailed(UUID.randomUUID(), d.id, RedisIOException(Some(t.getMessage), Some(t)))
@@ -394,7 +394,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
       private def watch(w: WatchRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
-            run(w)(tc.watch(w.keys.toArray: _*)) { result =>
+            run(w)(tc.watch(w.keys.toList: _*)) { result =>
               txState.append(ResponseF[String](result, { _ =>
                 WatchSucceeded(UUID.randomUUID(), w.id)
               }))
@@ -403,7 +403,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
               WatchFailed(UUID.randomUUID(), w.id, RedisIOException(Some(t.getMessage), Some(t)))
             }()
           case None =>
-            run(w)(jedis.watch(w.keys.toArray: _*)) { result =>
+            run(w)(jedis.watch(w.keys.toList: _*)) { result =>
               WatchSucceeded(UUID.randomUUID(), w.id)
             } { t =>
               WatchFailed(UUID.randomUUID(), w.id, RedisIOException(Some(t.getMessage), Some(t)))
@@ -458,7 +458,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
       private def mget(mg: MGetRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
-            run(mg)(tc.mget(mg.keys: _*)) { result =>
+            run(mg)(tc.mget(mg.keys.toList: _*)) { result =>
               txState.append(
                 ResponseF[util.List[String]](result, { p =>
                   MGetSucceeded(UUID.randomUUID(), mg.id, result.get.asScala)
@@ -469,7 +469,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
               MGetFailed(UUID.randomUUID(), mg.id, RedisIOException(Some(t.getMessage), Some(t)))
             }()
           case None =>
-            run(mg)(jedis.mget(mg.keys: _*)) { result =>
+            run(mg)(jedis.mget(mg.keys.toList: _*)) { result =>
               MGetSucceeded(UUID.randomUUID(), mg.id, result.asScala)
             } { t =>
               MGetFailed(UUID.randomUUID(), mg.id, RedisIOException(Some(t.getMessage), Some(t)))

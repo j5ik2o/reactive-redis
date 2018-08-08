@@ -3,6 +3,7 @@ package com.github.j5ik2o.reactive.redis.feature
 import java.util.UUID
 
 import cats.Show
+import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis._
 import com.github.j5ik2o.reactive.redis.command.strings._
 
@@ -26,7 +27,8 @@ trait StringsAPI[M[_]] {
   def incr(key: String): M[Result[Long]]
   def incrBy(key: String, value: Int): M[Result[Long]]
   def incrByFloat(key: String, value: Double): M[Result[Double]]
-  def mGet(keys: Seq[String]): M[Result[Seq[String]]]
+  def mGet(key: String, keys: String*): M[Result[Seq[String]]]
+  def mGet(keys: NonEmptyList[String]): M[Result[Seq[String]]]
   def mSet(values: Map[String, Any]): M[Result[Unit]]
   def mSetNx(values: Map[String, Any]): M[Result[Boolean]]
   def pSetEx[A: Show](key: String, millis: FiniteDuration, value: A): M[Result[Unit]]
@@ -146,7 +148,10 @@ trait StringsFeature extends StringsAPI[ReaderTTaskRedisConnection] {
       case IncrByFloatFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
-  override def mGet(keys: Seq[String]): ReaderTTaskRedisConnection[Result[Seq[String]]] =
+  override def mGet(key: String, keys: String*): ReaderTTaskRedisConnection[Result[Seq[String]]] =
+    mGet(NonEmptyList.of(key, keys: _*))
+
+  override def mGet(keys: NonEmptyList[String]): ReaderTTaskRedisConnection[Result[Seq[String]]] =
     send(MGetRequest(UUID.randomUUID(), keys)).flatMap {
       case MGetSuspended(_, _)          => ReaderTTask.pure(Suspended)
       case MGetSucceeded(_, _, results) => ReaderTTask.pure(Provided(results))

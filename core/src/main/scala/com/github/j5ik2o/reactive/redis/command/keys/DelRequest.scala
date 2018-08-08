@@ -9,13 +9,15 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-final case class DelRequest(id: UUID, key: String) extends CommandRequest with StringParsersSupport {
+final class DelRequest(val id: UUID, val keys: NonEmptyList[String]) extends CommandRequest with StringParsersSupport {
+
+  // val key: String = keys.head
 
   override type Response = DelResponse
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"DEL $key"
+  override def asString: String = s"DEL ${keys.toList.mkString(" ")}"
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
@@ -27,6 +29,14 @@ final case class DelRequest(id: UUID, key: String) extends CommandRequest with S
     case (ErrorExpr(msg), next) =>
       (DelFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+}
+
+object DelRequest {
+
+  def apply(id: UUID, key: String, keys: String*): DelRequest = new DelRequest(id, NonEmptyList.of(key, keys: _*))
+
+  def apply(id: UUID, keys: NonEmptyList[String]): DelRequest = new DelRequest(id, keys)
 
 }
 

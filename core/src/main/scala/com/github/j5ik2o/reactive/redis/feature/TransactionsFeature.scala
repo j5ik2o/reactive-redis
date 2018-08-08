@@ -2,6 +2,7 @@ package com.github.j5ik2o.reactive.redis.feature
 
 import java.util.UUID
 
+import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis.command.CommandResponse
 import com.github.j5ik2o.reactive.redis.command.transactions._
 import com.github.j5ik2o.reactive.redis._
@@ -14,7 +15,8 @@ trait TransactionsAPI[M[_]] {
   def exec(): M[Seq[CommandResponse]]
   def multi(): M[Unit]
   def unwatch(): M[Unit]
-  def watch(keys: Set[String]): M[Result[Unit]]
+  def watch(key: String, keys: String*): M[Result[Unit]]
+  def watch(keys: NonEmptyList[String]): M[Result[Unit]]
 }
 
 trait TransactionsFeature extends TransactionsAPI[ReaderTTaskRedisConnection] {
@@ -40,7 +42,10 @@ trait TransactionsFeature extends TransactionsAPI[ReaderTTaskRedisConnection] {
     case UnwatchFailed(_, _, ex) => ReaderTTask.raiseError(ex)
   }
 
-  override def watch(keys: Set[String]): ReaderTTaskRedisConnection[Result[Unit]] =
+  override def watch(key: String, keys: String*): ReaderTTaskRedisConnection[Result[Unit]] =
+    watch(NonEmptyList.of(key, keys: _*))
+
+  override def watch(keys: NonEmptyList[String]): ReaderTTaskRedisConnection[Result[Unit]] =
     send(WatchRequest(UUID.randomUUID(), keys)).flatMap {
       case WatchSuspended(_, _)  => ReaderTTask.pure(Suspended)
       case WatchSucceeded(_, _)  => ReaderTTask.pure(Provided(()))

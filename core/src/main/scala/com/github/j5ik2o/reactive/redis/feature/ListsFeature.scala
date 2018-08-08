@@ -10,43 +10,44 @@ import com.github.j5ik2o.reactive.redis.command.lists._
 import scala.concurrent.duration.Duration
 
 trait ListsAPI[M[_]] {
-  def blpop(key: String, timeout: Duration): M[Result[Seq[String]]]
-  def blpop(keys: NonEmptyList[String], timeout: Duration): M[Result[Seq[String]]]
-  def brpop(key: String, timeout: Duration): M[Result[Seq[String]]]
-  def brpop(keys: NonEmptyList[String], timeout: Duration): M[Result[Seq[String]]]
+  def blpop(timeout: Duration, key: String, keys: String*): M[Result[Seq[String]]]
+
+  def blpop(timeout: Duration, keys: NonEmptyList[String]): M[Result[Seq[String]]]
+
+  def brpop(timeout: Duration, key: String, keys: String*): M[Result[Seq[String]]]
+
+  def brpop(timeout: Duration, keys: NonEmptyList[String]): M[Result[Seq[String]]]
+
   def lpop(key: String): M[Result[Option[String]]]
-  def lpush[A: Show](key: String, value: A): M[Result[Long]]
+
+  def lpush[A: Show](key: String, value: A, values: A*): M[Result[Long]]
+
   def lpush[A: Show](key: String, values: NonEmptyList[A]): M[Result[Long]]
+
   def lrange(key: String, start: Long, stop: Long): M[Result[Seq[String]]]
-  def rpush[A: Show](key: String, value: A): M[Result[Long]]
+
+  def rpush[A: Show](key: String, value: A, values: A*): M[Result[Long]]
+
   def rpush[A: Show](key: String, values: NonEmptyList[A]): M[Result[Long]]
 }
 
-trait ListsFeature extends ListsAPI[ReaderTTaskRedisConnection] { this: RedisClient =>
+trait ListsFeature extends ListsAPI[ReaderTTaskRedisConnection] {
+  this: RedisClient =>
 
-  override def blpop(key: String, timeout: Duration): ReaderTTaskRedisConnection[Result[Seq[String]]] = {
-    send(BLPopRequest(UUID.randomUUID(), key, timeout)).flatMap {
-      case BLPopSuspended(_, _)         => ReaderTTask.pure(Suspended)
-      case BLPopSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
-      case BLPopFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
-    }
-  }
+  override def blpop(timeout: Duration, key: String, keys: String*): ReaderTTaskRedisConnection[Result[Seq[String]]] =
+    blpop(timeout, NonEmptyList.of[String](key, keys: _*))
 
-  override def blpop(keys: NonEmptyList[String], timeout: Duration): ReaderTTaskRedisConnection[Result[Seq[String]]] =
+  override def blpop(timeout: Duration, keys: NonEmptyList[String]): ReaderTTaskRedisConnection[Result[Seq[String]]] =
     send(BLPopRequest(UUID.randomUUID(), keys, timeout)).flatMap {
       case BLPopSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case BLPopSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
       case BLPopFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
-  override def brpop(key: String, timeout: Duration): ReaderTTaskRedisConnection[Result[Seq[String]]] =
-    send(BRPopRequest(UUID.randomUUID(), key, timeout)).flatMap {
-      case BRPopSuspended(_, _)         => ReaderTTask.pure(Suspended)
-      case BRPopSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
-      case BRPopFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
-    }
+  override def brpop(timeout: Duration, key: String, keys: String*): ReaderTTaskRedisConnection[Result[Seq[String]]] =
+    brpop(timeout, NonEmptyList.of[String](key, keys: _*))
 
-  override def brpop(keys: NonEmptyList[String], timeout: Duration): ReaderTTaskRedisConnection[Result[Seq[String]]] =
+  override def brpop(timeout: Duration, keys: NonEmptyList[String]): ReaderTTaskRedisConnection[Result[Seq[String]]] =
     send(BRPopRequest(UUID.randomUUID(), keys, timeout)).flatMap {
       case BRPopSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case BRPopSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
@@ -66,8 +67,8 @@ trait ListsFeature extends ListsAPI[ReaderTTaskRedisConnection] { this: RedisCli
       case LPopFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
-  override def lpush[A: Show](key: String, value: A): ReaderTTaskRedisConnection[Result[Long]] =
-    lpush(key, NonEmptyList.of(value))
+  override def lpush[A: Show](key: String, value: A, values: A*): ReaderTTaskRedisConnection[Result[Long]] =
+    lpush(key, NonEmptyList.of(value, values: _*))
 
   override def lpush[A: Show](key: String, values: NonEmptyList[A]): ReaderTTaskRedisConnection[Result[Long]] =
     send(LPushRequest(UUID.randomUUID(), key, values)).flatMap {
@@ -85,6 +86,7 @@ trait ListsFeature extends ListsAPI[ReaderTTaskRedisConnection] { this: RedisCli
       case LRangeSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
       case LRangeFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
+
   /*
    * LREM
    * LSET
@@ -92,8 +94,8 @@ trait ListsFeature extends ListsAPI[ReaderTTaskRedisConnection] { this: RedisCli
    * RPOP
    * RPOPLPUSH
    */
-  override def rpush[A: Show](key: String, value: A): ReaderTTaskRedisConnection[Result[Long]] =
-    rpush(key, NonEmptyList.one(value))
+  override def rpush[A: Show](key: String, value: A, values: A*): ReaderTTaskRedisConnection[Result[Long]] =
+    rpush(key, NonEmptyList.of(value, values: _*))
 
   override def rpush[A: Show](key: String, values: NonEmptyList[A]): ReaderTTaskRedisConnection[Result[Long]] =
     send(RPushRequest(UUID.randomUUID(), key, values)).flatMap {
@@ -101,6 +103,7 @@ trait ListsFeature extends ListsAPI[ReaderTTaskRedisConnection] { this: RedisCli
       case RPushSucceeded(_, _, value) => ReaderTTask.pure(Provided(value))
       case RPushFailed(_, _, ex)       => ReaderTTask.raiseError(ex)
     }
+
   /*
  * RPUSHX
  */

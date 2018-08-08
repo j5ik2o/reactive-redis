@@ -13,7 +13,8 @@ import scala.concurrent.duration.FiniteDuration
   * https://redis.io/commands#generics
   */
 trait KeysAPI[M[_]] {
-  def del(key: String): M[Result[Long]]
+  def del(key: String, keys: String*): M[Result[Long]]
+  def del(keys: NonEmptyList[String]): M[Result[Long]]
   def dump(key: String): M[Result[Option[Array[Byte]]]]
   def exists(key: String): M[Result[Boolean]]
   def expire(key: String, seconds: FiniteDuration): M[Result[Boolean]]
@@ -30,8 +31,11 @@ trait KeysAPI[M[_]] {
 trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
   this: RedisClient =>
 
-  override def del(key: String): ReaderTTaskRedisConnection[Result[Long]] =
-    send(DelRequest(UUID.randomUUID(), key)).flatMap {
+  override def del(key: String, keys: String*): ReaderTTaskRedisConnection[Result[Long]] =
+    del(NonEmptyList.of(key, keys: _*))
+
+  override def del(keys: NonEmptyList[String]): ReaderTTaskRedisConnection[Result[Long]] =
+    send(DelRequest(UUID.randomUUID(), keys)).flatMap {
       case DelSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case DelSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
       case DelFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
