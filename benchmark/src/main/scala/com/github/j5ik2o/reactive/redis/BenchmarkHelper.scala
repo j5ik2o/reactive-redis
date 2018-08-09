@@ -87,6 +87,7 @@ trait BenchmarkHelper {
 
   def tearDown(): Unit = {
     _poolOfJedisQueue.dispose()
+    _poolOfJedisActor.dispose()
     _poolOfDefaultQueue.dispose()
     _poolOfDefaultActor.dispose()
     redisTestServer.stop()
