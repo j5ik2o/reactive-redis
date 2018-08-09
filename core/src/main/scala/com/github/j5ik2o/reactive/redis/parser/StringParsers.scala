@@ -12,6 +12,7 @@ object StringParsers {
   import fastparse.all._
   val QUEUED: String = "QUEUED"
   val OK: String     = "OK"
+  val NOKEY: String  = "NOKEY"
 
   private val digit: P0      = P(CharIn('0' to '9'))
   private val lowerAlpha: P0 = P(CharIn('a' to 'z'))
