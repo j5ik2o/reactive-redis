@@ -31,7 +31,13 @@ object JedisFlowStage {
   final case class ResponseF[A](response: Response[A], f: CommandResponseF[A]) {
     def apply(): CommandResponse = f(response)
   }
+  trait PingArgIF {
+    def pingArg(arg: Option[String]): String
+  }
 
+  trait PingArgTxIF {
+    def pingArg(arg: Option[String]): Response[String]
+  }
 }
 
 @SuppressWarnings(
@@ -64,14 +70,6 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
       private var inFlight: Int                                    = _
       private var completionState: Option[Try[Unit]]               = _
       private var resultCallback: AsyncCallback[RequestWithResult] = _
-
-      trait PingArgIF {
-        def pingArg(arg: Option[String]): String
-      }
-
-      trait PingArgTxIF {
-        def pingArg(arg: Option[String]): Response[String]
-      }
 
       private var jedis: Jedis with PingArgIF = _
 
@@ -142,9 +140,9 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case i: IncrRequest        => incr(i)
             case i: IncrByRequest      => incrBy(i)
             case i: IncrByFloatRequest => incrByFloat(i)
-            case mg: MGetRequest       => mget(mg)
-            case ms: MSetRequest       => mset(ms)
-            case ms: MSetNxRequest     => msetnx(ms)
+            case mg: MGetRequest       => mGet(mg)
+            case ms: MSetRequest       => mSet(ms)
+            case ms: MSetNxRequest     => mSetNx(ms)
             case p: PSetExRequest      => pSetEx(p)
             case s: SetRequest         => set(s)
             case s: SetBitRequest      => setBit(s)
@@ -165,28 +163,28 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case p: PExpireRequest   => pexpire(p)
             case p: PExpireAtRequest => pexpireAt(p)
             // -- Lits
-            case b: BLPopRequest  => blpop(b)
-            case b: BRPopRequest  => brpop(b)
-            case l: LPopRequest   => lpop(l)
-            case l: LPushRequest  => lpush(l)
+            case b: BLPopRequest  => blPop(b)
+            case b: BRPopRequest  => brPop(b)
+            case l: LPopRequest   => lPop(l)
+            case l: LPushRequest  => lPush(l)
             case r: RPushRequest  => rpush(r)
             case l: LRangeRequest => lrange(l)
             case l: LLenRequest   => llen(l)
 
             // --- Hashes
-            case h: HDelRequest    => hdel(h)
-            case h: HExistsRequest => hexists(h)
-            case h: HGetRequest    => hget(h)
-            case h: HGetAllRequest => hgetall(h)
-            case h: HSetRequest    => hset(h)
-            case h: HSetNxRequest  => hsetnx(h)
+            case h: HDelRequest    => hDel(h)
+            case h: HExistsRequest => hExists(h)
+            case h: HGetRequest    => hGet(h)
+            case h: HGetAllRequest => hGetAll(h)
+            case h: HSetRequest    => hSet(h)
+            case h: HSetNxRequest  => hSetNx(h)
             // --- Sets
             case s: SAddRequest => sadd(s)
           }
         }
       }
 
-      private def sadd(s: SAddRequest) = {
+      private def sadd(s: SAddRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(s)(tc.sadd(s.key, s.values.toList: _*)) { result =>
@@ -206,7 +204,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def llen(l: LLenRequest) = {
+      private def llen(l: LLenRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(l)(tc.llen(l.key)) { result =>
@@ -242,7 +240,6 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             } { t =>
               PExpireAtFailed(UUID.randomUUID(), p.id, RedisIOException(Some(t.getMessage), Some(t)))
             }()
-
         }
       }
 
@@ -454,7 +451,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def msetnx(ms: MSetNxRequest): Future[CommandResponse] = {
+      private def mSetNx(ms: MSetNxRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(ms)(tc.msetnx(ms.values.toSeq.flatMap { case (k, v) => Seq(k, v.toString) }: _*)) { result =>
@@ -476,7 +473,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def mset(ms: MSetRequest): Future[CommandResponse] = {
+      private def mSet(ms: MSetRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             val args = ms.values.toSeq.flatMap { case (k, v) => Seq(k, v.toString) }
@@ -498,7 +495,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def mget(mg: MGetRequest): Future[CommandResponse] = {
+      private def mGet(mg: MGetRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(mg)(tc.mget(mg.keys.toList: _*)) { result =>
@@ -580,7 +577,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def lpush(l: LPushRequest): Future[CommandResponse] = {
+      private def lPush(l: LPushRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(l)(tc.lpush(l.key, l.values.toList: _*)) { result =>
@@ -600,7 +597,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def lpop(l: LPopRequest): Future[CommandResponse] = {
+      private def lPop(l: LPopRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(l)(tc.lpop(l.key)) { result =>
@@ -620,7 +617,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def hsetnx(h: HSetNxRequest): Future[CommandResponse] = {
+      private def hSetNx(h: HSetNxRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(h)(tc.hsetnx(h.key, h.field, h.value)) { result =>
@@ -640,7 +637,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def hset(h: HSetRequest): Future[CommandResponse] = {
+      private def hSet(h: HSetRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(h)(tc.hset(h.key, h.field, h.value)) { result =>
@@ -660,7 +657,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def hgetall(h: HGetAllRequest): Future[CommandResponse] = {
+      private def hGetAll(h: HGetAllRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(h)(tc.hgetAll(h.key)) { result =>
@@ -680,7 +677,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def hget(h: HGetRequest): Future[CommandResponse] = {
+      private def hGet(h: HGetRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(h)(tc.hget(h.key, h.field)) { result =>
@@ -700,7 +697,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def brpop(b: BRPopRequest): Future[CommandResponse] = {
+      private def brPop(b: BRPopRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             def command =
@@ -734,7 +731,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def hexists(h: HExistsRequest): Future[CommandResponse] = {
+      private def hExists(h: HExistsRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(h)(tc.hexists(h.key, h.field)) { result =>
@@ -754,7 +751,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def hdel(h: HDelRequest): Future[CommandResponse] = {
+      private def hDel(h: HDelRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(h)(tc.hdel(h.key, h.fields.toList: _*)) { result =>
@@ -774,7 +771,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def blpop(b: BLPopRequest): Future[CommandResponse] = {
+      private def blPop(b: BLPopRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             def command =
