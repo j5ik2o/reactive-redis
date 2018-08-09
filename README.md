@@ -3,7 +3,6 @@
 [![CircleCI](https://circleci.com/gh/j5ik2o/reactive-redis.svg?style=shield&circle-token=b858c698c54b46769e933d7ee7fd55209234bae1)](https://circleci.com/gh/j5ik2o/reactive-redis)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.j5ik2o/reactive-redis-core_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.j5ik2o/reactive-redis-core_2.12)
 [![Scaladoc](http://javadoc-badge.appspot.com/com.github.j5ik2o/reactive-redis-core_2.12.svg?label=scaladoc)](http://javadoc-badge.appspot.com/com.github.j5ik2o/reactive-redis-core_2.12/com/github/j5ik2o/reactive/redis/index.html?javadocio=true)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/54e35f1cfde048feae3c9c35cadf78a0)](https://www.codacy.com/app/j5ik2o/reactive-redis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=j5ik2o/reactive-redis&amp;utm_campaign=Badge_Grade)
 [![License: MIT](http://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 
 Akka-Stream based Redis Client for Scala
