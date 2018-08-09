@@ -14,6 +14,7 @@ trait ConnectionAPI[M[_]] {
   def ping(message: Option[String] = None): M[Result[String]]
   def quit(): M[Unit]
   def select(index: Int): M[Result[Unit]]
+  def swapDB(index0: Int, index1: Int): M[Result[Unit]]
 }
 
 trait ConnectionFeature extends ConnectionAPI[ReaderTTaskRedisConnection] {
@@ -51,8 +52,10 @@ trait ConnectionFeature extends ConnectionAPI[ReaderTTaskRedisConnection] {
       case SelectFailed(_, _, ex) => ReaderTTask.raiseError(ex)
     }
 
-  /**
-  * SWAPDB
-  */
-
+  override def swapDB(index0: Int, index1: Int): ReaderTTaskRedisConnection[Result[Unit]] =
+    send(SwapDBRequest(UUID.randomUUID(), index0, index1)).flatMap {
+      case SwapDBSuspended(_, _)  => ReaderTTask.pure(Suspended)
+      case SwapDBSucceeded(_, _)  => ReaderTTask.pure(Provided(()))
+      case SwapDBFailed(_, _, ex) => ReaderTTask.raiseError(ex)
+    }
 }

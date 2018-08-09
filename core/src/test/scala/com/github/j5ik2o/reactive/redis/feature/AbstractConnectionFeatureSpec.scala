@@ -44,6 +44,13 @@ abstract class AbstractConnectionFeatureSpec extends AbstractRedisClientSpec(Act
         _ <- redisClient.select(1)
       } yield ())
     }
+//    "swapdb" in {
+//      runProgram(
+//        for {
+//          _ <- redisClient.swapDB(0, 1)
+//        } yield ()
+//      )
+//    }
     "quit" in {
       an[RedisRequestException] should be thrownBy {
         runProgram(for {

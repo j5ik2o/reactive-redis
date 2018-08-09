@@ -5,6 +5,7 @@ import java.{ lang, util }
 
 import akka.stream.stage._
 import akka.stream.{ Attributes, FlowShape, Inlet, Outlet }
+import cats.Id
 import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command.connection._
 import com.github.j5ik2o.reactive.redis.command.hashes._
@@ -31,13 +32,10 @@ object JedisFlowStage {
   final case class ResponseF[A](response: Response[A], f: CommandResponseF[A]) {
     def apply(): CommandResponse = f(response)
   }
-  trait PingArgIF {
-    def pingArg(arg: Option[String]): String
+  trait JedisEx[M[_]] {
+    def pingArg(arg: Option[String]): M[String]
   }
 
-  trait PingArgTxIF {
-    def pingArg(arg: Option[String]): Response[String]
-  }
 }
 
 @SuppressWarnings(
@@ -71,7 +69,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
       private var completionState: Option[Try[Unit]]               = _
       private var resultCallback: AsyncCallback[RequestWithResult] = _
 
-      private var jedis: Jedis with PingArgIF = _
+      private var jedis: Jedis with JedisEx[Id] = _
 
       private val DC = () => ()
 
@@ -119,6 +117,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case p: PingRequest   => ping(p)
             case e: EchoRequest   => echo(e)
             case s: SelectRequest => select(s)
+            case s: SwapDBRequest => fail(out, new UnsupportedOperationException("swap is unsupported operation."))
             // --- transactions
             case m: MultiRequest   => multi(m)
             case e: ExecRequest    => exec(e)
@@ -1297,25 +1296,24 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }()
       }
 
-      private def ping(p: PingRequest): Future[CommandResponse] = {
-        import p._
+      private def ping(pr: PingRequest): Future[CommandResponse] = {
         transaction match {
-          case Some(tc: Transaction with PingArgTxIF) =>
-            run(p)(tc.pingArg(p.message)) { r =>
+          case Some(tc: Transaction with JedisEx[Response]) =>
+            run(pr)(tc.pingArg(pr.message)) { r =>
               txState.append(ResponseF[String](r, { r =>
-                PingSucceeded(UUID.randomUUID(), id, r.get)
+                PingSucceeded(UUID.randomUUID(), pr.id, r.get)
               }))
-              PingSuspended(UUID.randomUUID(), id)
+              PingSuspended(UUID.randomUUID(), pr.id)
             } { t =>
-              PingFailed(UUID.randomUUID(), id, RedisIOException(Some(t.getMessage), Some(t)))
+              PingFailed(UUID.randomUUID(), pr.id, RedisIOException(Some(t.getMessage), Some(t)))
             }()
           case Some(_) =>
             throw new AssertionError()
           case None =>
-            run(p)(jedis.pingArg(p.message)) {
-              PingSucceeded(UUID.randomUUID(), id, _)
+            run(pr)(jedis.pingArg(pr.message)) {
+              PingSucceeded(UUID.randomUUID(), pr.id, _)
             } { t =>
-              PingFailed(UUID.randomUUID(), id, RedisIOException(Some(t.getMessage), Some(t)))
+              PingFailed(UUID.randomUUID(), pr.id, RedisIOException(Some(t.getMessage), Some(t)))
             }()
         }
       }
@@ -1354,8 +1352,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         resultCallback = getAsyncCallback[RequestWithResult](handleResult)
         jedis = (connectionTimeout, socketTimeout) match {
           case (Some(ct), None) =>
-            new Jedis(host, port, if (ct.isFinite()) ct.toSeconds.toInt else 0) with PingArgIF {
-
+            new Jedis(host, port, if (ct.isFinite()) ct.toSeconds.toInt else 0) with JedisEx[Id] {
               val custom = new Client(host, port) {
                 def pingArg(argOpt: Option[String]): Unit = {
                   argOpt match {
@@ -1368,8 +1365,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
               }
 
               override def multi(): Transaction = {
-                this.custom.multi()
-                new Transaction(this.custom) with PingArgTxIF {
+                new Transaction(this.custom) with JedisEx[Response] {
                   override def pingArg(arg: Option[String]): Response[String] = {
                     custom.pingArg(arg)
                     getResponse(BuilderFactory.STRING)
@@ -1377,7 +1373,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
                 }
               }
 
-              def pingArg(arg: Option[String]): String = {
+              def pingArg(arg: Option[String]): Id[String] = {
                 custom.pingArg(arg)
                 custom.getStatusCodeReply
               }
@@ -1386,7 +1382,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             new Jedis(host,
                       port,
                       if (ct.isFinite()) ct.toSeconds.toInt else 0,
-                      if (st.isFinite()) st.toSeconds.toInt else 0) with PingArgIF {
+                      if (st.isFinite()) st.toSeconds.toInt else 0) with JedisEx[Id] {
               val custom = new Client(host, port) {
                 def pingArg(argOpt: Option[String]): Unit = {
                   argOpt match {
@@ -1399,8 +1395,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
               }
 
               override def multi(): Transaction = {
-                this.custom.multi()
-                new Transaction(this.custom) with PingArgTxIF {
+                new Transaction(this.custom) with JedisEx[Response] {
                   override def pingArg(arg: Option[String]): Response[String] = {
                     custom.pingArg(arg)
                     getResponse(BuilderFactory.STRING)
@@ -1408,13 +1403,13 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
                 }
               }
 
-              def pingArg(arg: Option[String]): String = {
+              override def pingArg(arg: Option[String]): Id[String] = {
                 custom.pingArg(arg)
                 custom.getStatusCodeReply
               }
             }
           case _ =>
-            new Jedis(host, port) with PingArgIF {
+            new Jedis(host, port) with JedisEx[Id] {
               val custom = new Client(host, port) {
                 def pingArg(argOpt: Option[String]): Unit = {
                   argOpt match {
@@ -1428,8 +1423,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
               }
 
               override def multi(): Transaction = {
-                this.custom.multi()
-                new Transaction(this.custom) with PingArgTxIF {
+                new Transaction(this.custom) with JedisEx[Response] {
                   override def pingArg(arg: Option[String]): Response[String] = {
                     custom.pingArg(arg)
                     getResponse(BuilderFactory.STRING)
@@ -1437,7 +1431,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
                 }
               }
 
-              def pingArg(arg: Option[String]): String = {
+              def pingArg(arg: Option[String]): Id[String] = {
                 custom.pingArg(arg)
                 custom.getStatusCodeReply
               }
