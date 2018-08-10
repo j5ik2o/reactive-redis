@@ -94,7 +94,8 @@ val coreSettings = Seq(
     Wart.EitherProjectionPartial,
     Wart.AsInstanceOf
   ),
-  wartremoverExcluded += baseDirectory.value / "src" / "test" / "scala"
+  wartremoverExcluded += baseDirectory.value / "src" / "test" / "scala",
+  scapegoatVersion in ThisBuild := "1.3.7"
 ) ++ scalaStyleSettings
 
 val akkaVersion = "2.5.11"
