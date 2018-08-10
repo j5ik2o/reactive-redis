@@ -32,5 +32,4 @@ jobs:
             - "~/.ivy2/cache"
             - "~/.sbt"
           key: v1-dependencies--{{ checksum "build.sbt" }}
-      - run: sbt coverage test:compile & sbt coveralls
       - run: sbt +core/test && sbt +pool-commons/test && sbt +pool-fop/test && sbt +pool-scala/test && sbt +pool-stormpot/test
