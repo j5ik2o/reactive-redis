@@ -21,7 +21,7 @@ final case class ExpireRequest(id: UUID, key: String, seconds: FiniteDuration)
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"EXPIRE $key ${seconds.toSeconds}"
+  override def asString: String = cs("EXPIRE", Some(key), Some(seconds.toSeconds.toString))
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

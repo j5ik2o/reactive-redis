@@ -14,7 +14,7 @@ final case class GetSetRequest(id: UUID, key: String, value: String) extends Com
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"GETSET $key $value"
+  override def asString: String = cs("GETSET", Some(key), Some(value))
 
   override protected lazy val responseParser: P[Expr] = fastParse(bulkStringReply | simpleStringReply | errorReply)
 

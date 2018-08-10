@@ -14,7 +14,7 @@ final case class EchoRequest(id: UUID, message: String) extends CommandRequest w
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"ECHO $message"
+  override def asString: String = cs("ECHO", Some(message))
 
   override protected lazy val responseParser: P[Expr] = fastParse(bulkStringReply | simpleStringReply | errorReply)
 

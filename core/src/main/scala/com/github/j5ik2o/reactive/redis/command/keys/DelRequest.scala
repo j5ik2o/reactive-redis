@@ -17,7 +17,7 @@ final class DelRequest(val id: UUID, val keys: NonEmptyList[String]) extends Com
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"DEL ${keys.toList.mkString(" ")}"
+  override def asString: String = cs("DEL", keys.map(Some(_)).toList: _*)
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

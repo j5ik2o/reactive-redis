@@ -19,7 +19,7 @@ final case class PSetExRequest(id: UUID, key: String, millis: FiniteDuration, va
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"""PSETEX $key ${millis.toMillis} "$value""""
+  override def asString: String = cs("PSETEX", Some(key), Some(millis.toMillis.toString), Some(value))
 
   override protected lazy val responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
 

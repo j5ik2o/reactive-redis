@@ -14,7 +14,7 @@ final case class DecrRequest(id: UUID, key: String) extends CommandRequest with 
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"DECR $key"
+  override def asString: String = cs("DECR", Some(key))
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

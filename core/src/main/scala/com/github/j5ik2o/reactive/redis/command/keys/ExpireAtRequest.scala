@@ -17,7 +17,7 @@ final case class ExpireAtRequest(id: UUID, key: String, expiresAt: ZonedDateTime
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"""EXPIREAT $key ${expiresAt.toEpochSecond}"""
+  override def asString: String = cs("EXPIREAT", Some(key), Some(expiresAt.toEpochSecond.toString))
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

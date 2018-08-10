@@ -16,7 +16,9 @@ final case class BitCountRequest(id: UUID, key: String, startAndEnd: Option[Star
 
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = s"BITCOUNT $key" + startAndEnd.fold("")(e => " " + e.start + " " + e.end)
+  override def asString: String =
+    cs("BITCOUNT",
+       Some(key) :: startAndEnd.map(v => List(v.start.toString, v.end.toString).map(Some(_))).getOrElse(Nil): _*)
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

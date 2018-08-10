@@ -12,7 +12,7 @@ final case class SelectRequest(id: UUID, index: Int) extends CommandRequest with
   override type Response = SelectResponse
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = s"SELECT $index"
+  override def asString: String = cs("SELECT", Some(index.toString))
 
   override protected def responseParser: P[Expr] = fastParse(simpleStringReply)
   override protected def parseResponse: Handler = {

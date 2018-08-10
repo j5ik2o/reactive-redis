@@ -13,7 +13,7 @@ final case class HGetAllRequest(id: UUID, key: String) extends CommandRequest wi
   override type Response = HGetAllResponse
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = s"HGETALL $key"
+  override def asString: String = cs("HGETALL", Some(key))
 
   override protected lazy val responseParser: P[Expr] = fastParse(stringArrayReply | simpleStringReply)
 

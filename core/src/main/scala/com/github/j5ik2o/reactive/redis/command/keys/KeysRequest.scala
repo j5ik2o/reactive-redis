@@ -14,7 +14,7 @@ final case class KeysRequest(id: UUID, pattern: String) extends CommandRequest w
 
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = s"KEYS $pattern"
+  override def asString: String = cs("KEYS", Some(pattern))
 
   override protected lazy val responseParser: P[Expr] = fastParse(
     stringArrayReply | simpleStringReply | errorReply

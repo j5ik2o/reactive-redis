@@ -14,7 +14,7 @@ final case class StrLenRequest(id: UUID, key: String) extends CommandRequest wit
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"STRLEN $key"
+  override def asString: String = cs("STRLEN", Some(key))
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

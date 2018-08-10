@@ -16,7 +16,8 @@ final case class GetRangeRequest(id: UUID, key: String, startAndEnd: StartAndEnd
 
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = s"GETRANGE $key ${startAndEnd.start} ${startAndEnd.end}"
+  override def asString: String =
+    cs("GETRANGE", Some(key), Some(startAndEnd.start.toString), Some(startAndEnd.end.toString))
 
   override protected lazy val responseParser: P[Expr] = fastParse(bulkStringReply | simpleStringReply | errorReply)
 

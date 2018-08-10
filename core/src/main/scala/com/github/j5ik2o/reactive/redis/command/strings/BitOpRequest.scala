@@ -23,7 +23,8 @@ final case class BitOpRequest(id: UUID,
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"BITOP ${operand.entryName} $outputKey $inputKey1 $inputKey2"
+  override def asString: String =
+    cs("BITOP", Some(operand.entryName), Some(outputKey), Some(inputKey1), Some(inputKey2))
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

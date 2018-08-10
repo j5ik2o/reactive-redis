@@ -14,7 +14,7 @@ final case class LPopRequest(id: UUID, key: String) extends CommandRequest with 
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"LPOP $key"
+  override def asString: String = cs("LPOP", Some(key))
 
   override protected lazy val responseParser: P[Expr] = fastParse(bulkStringReply | simpleStringReply | errorReply)
 

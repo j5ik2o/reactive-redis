@@ -8,13 +8,14 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
+@SuppressWarnings(Array("org.wartremover.warts.ToString"))
 final case class IncrByRequest(id: UUID, key: String, value: Int) extends CommandRequest with StringParsersSupport {
 
   override type Response = IncrByResponse
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"INCRBY $key $value"
+  override def asString: String = cs("INCRBY", Some(key), Some(value.toString))
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

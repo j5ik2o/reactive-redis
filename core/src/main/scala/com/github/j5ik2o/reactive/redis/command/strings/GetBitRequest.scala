@@ -14,7 +14,7 @@ final case class GetBitRequest(id: UUID, key: String, offset: Int) extends Comma
 
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = s"GETBIT $key $offset"
+  override def asString: String = cs("GETBIT", Some(key), Some(offset.toString))
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

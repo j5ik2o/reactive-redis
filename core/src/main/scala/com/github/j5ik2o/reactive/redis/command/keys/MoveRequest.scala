@@ -14,7 +14,7 @@ final case class MoveRequest(id: UUID, key: String, db: Int) extends CommandRequ
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"MOVE $key $db"
+  override def asString: String = cs("MOVE", Some(key), Some(db.toString))
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

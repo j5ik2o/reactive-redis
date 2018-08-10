@@ -15,7 +15,7 @@ final case class DumpRequest(id: UUID, key: String) extends CommandRequest {
 
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = s"DUMP $key"
+  override def asString: String = cs("DUMP", Some(key))
 
   override protected lazy val responseParser: P[Expr] = fastParse(bulkBytesReply | simpleStringReply)
 

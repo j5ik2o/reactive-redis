@@ -11,7 +11,7 @@ import fastparse.all._
 
 import scala.concurrent.duration.Duration
 
-final class BLPopRequest(val id: UUID, val keys: NonEmptyList[String], val timeout: Duration)
+final class BLPopRequest(val id: UUID, val keys: NonEmptyList[String], val timeout: Duration = Duration.Zero)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -19,9 +19,9 @@ final class BLPopRequest(val id: UUID, val keys: NonEmptyList[String], val timeo
 
   override val isMasterOnly: Boolean = true
 
-  private def timetoutToSeconds: Long = if (timeout.isFinite()) timeout.toSeconds else 0
+  private def timeoutToSeconds: Long = if (timeout.isFinite()) timeout.toSeconds else 0
 
-  override def asString: String = s"BLPOP ${keys.toList.mkString(" ")} $timetoutToSeconds"
+  override def asString: String = s"BLPOP ${keys.toList.mkString(" ")} $timeoutToSeconds"
 
   override protected lazy val responseParser: P[Expr] = fastParse(stringArrayReply | simpleStringReply | errorReply)
 

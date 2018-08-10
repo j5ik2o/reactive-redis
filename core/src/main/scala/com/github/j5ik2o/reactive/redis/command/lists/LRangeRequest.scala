@@ -15,7 +15,7 @@ final case class LRangeRequest(id: UUID, key: String, start: Long, stop: Long)
   override type Response = LRangeResponse
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = s"LRANGE $key $start $stop"
+  override def asString: String = cs("LRANGE", Some(key), Some(start.toString), Some(stop.toString))
 
   override protected def responseParser: P[Expr] = fastParse(stringArrayReply | simpleStringReply | errorReply)
 

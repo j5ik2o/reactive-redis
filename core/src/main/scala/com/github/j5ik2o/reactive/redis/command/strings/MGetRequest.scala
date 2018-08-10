@@ -15,7 +15,7 @@ final class MGetRequest(val id: UUID, val keys: NonEmptyList[String]) extends Co
 
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = s"MGET ${keys.toList.mkString(" ")}"
+  override def asString: String = cs("MGET", keys.toList.map(Some(_)): _*)
 
   override protected lazy val responseParser: P[Expr] = fastParse(
     stringArrayReply | simpleStringReply | errorReply

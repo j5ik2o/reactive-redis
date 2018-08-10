@@ -15,7 +15,7 @@ final class SAddRequest(val id: UUID, val key: String, val values: NonEmptyList[
   override type Response = SAddResponse
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"SADD $key ${values.toList.mkString(" ")}"
+  override def asString: String = cs("SADD", Some(key) :: values.map(Some(_)).toList: _*)
 
   override protected def responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

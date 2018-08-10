@@ -14,7 +14,7 @@ final case class DecrByRequest(id: UUID, key: String, value: Int) extends Comman
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"DECRBY $key $value"
+  override def asString: String = cs("DECRBY", Some(key), Some(value.toString))
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

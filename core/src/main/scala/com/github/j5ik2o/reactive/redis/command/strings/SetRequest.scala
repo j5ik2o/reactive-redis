@@ -41,9 +41,7 @@ final case class SetRequest(id: UUID,
   }
 
   override def asString: String =
-    s"""SET $key "$value"${expiration.fold("")(v => s" ${setExpirationToString(v)}")}${setOption.fold("")(
-      v => s" ${v.entryName}"
-    )}"""
+    cs("SET", Some(key), Some(value), expiration.map(setExpirationToString), setOption.map(_.entryName))
 
   override protected lazy val responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
 

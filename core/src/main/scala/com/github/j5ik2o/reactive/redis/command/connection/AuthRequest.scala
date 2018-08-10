@@ -14,7 +14,7 @@ final case class AuthRequest(id: UUID, password: String) extends CommandRequest 
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"AUTH $password"
+  override def asString: String = cs("AUTH", Some(password))
 
   override protected lazy val responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
 

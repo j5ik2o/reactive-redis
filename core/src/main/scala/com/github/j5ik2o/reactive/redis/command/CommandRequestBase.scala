@@ -17,6 +17,13 @@ trait CommandRequestBase {
   type Repr
   type P[+T] = Decoder[T, Elem, Repr]
 
+  def cs(param: String, params: Option[String]*): String = {
+    val _params = Some(param) :: params.toList
+    val result = "*" + _params.count(_.nonEmpty) + "\r\n" +
+    _params.collect { case Some(v) => "$" + v.length + "\r\n" + s"$v" + "\r\n" }.mkString
+    result.stripSuffix("\r\n")
+  }
+
   def fastParse[T](p: => fastparse.core.Parser[T, Elem, Repr]): Decoder[T, Elem, Repr] = new Decoder[T, Elem, Repr] {
     override def parse(input: Repr, index: Int): Either[ParseException, (T, Int)] = p.parse(input, index) match {
       case f @ Parsed.Failure(_, index, _) =>

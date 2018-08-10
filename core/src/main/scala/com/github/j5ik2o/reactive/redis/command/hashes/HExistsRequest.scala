@@ -13,7 +13,7 @@ final case class HExistsRequest(id: UUID, key: String, field: String) extends Co
   override type Response = HExistsResponse
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = s"HEXISTS $key $field"
+  override def asString: String = cs("HEXISTS", Some(key), Some(field))
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply)
 

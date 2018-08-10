@@ -17,7 +17,8 @@ final case class PExpireAtRequest(id: UUID, key: String, millisecondsTimestamp: 
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"PEXPIREAT $key ${millisecondsTimestamp.toInstant.toEpochMilli}"
+  override def asString: String =
+    cs("PEXPIREAT", Some(key), Some(millisecondsTimestamp.toInstant.toEpochMilli.toString))
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

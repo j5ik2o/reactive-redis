@@ -14,7 +14,7 @@ final case class HGetRequest(id: UUID, key: String, field: String) extends Comma
 
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = s"HGET $key $field"
+  override def asString: String = cs("HGET", Some(key), Some(field))
 
   override protected lazy val responseParser: P[Expr] = fastParse(bulkStringReply | simpleStringReply)
 

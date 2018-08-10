@@ -13,7 +13,7 @@ final case class SwapDBRequest(id: UUID, index0: Int, index1: Int) extends Comma
   override type Response = SwapDBResponse
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"SWAPDB $index0 $index1"
+  override def asString: String = cs("SWAPDB", Some(index0.toString), Some(index1.toString))
 
   override protected def responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
 
