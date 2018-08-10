@@ -162,9 +162,10 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case p: PExpireRequest   => pexpire(p)
             case p: PExpireAtRequest => pexpireAt(p)
             case p: PTtlRequest      => pttl(p)
+            // -- BLits
+            case b: BLPopRequest => blPop(b)
+            case b: BRPopRequest => brPop(b)
             // -- Lits
-            case b: BLPopRequest  => blPop(b)
-            case b: BRPopRequest  => brPop(b)
             case l: LPopRequest   => lPop(l)
             case l: LPushRequest  => lPush(l)
             case r: RPushRequest  => rpush(r)
@@ -1156,7 +1157,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
       private def bitField(bf: BitFieldRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
-            run(bf)(tc.bitfield(bf.key, bf.options.flatMap(_.asString.split(" ")): _*)) { result =>
+            run(bf)(tc.bitfield(bf.key, bf.options.toList.flatMap(v => v.toSeq): _*)) { result =>
               txState.append(ResponseF[util.List[lang.Long]](result, { r =>
                 BitFieldSucceeded(UUID.randomUUID(), bf.id, r.get.asScala.map(_.toLong))
               }))
@@ -1165,7 +1166,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
               BitFieldFailed(UUID.randomUUID(), bf.id, RedisIOException(Some(t.getMessage), Some(t)))
             }()
           case None =>
-            run(bf)(jedis.bitfield(bf.key, bf.options.flatMap(_.asString.split(" ")): _*)) { result =>
+            run(bf)(jedis.bitfield(bf.key, bf.options.toList.flatMap(v => v.toSeq): _*)) { result =>
               BitFieldSucceeded(UUID.randomUUID(), bf.id, result.asScala.map(_.toLong))
             } { t =>
               BitFieldFailed(UUID.randomUUID(), bf.id, RedisIOException(Some(t.getMessage), Some(t)))

@@ -16,7 +16,7 @@ final case class BitFieldRequest(id: UUID, key: String, options: BitFieldRequest
 
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = s"BITFIELD $key ${options.map(_.asString).mkString(" ")}"
+  override def asString: String = cs("BITFIELD", Some(key) :: options.toSeq.flatMap(_.toSeq).map(Some(_)).toList: _*)
 
   override protected lazy val responseParser: P[Expr] = fastParse(
     integerArrayReply | simpleStringReply | errorReply
@@ -36,51 +36,51 @@ final case class BitFieldRequest(id: UUID, key: String, options: BitFieldRequest
 object BitFieldRequest {
 
   sealed trait BitType {
-    def asString: String
+    def toSeq: Seq[String]
   }
 
   final case class SingedBitType(bit: Int) extends BitType {
-    override def asString: String = s"i$bit"
+    override def toSeq: Seq[String] = Seq(s"i$bit")
   }
 
   final case class UnsignedBitType(bit: Int) extends BitType {
-    override def asString: String = s"u$bit"
+    override def toSeq: Seq[String] = Seq(s"u$bit")
   }
 
   sealed trait SubOption {
-    def asString: String
+    def toSeq: Seq[String]
   }
 
   final case class Get(bitType: BitType, offset: Int) extends SubOption {
-    override def asString: String = s"GET ${bitType.asString} $offset"
+    override def toSeq: Seq[String] = Seq("GET") ++ bitType.toSeq ++ Seq(offset.toString)
   }
 
   final case class Set(bitType: BitType, offset: Int, value: Int) extends SubOption {
-    override def asString: String = s"SET ${bitType.asString} $offset $value"
+    override def toSeq: Seq[String] = Seq("SET") ++ bitType.toSeq ++ Seq(offset.toString, value.toString)
   }
 
   final case class IncrBy(bitType: BitType, offset: Int, increment: Int) extends SubOption {
-    override def asString: String = s"INCRBY ${bitType.asString} $offset $increment"
+    override def toSeq: Seq[String] = Seq("INCRBY") ++ bitType.toSeq ++ Seq(offset.toString, increment.toString)
   }
 
   sealed trait OverflowType {
-    def asString: String
+    def toSeq: Seq[String]
   }
 
   case object Wrap extends OverflowType {
-    override def asString: String = "WRAP"
+    override def toSeq: Seq[String] = Seq("WRAP")
   }
 
   case object Sat extends OverflowType {
-    override def asString: String = "SAT"
+    override def toSeq: Seq[String] = Seq("SAT")
   }
 
   case object Fail extends OverflowType {
-    override def asString: String = "FAIL"
+    override def toSeq: Seq[String] = Seq("FAIL")
   }
 
   final case class Overflow(overflowType: OverflowType) extends SubOption {
-    override def asString: String = s"OVERFLOW ${overflowType.asString}"
+    override def toSeq: Seq[String] = Seq("OVERFLOW") ++ overflowType.toSeq
   }
 
 }

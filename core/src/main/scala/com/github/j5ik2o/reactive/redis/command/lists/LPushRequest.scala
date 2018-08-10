@@ -18,7 +18,7 @@ final case class LPushRequest(id: UUID, key: String, values: NonEmptyList[String
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"LPUSH $key ${values.toList.mkString(" ")}"
+  override def asString: String = cs("LPUSH", Some(key) :: values.map(Some(_)).toList: _*)
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

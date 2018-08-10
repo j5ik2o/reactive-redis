@@ -14,7 +14,7 @@ final case class GetRequest(id: UUID, key: String) extends CommandRequest with S
 
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = s"GET $key"
+  override def asString: String = cs("GET", Some(key))
 
   override protected lazy val responseParser: P[Expr] = fastParse(bulkStringReply | simpleStringReply | errorReply)
   // override protected lazy val responseParser: P[Expr] = default(Reference)(NewParsers.getParer(Reference))

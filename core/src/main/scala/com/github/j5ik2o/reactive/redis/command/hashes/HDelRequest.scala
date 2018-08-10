@@ -16,7 +16,8 @@ final case class HDelRequest(id: UUID, key: String, fields: NonEmptyList[String]
   override type Response = HDelResponse
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"HDEL $key ${fields.toList.mkString(" ")}"
+  override def asString: String =
+    cs("HDEL", Some(key) :: fields.map(Some(_)).toList: _*)
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply)
 

@@ -16,9 +16,14 @@ final case class BitPosRequest(id: UUID, key: String, bit: Int, startAndEnd: Opt
 
   override val isMasterOnly: Boolean = false
 
-  override val asString: String =
-  s"BITPOS $key $bit" + startAndEnd.fold("") { e =>
-    " " + e.asString
+  override val asString: String = {
+    val option: Seq[Option[String]] = startAndEnd match {
+      case Some(v) =>
+        Seq(Some(v.start.toString), v.end.map(_.toString))
+      case None =>
+        Seq.empty[Option[String]]
+    }
+    cs("BITPOS", Some(key) :: Some(bit.toString) :: option.toList: _*)
   }
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)

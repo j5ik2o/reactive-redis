@@ -7,7 +7,7 @@ import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandRespons
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr, StringOptExpr }
 import fastparse.all._
-
+@SuppressWarnings(Array("org.wartremover.warts.ToString"))
 final case class IncrByFloatRequest(id: UUID, key: String, value: Double)
     extends CommandRequest
     with StringParsersSupport {
@@ -16,7 +16,7 @@ final case class IncrByFloatRequest(id: UUID, key: String, value: Double)
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"INCRBYFLOAT $key $value"
+  override def asString: String = cs("INCRBYFLOAT", Some(key), Some(value.toString))
 
   override protected lazy val responseParser: P[Expr] = fastParse(bulkStringReply | simpleStringReply | errorReply)
 

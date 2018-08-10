@@ -16,7 +16,7 @@ final case class HSetRequest(id: UUID, key: String, field: String, value: String
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"""HSET $key $field "$value""""
+  override def asString: String = cs("HSET", Some(key), Some(field), Some(value))
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply)
 

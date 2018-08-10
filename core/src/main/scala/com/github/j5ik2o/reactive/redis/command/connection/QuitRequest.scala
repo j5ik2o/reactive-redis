@@ -12,7 +12,7 @@ final case class QuitRequest(id: UUID) extends CommandRequest with StringParsers
   override type Response = QuitResponse
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = "QUIT"
+  override def asString: String = cs("QUIT")
 
   override protected def responseParser: P[Expr] = fastParse(simpleStringReply)
 

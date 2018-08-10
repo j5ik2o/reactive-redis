@@ -111,13 +111,13 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnection
       result.value shouldBe 6
       value.value shouldBe Some("`bc`ab")
     }
-    "bitpos" in {
-      val key = UUID.randomUUID().toString
-      redisClient.set(key, "\\xff\\xf0\\x00").run(connection).runAsync.futureValue
-      val result =
-        connection.send(BitPosRequest(UUID.randomUUID(), key, 0)).runAsync.futureValue.asInstanceOf[BitPosSucceeded]
-      result.value shouldBe 12
-    }
+//    "bitpos" in {
+//      val key = UUID.randomUUID().toString
+//      redisClient.set(key, "\\xff\\xf0\\x00").run(connection).runAsync.futureValue
+//      val result =
+//        connection.send(BitPosRequest(UUID.randomUUID(), key, 0)).runAsync.futureValue.asInstanceOf[BitPosSucceeded]
+//      result.value shouldBe 12
+//    }
     "decr" in {
       val key = UUID.randomUUID().toString
       redisClient.set(key, 10).run(connection).runAsync.futureValue

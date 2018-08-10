@@ -31,8 +31,16 @@ final case class MigrateRequest(id: UUID,
   override val isMasterOnly: Boolean = true
 
   override def asString: String =
-    s"""MIGRATE $host $port $key $toDbNo ${timeout.toMillis}""" + (if (copy) " COPY" else "") + (if (replace) " REPLACE"
-                                                                                                 else "")
+    cs(
+      "MIGRATE",
+      Some(host),
+      Some(port.toString),
+      Some(key),
+      Some(toDbNo.toString),
+      Some(timeout.toMillis.toString),
+      if (copy) Some("COPY") else None,
+      if (replace) Some("REPLACE") else None
+    )
 
   override protected lazy val responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
 

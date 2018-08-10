@@ -3,9 +3,9 @@ package com.github.j5ik2o.reactive.redis.command.connection
 import java.util.UUID
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
-import com.github.j5ik2o.reactive.redis.command.{CommandRequest, CommandResponse, StringParsersSupport}
+import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
-import com.github.j5ik2o.reactive.redis.parser.model.{ErrorExpr, Expr, SimpleExpr, StringOptExpr}
+import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr, StringOptExpr }
 import fastparse.all._
 
 final case class EchoRequest(id: UUID, message: String) extends CommandRequest with StringParsersSupport {
@@ -14,7 +14,7 @@ final case class EchoRequest(id: UUID, message: String) extends CommandRequest w
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = buildCmdString("ECHO", Some(message))
+  override def asString: String = cs("ECHO", Some(message))
 
   override protected lazy val responseParser: P[Expr] = fastParse(bulkStringReply | simpleStringReply | errorReply)
 

@@ -14,7 +14,7 @@ final case class BRPopLPushRequest(id: UUID, source: String, destination: String
   override type Response = BRPopLPushResponse
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"BRPOPLPUSH $source $destination ${timeout.toSeconds}"
+  override def asString: String = cs("BRPOPLPUSH", Some(source), Some(destination), Some(timeout.toSeconds.toString))
 
   override protected def responseParser: P[Expr] = fastParse(bulkStringReply)
   override protected def parseResponse: Handler = {

@@ -12,7 +12,7 @@ final case class LLenRequest(id: UUID, key: String) extends CommandRequest with 
   override type Response = LLenResponse
   override val isMasterOnly: Boolean = false
 
-  override def asString: String = s"LLEN $key"
+  override def asString: String = cs("LLEN", Some(key))
 
   override protected def responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

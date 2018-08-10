@@ -220,9 +220,9 @@ private[redis] class RedisConnectionOfJedis(val peerConfig: PeerConfig,
         .flatten
         .onErrorRecoverWith {
           case ex: AskTimeoutException =>
-            Task.raiseError(RedisRequestException("ask timeout", Some(ex)))
+            Task.raiseError(RedisRequestException(s"ask timeout: ${cmd.asString}", Some(ex)))
           case ex: TimeoutException =>
-            Task.raiseError(RedisRequestException("task timeout", Some(ex)))
+            Task.raiseError(RedisRequestException(s"task timeout ${cmd.asString}", Some(ex)))
         }
     }
     peerConfig.requestBackoffConfig match {

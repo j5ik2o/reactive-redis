@@ -14,7 +14,7 @@ final case class PersistRequest(id: UUID, key: String) extends CommandRequest wi
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"PERSIST $key"
+  override def asString: String = cs("PERSIST", Some(key))
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

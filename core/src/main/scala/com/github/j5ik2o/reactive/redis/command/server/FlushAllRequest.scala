@@ -14,7 +14,7 @@ final case class FlushAllRequest(id: UUID, async: Boolean = false) extends Comma
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"FLUSHALL" + (if (async) " ASYNC" else "")
+  override def asString: String = cs("FLUSHALL", if (async) Some("ASYNC") else None)
 
   override protected lazy val responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
 

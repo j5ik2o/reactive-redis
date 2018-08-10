@@ -17,10 +17,10 @@ trait CommandRequestBase {
   type Repr
   type P[+T] = Decoder[T, Elem, Repr]
 
-  def buildCmdString(param: String, params: Option[String]*): String = {
+  def cs(param: String, params: Option[String]*): String = {
     val _params = Some(param) :: params.toList
     val result = "*" + _params.count(_.nonEmpty) + "\r\n" +
-      _params.collect{ case Some(v) => "$" + v.length + "\r\n" + s"$v" + "\r\n"}.mkString
+    _params.collect { case Some(v) => "$" + v.length + "\r\n" + s"$v" + "\r\n" }.mkString
     result.stripSuffix("\r\n")
   }
 

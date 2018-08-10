@@ -16,7 +16,7 @@ final case class SetBitRequest(id: UUID, key: String, offset: Long, value: Long)
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"SETBIT $key $offset $value"
+  override def asString: String = cs("SETBIT", Some(key), Some(offset.toString), Some(value.toString))
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

@@ -17,7 +17,7 @@ final class RPushRequest(val id: UUID, val key: String, val values: NonEmptyList
   override type Response = RPushResponse
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"RPUSH $key ${values.toList.mkString(" ")}"
+  override def asString: String = cs("RPUSH", Some(key) :: values.map(Some(_)).toList: _*)
 
   override protected def responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

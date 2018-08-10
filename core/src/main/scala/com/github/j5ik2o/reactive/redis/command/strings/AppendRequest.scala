@@ -13,7 +13,7 @@ final case class AppendRequest(id: UUID, key: String, value: String) extends Com
 
   override type Response = AppendResponse
 
-  override def asString: String = s"""APPEND $key "$value""""
+  override def asString: String = cs("APPEND", Some(key), Some(value))
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

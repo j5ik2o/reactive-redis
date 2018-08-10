@@ -17,7 +17,7 @@ final case class SetRangeRequest(id: UUID, key: String, range: Int, value: Strin
 
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"""SETRANGE $key $range "$value""""
+  override def asString: String = cs("SETRANGE", Some(key), Some(range.toString), Some(value))
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

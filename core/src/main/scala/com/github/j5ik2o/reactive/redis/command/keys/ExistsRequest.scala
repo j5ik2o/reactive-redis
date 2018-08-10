@@ -13,6 +13,8 @@ final class ExistsRequest(val id: UUID, val keys: NonEmptyList[String])
     extends CommandRequest
     with StringParsersSupport {
 
+  override def toString: String = s"ExistsRequest($id, $keys)"
+
   override type Response = ExistsResponse
 
   override val isMasterOnly: Boolean = false

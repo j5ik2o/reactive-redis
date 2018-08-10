@@ -8,6 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
+@SuppressWarnings(Array("org.wartremover.warts.ToString"))
 final case class MSetNxRequest(id: UUID, values: Map[String, Any]) extends CommandRequest with StringParsersSupport {
 
   override type Response = MSetNxResponse
@@ -15,11 +16,8 @@ final case class MSetNxRequest(id: UUID, values: Map[String, Any]) extends Comma
   override val isMasterOnly: Boolean = true
 
   override def asString: String = {
-    val keyWithValues = values.foldLeft("") {
-      case (r, (k, v)) =>
-        r + s""" $k "$v""""
-    }
-    s"MSETNX $keyWithValues"
+    val params = values.toSeq.flatMap { case (k, v) => Seq(k, v.toString) }.map(Some(_))
+    cs("MSETNX", params: _*)
   }
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)

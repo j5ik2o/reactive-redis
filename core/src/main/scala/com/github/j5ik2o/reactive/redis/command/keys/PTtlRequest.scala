@@ -13,7 +13,7 @@ final case class PTtlRequest(id: UUID, key: String) extends CommandRequest with 
   override type Response = PTtlResponse
   override val isMasterOnly: Boolean = true
 
-  override def asString: String = s"PTTL $key"
+  override def asString: String = cs("PTTL", Some(key))
 
   override protected def responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 
