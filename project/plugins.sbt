@@ -11,3 +11,7 @@ addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.0")
 addSbtPlugin("org.wartremover" % "sbt-wartremover" % "2.3.1")
 
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.4")
+
+addSbtPlugin("com.sksamuel.scapegoat" %% "sbt-scapegoat" % "1.0.9")
+
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.1")
