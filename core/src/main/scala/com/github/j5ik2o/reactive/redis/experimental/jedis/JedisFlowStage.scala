@@ -150,17 +150,18 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case s: SetRangeRequest    => setRange(s)
             case s: StrLenRequest      => strLen(s)
             // --- Keys
-            case d: DelRequest      => del(d)
-            case d: DumpRequest     => dump(d)
-            case e: ExistsRequest   => exists(e)
-            case e: ExpireRequest   => expire(e)
-            case e: ExpireAtRequest => expireAt(e)
-            case k: KeysRequest     => keys(k)
-            //            case m: MigrateRequest   =>
-            //            case m: MoveRequest      =>
-            //            case p: PersistRequest   =>
+            case d: DelRequest       => del(d)
+            case d: DumpRequest      => dump(d)
+            case e: ExistsRequest    => exists(e)
+            case e: ExpireRequest    => expire(e)
+            case e: ExpireAtRequest  => expireAt(e)
+            case k: KeysRequest      => keys(k)
+            case m: MigrateRequest   => migrate(m)
+            case m: MoveRequest      => move(m)
+            case p: PersistRequest   => persist(p)
             case p: PExpireRequest   => pexpire(p)
             case p: PExpireAtRequest => pexpireAt(p)
+            case p: PTtlRequest      => pttl(p)
             // -- Lits
             case b: BLPopRequest  => blPop(b)
             case b: BRPopRequest  => brPop(b)
@@ -180,6 +181,86 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             // --- Sets
             case s: SAddRequest => sadd(s)
           }
+        }
+      }
+
+      private def migrate(m: MigrateRequest) = {
+        transaction match {
+          case Some(tc) =>
+            run(m)(tc.migrate(m.host, m.port, m.key, m.toDbNo, m.timeout.toMillis.toInt)) { result =>
+              txState.append(ResponseF[String](result, { p =>
+                MigrateSucceeded(UUID.randomUUID(), m.id, Status.withName(p.get))
+              }))
+              MigrateSuspended(UUID.randomUUID(), m.id)
+            } { t =>
+              MigrateFailed(UUID.randomUUID(), m.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(m)(jedis.migrate(m.host, m.port, m.key, m.toDbNo, m.timeout.toMillis.toInt)) { result =>
+              MigrateSucceeded(UUID.randomUUID(), m.id, Status.withName(result))
+            } { t =>
+              MigrateFailed(UUID.randomUUID(), m.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def move(m: MoveRequest) = {
+        transaction match {
+          case Some(tc) =>
+            run(m)(tc.move(m.key, m.db)) { result =>
+              txState.append(ResponseF[lang.Long](result, { s =>
+                MoveSucceeded(UUID.randomUUID(), m.id, s.get == 1)
+              }))
+              MoveSuspended(UUID.randomUUID(), m.id)
+            } { t =>
+              MoveFailed(UUID.randomUUID(), m.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(m)(jedis.move(m.key, m.db)) { result =>
+              MoveSucceeded(UUID.randomUUID(), m.id, result == 1)
+            } { t =>
+              MoveFailed(UUID.randomUUID(), m.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def persist(p: PersistRequest) = {
+        transaction match {
+          case Some(tc) =>
+            run(p)(tc.persist(p.key)) { result =>
+              txState.append(ResponseF[lang.Long](result, { s =>
+                PersistSucceeded(UUID.randomUUID(), p.id, s.get == 1)
+              }))
+              PersistSuspended(UUID.randomUUID(), p.id)
+            } { t =>
+              PersistFailed(UUID.randomUUID(), p.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(p)(jedis.persist(p.key)) { result =>
+              PersistSucceeded(UUID.randomUUID(), p.id, result == 1)
+            } { t =>
+              PersistFailed(UUID.randomUUID(), p.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def pttl(p: PTtlRequest) = {
+        transaction match {
+          case Some(tc) =>
+            run(p)(tc.pttl(p.key)) { result =>
+              txState.append(ResponseF[lang.Long](result, { s =>
+                PTtlSucceeded(UUID.randomUUID(), p.id, s.get)
+              }))
+              PTtlSuspended(UUID.randomUUID(), p.id)
+            } { t =>
+              PTtlFailed(UUID.randomUUID(), p.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(p)(jedis.pttl(p.key)) { result =>
+              PTtlSucceeded(UUID.randomUUID(), p.id, result)
+            } { t =>
+              PTtlFailed(UUID.randomUUID(), p.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
         }
       }
 

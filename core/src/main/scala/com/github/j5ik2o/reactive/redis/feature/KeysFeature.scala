@@ -20,12 +20,19 @@ trait KeysAPI[M[_]] {
   def expire(key: String, seconds: FiniteDuration): M[Result[Boolean]]
   def expireAt(key: String, expiresAt: ZonedDateTime): M[Result[Boolean]]
   def keys(pattern: String): M[Result[Seq[String]]]
-  def migrate(host: String, port: Int, key: String, toDbNo: Int, timeout: FiniteDuration): M[Result[Unit]]
+  def migrate(host: String,
+              port: Int,
+              key: String,
+              toDbNo: Int,
+              timeout: FiniteDuration,
+              copy: Boolean,
+              replease: Boolean,
+              keys: NonEmptyList[String]): M[Result[Status]]
   def move(key: String, db: Int): M[Result[Boolean]]
   def persist(key: String): M[Result[Boolean]]
   def pExpire(key: String, milliseconds: FiniteDuration): M[Result[Boolean]]
   def pExpireAt(key: String, millisecondsTimestamp: ZonedDateTime): M[Result[Boolean]]
-
+  def pTtl(key: String): M[Result[Long]]
 }
 
 trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
@@ -80,11 +87,14 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
                        port: Int,
                        key: String,
                        toDbNo: Int,
-                       timeout: FiniteDuration): ReaderTTaskRedisConnection[Result[Unit]] =
-    send(MigrateRequest(UUID.randomUUID(), host, port, key, toDbNo, timeout)).flatMap {
-      case MigrateSuspended(_, _)  => ReaderTTask.pure(Suspended)
-      case MigrateSucceeded(_, _)  => ReaderTTask.pure(Provided(()))
-      case MigrateFailed(_, _, ex) => ReaderTTask.raiseError(ex)
+                       timeout: FiniteDuration,
+                       copy: Boolean,
+                       replease: Boolean,
+                       keys: NonEmptyList[String]): ReaderTTaskRedisConnection[Result[Status]] =
+    send(MigrateRequest(UUID.randomUUID(), host, port, key, toDbNo, timeout, copy, replease, keys)).flatMap {
+      case MigrateSuspended(_, _)         => ReaderTTask.pure(Suspended)
+      case MigrateSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case MigrateFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
   override def move(key: String, db: Int): ReaderTTaskRedisConnection[Result[Boolean]] =
@@ -118,8 +128,14 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
       case PExpireAtFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
+  override def pTtl(key: String): ReaderTTaskRedisConnection[Result[Long]] =
+    send(PTtlRequest(UUID.randomUUID(), key)).flatMap {
+      case PTtlSuspended(_, _)         => ReaderTTask.pure(Suspended)
+      case PTtlSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case PTtlFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+    }
+
   /**
-  * PTTL
   * RANDOMKEY
   * RENAME
   * RENAMENX
