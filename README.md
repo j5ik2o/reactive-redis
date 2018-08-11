@@ -203,63 +203,63 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
   </tr>
   <tr>
     <td>HDEL</td>
-    <td></td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>HEXISTS</td>
-    <td></td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>HGET</td>
-    <td></td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>HGETALL</td>
-    <td></td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>HINCRBY</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>HINCRBYFLOAT</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>HKEYS</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>HLEN</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>HMGET</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>HMSET</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>HSCAN</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>HSET</td>
-    <td></td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>HSETNX</td>
-    <td></td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>HSTRLEN</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>HVALS</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
 </table>
 
@@ -272,15 +272,15 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
   </tr>
   <tr>
     <td>PFADD</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>PFCOUNT</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>PFMERGE</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
 </table>
 
@@ -394,15 +394,15 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
 <table>
   <tr>
     <td>BLPOP</td>
-    <td></td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>BRPOP</td>
-    <td></td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>BRPOPLPUSH</td>
-    <td></td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>LINDEX</td>
@@ -414,7 +414,7 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
   </tr>
   <tr>
     <td>LLEN</td>
-    <td></td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>LPOP</td>
@@ -422,7 +422,7 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
   </tr>
   <tr>
     <td>LPUSH</td>
-    <td></td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>LPUSHX</td>
@@ -430,7 +430,7 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
   </tr>
   <tr>
     <td>LRANGE</td>
-    <td></td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>LREM</td>
@@ -454,7 +454,7 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
   </tr>
   <tr>
     <td>RPUSH</td>
-    <td></td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>RPUSHX</td>
