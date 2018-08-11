@@ -263,6 +263,27 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
   </tr>
 </table>
 
+- HyperLogLog
+
+<table>
+  <tr>
+    <td>Command</td>
+    <td>Support</td>
+  </tr>
+  <tr>
+    <td>PFADD</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>PFCOUNT</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>PFMERGE</td>
+    <td></td>
+  </tr>
+</table>
+
 - Keys
 
 <table>
