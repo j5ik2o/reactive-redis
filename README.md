@@ -462,6 +462,34 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
   </tr>
 </table>
 
+- PubSub
+
+<table>
+  <tr>
+    <td>PSUBSCRIBE</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>PUBLISH</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>PUBSUB</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>PUNSUBSCRIBE</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>SUBSCRIBE</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>UNSUBSCRIBE</td>
+    <td></td>
+  </tr>
+</table>  
 - Sets
 
 <table>
