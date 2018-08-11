@@ -93,7 +93,7 @@ abstract class AbstractKeysFeatureSpec extends AbstractRedisClientSpec(ActorSyst
           _ <- redisClient.expire(k, 1 seconds)
           r <- redisClient.pTtl(k)
         } yield r)
-        result1.value shouldBe <=(1000)
+        result1.value.toMillis shouldBe <=(1000)
     }
     "randomkey" in forAll(keyStrValueGen) {
       case (k, v) =>
