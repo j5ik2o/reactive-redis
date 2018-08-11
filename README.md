@@ -162,205 +162,218 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
 </table>
 
 - Sets
+
 <table>
   <tr>
+    <td>Command</td>
+    <td>Support</td>
+  </tr>
+  <tr>
     <td>SADD</td>
-    <td></td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>SCARD</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>SDIFF</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>SDIFFSTORE</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>SINTER</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>SINTERSTORE</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>SISMEMBER</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>SMEMBERS</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>SMOVE</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>SPOP</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>SRANDMEMBER</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>SREM</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>SSCAN</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>SUNION</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
   <tr>
     <td>SUNIONSTORE</td>
-    <td></td>
+    <td>TODO</td>
   </tr>
 </table>
 
 - SortedSets
 
 <table>
-	<tr>
-<td>BZPOPMAX</td>
-<td></td>
-</tr>
-<tr>
-<td>BZPOPMIN</td>
-<td></td>
-</tr>
-<tr>
-<td>ZADD</td>
-<td></td>
-</tr>
-<tr>
-<td>ZCARD</td>
-<td></td>
-</tr>
-<tr>
-<td>ZCOUNT</td>
-<td></td>
-</tr>
-<tr>
-<td>ZINCRBY</td>
-<td></td>
-</tr>
-<tr>
-<td>ZINTERSTORE</td>
-<td></td>
-</tr>
-<tr>
-<td>ZLEXCOUNT</td>
-<td></td>
-</tr>
-<tr>
-<td>ZPOPMAX</td>
-<td></td>
-</tr>
-<tr>
-<td>ZPOPMIN</td>
-<td></td>
-</tr>
-<tr>
-<td>ZRANGE</td>
-<td></td>
-</tr>
-<tr>
-<td>ZRANGEBYLEX</td>
-<td></td>
-</tr>
-<tr>
-<td>ZRANGEBYSCORE</td>
-<td></td>
-</tr>
-<tr>
-<td>ZRANK</td>
-<td></td>
-</tr>
-<tr>
-<td>ZREM</td>
-<td></td>
-</tr>
-<tr>
-<td>ZREMRANGEBYLEX</td>
-<td></td>
-</tr>
-<tr>
-<td>ZREMRANGEBYRANK</td>
-<td></td>
-</tr>
-<tr>
-<td>ZREMRANGEBYSCORE</td>
-<td></td>
-</tr>
-<tr>
-<td>ZREVRANGE</td>
-<td></td>
-</tr>
-<tr>
-<td>ZREVRANGEBYLEX</td>
-<td></td>
-</tr>
-<tr>
-<td>ZREVRANGEBYSCORE</td>
-<td></td>
-</tr>
-<tr>
-<td>ZREVRANK</td>
-<td></td>
-</tr>
-<tr>
-<td>ZSCAN</td>
-<td></td>
-</tr>
-<tr>
-<td>ZSCORE</td>
-<td></td>
-</tr>
-<tr>
-<td>ZUNIONSTORE</td>
-<td></td>
-</tr>
-	</table>
+  <tr>
+    <td>Command</td>
+    <td>Support</td>
+  </tr>
+  <tr>
+    <td>BZPOPMAX</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>BZPOPMIN</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZADD</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZCARD</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZCOUNT</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZINCRBY</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZINTERSTORE</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZLEXCOUNT</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZPOPMAX</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZPOPMIN</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZRANGE</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZRANGEBYLEX</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZRANGEBYSCORE</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZRANK</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZREM</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZREMRANGEBYLEX</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZREMRANGEBYRANK</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZREMRANGEBYSCORE</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZREVRANGE</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZREVRANGEBYLEX</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZREVRANGEBYSCORE</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZREVRANK</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZSCAN</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZSCORE</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>ZUNIONSTORE</td>
+    <td>TODO</td>
+  </tr>
+</table>
 
 - Streams
 
 <table>
-		<tr>
-		<td>XADD</td>
-		<td>TODO</td>
-	</tr>
-	<tr>
-		<td>XLEN</td>
-		<td>TODO</td>
-	</tr>
-	<tr>
-		<td>XPENDING</td>
-		<td>TODO</td>
-	</tr>
-	<tr>
-		<td>XRANGE</td>
-		<td>TODO</td>
-	</tr>
-	<tr>
-		<td>XREAD</td>
-		<td>TODO</td>
-	</tr>
-	<tr>
-		<td>XREADGROUP</td>
-		<td>TODO</td>
-	</tr>
-	<tr>
-		<td>XREVRANGE</td>
-		<td>TODO</td>
-	</tr>
+  <tr>
+    <td>Command</td>
+    <td>Support</td>
+  </tr>
+  <tr>
+    <td>XADD</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>XLEN</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>XPENDING</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>XRANGE</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>XREAD</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>XREADGROUP</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>XREVRANGE</td>
+    <td>TODO</td>
+  </tr>
 </table>
 
 - Strings
