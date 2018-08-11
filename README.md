@@ -389,6 +389,79 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
   </tr>
 </table>
 
+- Lists
+
+<table>
+  <tr>
+    <td>BLPOP</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>BRPOP</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>BRPOPLPUSH</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>LINDEX</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>LINSERT</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>LLEN</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>LPOP</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>LPUSH</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>LPUSHX</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>LRANGE</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>LREM</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>LSET</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>LTRIM</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>RPOP</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>RPOPLPUSH</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>RPUSH</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>RPUSHX</td>
+    <td></td>
+  </tr>
+</table>
+
 - Sets
 
 <table>
