@@ -161,6 +161,108 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
   </tr>
 </table>
 
+- Geo
+
+<table>
+  <tr>
+    <td>Command</td>
+    <td>Support</td>
+  </tr>
+  <tr>
+    <td>GEOADD</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>GEODIST</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>GEOHASH</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>GEOPOS</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>GEORADIUS</td>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <td>GEORADIUSBYMEMBER</td>
+    <td>TODO</td>
+  </tr>
+</table>
+
+- Hashes
+
+<table>
+  <tr>
+    <td>Command</td>
+    <td>Support</td>
+  </tr>
+  <tr>
+    <td>HDEL</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>HEXISTS</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>HGET</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>HGETALL</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>HINCRBY</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>HINCRBYFLOAT</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>HKEYS</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>HLEN</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>HMGET</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>HMSET</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>HSCAN</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>HSET</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>HSETNX</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>HSTRLEN</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>HVALS</td>
+    <td></td>
+  </tr>
+</table>
+
 - Keys
 
 <table>
