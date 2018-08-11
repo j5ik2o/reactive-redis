@@ -524,6 +524,159 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
   </tr>
 </table>
 
+- Server
+
+<table>
+  <tr>
+    <td>BGREWRITEAOF</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>BGSAVE</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>CLIENT GETNAME</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>CLIENT KILL</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>CLIENT LIST</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>CLIENT PAUSE</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>CLIENT REPLY</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>CLIENT SETNAME</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>COMMAND</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>COMMAND COUNT</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>COMMAND GETKEYS</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>COMMAND INFO</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>CONFIG GET</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>CONFIG RESETSTAT</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>CONFIG REWRITE</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>CONFIG SET</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>DBSIZE</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>DEBUG OBJECT</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>DEBUG SEGFAULT</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>FLUSHALL</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>FLUSHDB</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>INFO</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>LASTSAVE</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>MEMORY DOCTOR</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>MEMORY HELP</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>MEMORY MALLOC-STATS</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>MEMORY PURGE</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>MEMORY STATS</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>MEMORY USAGE</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>MONITOR</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>ROLE</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>SAVE</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>SHUTDOWN</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>SLAVEOF</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>SLOWLOG</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>SYNC</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>TIME</td>
+    <td></td>
+  </tr>
+</table>
+
 - Sets
 
 <table>
