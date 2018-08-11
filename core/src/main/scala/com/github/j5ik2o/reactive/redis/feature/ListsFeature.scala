@@ -18,7 +18,7 @@ trait ListsAPI[M[_]] {
 
   def brPop(timeout: Duration, keys: NonEmptyList[String]): M[Result[Seq[String]]]
 
-  def brPopLPush(source: String, destination: String, timeout: Duration): M[Result[String]]
+  def brPopLPush(source: String, destination: String, timeout: Duration): M[Result[Option[String]]]
 
   def lPop(key: String): M[Result[Option[String]]]
 
@@ -58,7 +58,7 @@ trait ListsFeature extends ListsAPI[ReaderTTaskRedisConnection] {
 
   override def brPopLPush(source: String,
                           destination: String,
-                          timeout: Duration): ReaderTTaskRedisConnection[Result[String]] =
+                          timeout: Duration): ReaderTTaskRedisConnection[Result[Option[String]]] =
     send(BRPopLPushRequest(UUID.randomUUID(), source, destination, timeout)).flatMap {
       case BRPopLPushSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case BRPopLPushSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))

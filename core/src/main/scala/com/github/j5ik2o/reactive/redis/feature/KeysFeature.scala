@@ -7,7 +7,7 @@ import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis._
 import com.github.j5ik2o.reactive.redis.command.keys._
 
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{ Duration, FiniteDuration }
 
 /**
   * https://redis.io/commands#generics
@@ -32,7 +32,8 @@ trait KeysAPI[M[_]] {
   def persist(key: String): M[Result[Boolean]]
   def pExpire(key: String, milliseconds: FiniteDuration): M[Result[Boolean]]
   def pExpireAt(key: String, millisecondsTimestamp: ZonedDateTime): M[Result[Boolean]]
-  def pTtl(key: String): M[Result[Long]]
+  def pTtl(key: String): M[Result[Duration]]
+  def randomKey(): M[Result[Option[String]]]
 }
 
 trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
@@ -128,15 +129,21 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
       case PExpireAtFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
-  override def pTtl(key: String): ReaderTTaskRedisConnection[Result[Long]] =
+  override def pTtl(key: String): ReaderTTaskRedisConnection[Result[Duration]] =
     send(PTtlRequest(UUID.randomUUID(), key)).flatMap {
-      case PTtlSuspended(_, _)         => ReaderTTask.pure(Suspended)
-      case PTtlSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
-      case PTtlFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+      case PTtlSuspended(_, _)             => ReaderTTask.pure(Suspended)
+      case result @ PTtlSucceeded(_, _, _) => ReaderTTask.pure(Provided(result.toDuration))
+      case PTtlFailed(_, _, ex)            => ReaderTTask.raiseError(ex)
+    }
+
+  override def randomKey(): ReaderTTaskRedisConnection[Result[Option[String]]] =
+    send(RandomKeyRequest(UUID.randomUUID())).flatMap {
+      case RandomKeySuspended(_, _)         => ReaderTTask.pure(Suspended)
+      case RandomKeySucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case RandomKeyFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
   /**
-  * RANDOMKEY
   * RENAME
   * RENAMENX
   * RESTORE
