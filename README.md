@@ -462,7 +462,7 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
   </tr>
 </table>
 
-- PubSub
+- Pub/Sub
 
 <table>
   <tr>
@@ -489,7 +489,41 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
     <td>UNSUBSCRIBE</td>
     <td></td>
   </tr>
-</table>  
+</table>
+
+- Scripting
+
+<table>
+  <tr>
+    <td>EVAL</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>EVALSHA</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>SCRIPT DEBUG</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>SCRIPT EXISTS</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>SCRIPT FLUSH</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>SCRIPT KILL</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>SCRIPT LOAD</td>
+    <td></td>
+  </tr>
+</table>
+
 - Sets
 
 <table>
