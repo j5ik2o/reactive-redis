@@ -162,24 +162,8 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case p: PExpireRequest   => pexpire(p)
             case p: PExpireAtRequest => pexpireAt(p)
             case p: PTtlRequest      => pttl(p)
-            case r: RandomKeyRequest =>
-              transaction match {
-                case Some(tc) =>
-                  run(r)(tc.randomKey()) { result =>
-                    txState.append(ResponseF[String](result, { p =>
-                      RandomKeySucceeded(UUID.randomUUID(), r.id, Option(p.get))
-                    }))
-                    RandomKeySuspended(UUID.randomUUID(), r.id)
-                  } { t =>
-                    RandomKeyFailed(UUID.randomUUID(), r.id, RedisIOException(Some(t.getMessage), Some(t)))
-                  }()
-                case None =>
-                  run(r)(jedis.randomKey()) { result =>
-                    RandomKeySucceeded(UUID.randomUUID(), r.id, Option(result))
-                  } { t =>
-                    RandomKeyFailed(UUID.randomUUID(), r.id, RedisIOException(Some(t.getMessage), Some(t)))
-                  }()
-              }
+            case r: RandomKeyRequest => randomKey(r)
+            case r: RenameRequest    => rename(r)
             // -- BLits
             case b: BLPopRequest => blPop(b)
             case b: BRPopRequest => brPop(b)
@@ -200,6 +184,46 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             // --- Sets
             case s: SAddRequest => sadd(s)
           }
+        }
+      }
+
+      private def rename(r: RenameRequest) = {
+        transaction match {
+          case Some(tc) =>
+            run(r)(tc.rename(r.key, r.newKey)) { result =>
+              txState.append(ResponseF[String](result, { _ =>
+                RenameSucceeded(UUID.randomUUID(), r.id)
+              }))
+              RenameSuspended(UUID.randomUUID(), r.id)
+            } { t =>
+              RenameFailed(UUID.randomUUID(), r.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(r)(jedis.rename(r.key, r.newKey)) { result =>
+              RenameSucceeded(UUID.randomUUID(), r.id)
+            } { t =>
+              RenameFailed(UUID.randomUUID(), r.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def randomKey(r: RandomKeyRequest) = {
+        transaction match {
+          case Some(tc) =>
+            run(r)(tc.randomKey()) { result =>
+              txState.append(ResponseF[String](result, { p =>
+                RandomKeySucceeded(UUID.randomUUID(), r.id, Option(p.get))
+              }))
+              RandomKeySuspended(UUID.randomUUID(), r.id)
+            } { t =>
+              RandomKeyFailed(UUID.randomUUID(), r.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(r)(jedis.randomKey()) { result =>
+              RandomKeySucceeded(UUID.randomUUID(), r.id, Option(result))
+            } { t =>
+              RandomKeyFailed(UUID.randomUUID(), r.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
         }
       }
 
