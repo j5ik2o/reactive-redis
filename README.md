@@ -345,7 +345,7 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
   </tr>
   <tr>
     <td>RANDOMKEY</td>
-    <td>TODO</td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>RENAME</td>
