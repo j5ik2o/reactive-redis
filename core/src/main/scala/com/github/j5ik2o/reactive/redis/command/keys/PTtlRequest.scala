@@ -1,12 +1,15 @@
 package com.github.j5ik2o.reactive.redis.command.keys
 
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
+
+import scala.concurrent.duration.Duration
 
 final case class PTtlRequest(id: UUID, key: String) extends CommandRequest with StringParsersSupport {
 
@@ -30,7 +33,9 @@ final case class PTtlRequest(id: UUID, key: String) extends CommandRequest with 
 
 sealed trait PTtlResponse extends CommandResponse
 
-final case class PTtlSucceeded(id: UUID, requestId: UUID, value: Long) extends PTtlResponse
+final case class PTtlSucceeded(id: UUID, requestId: UUID, value: Long) extends PTtlResponse {
+  def toDuration: Duration = Duration(value, TimeUnit.MILLISECONDS)
+}
 
 final case class PTtlSuspended(id: UUID, requestId: UUID) extends PTtlResponse
 
