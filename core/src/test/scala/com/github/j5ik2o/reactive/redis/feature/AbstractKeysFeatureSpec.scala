@@ -112,6 +112,20 @@ abstract class AbstractKeysFeatureSpec extends AbstractRedisClientSpec(ActorSyst
         } yield r)
         result1.value shouldBe Some(v)
     }
+    "renamenx" in forAll(keyStrValueGen) {
+      case (k, v) =>
+        val result1 = runProgram(for {
+          _ <- redisClient.set(k, v)
+          k2 = s"$k-2"
+          r1 <- redisClient.renameNx(k, k2)
+          r2 <- redisClient.get(k2)
+          _ <- redisClient.set(k, v)
+          r3 <- redisClient.renameNx(k, k2)
+        } yield (r1, r2, r3))
+        result1._1.value shouldBe true
+        result1._2.value shouldBe Some(v)
+        result1._3.value shouldBe false
+    }
   }
 
 }

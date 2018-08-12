@@ -164,6 +164,8 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case p: PTtlRequest      => pttl(p)
             case r: RandomKeyRequest => randomKey(r)
             case r: RenameRequest    => rename(r)
+            case r: RenameNxRequest  => renameNx(r)
+
             // -- BLits
             case b: BLPopRequest => blPop(b)
             case b: BRPopRequest => brPop(b)
@@ -187,7 +189,27 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def rename(r: RenameRequest) = {
+      private def renameNx(r: RenameNxRequest): Future[CommandResponse] = {
+        transaction match {
+          case Some(tc) =>
+            run(r)(tc.renamenx(r.key, r.newKey)) { result =>
+              txState.append(ResponseF[java.lang.Long](result, { p =>
+                RenameNxSucceeded(UUID.randomUUID(), r.id, p.get == 1L)
+              }))
+              RenameNxSuspended(UUID.randomUUID(), r.id)
+            } { t =>
+              RenameNxFailed(UUID.randomUUID(), r.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(r)(jedis.renamenx(r.key, r.newKey)) { result =>
+              RenameNxSucceeded(UUID.randomUUID(), r.id, result == 1L)
+            } { t =>
+              RenameNxFailed(UUID.randomUUID(), r.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def rename(r: RenameRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(r)(tc.rename(r.key, r.newKey)) { result =>
@@ -207,7 +229,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def randomKey(r: RandomKeyRequest) = {
+      private def randomKey(r: RandomKeyRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(r)(tc.randomKey()) { result =>
@@ -227,7 +249,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def migrate(m: MigrateRequest) = {
+      private def migrate(m: MigrateRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(m)(tc.migrate(m.host, m.port, m.key, m.toDbNo, m.timeout.toMillis.toInt)) { result =>
@@ -247,7 +269,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def move(m: MoveRequest) = {
+      private def move(m: MoveRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(m)(tc.move(m.key, m.db)) { result =>
@@ -267,7 +289,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def persist(p: PersistRequest) = {
+      private def persist(p: PersistRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(p)(tc.persist(p.key)) { result =>
@@ -287,7 +309,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def pttl(p: PTtlRequest) = {
+      private def pttl(p: PTtlRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(p)(tc.pttl(p.key)) { result =>

@@ -35,6 +35,7 @@ trait KeysAPI[M[_]] {
   def pTtl(key: String): M[Result[Duration]]
   def randomKey(): M[Result[Option[String]]]
   def rename(key: String, newKey: String): M[Result[Unit]]
+  def renameNx(key: String, newKey: String): M[Result[Boolean]]
 }
 
 trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
@@ -150,8 +151,15 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
       case RenameSucceeded(_, _)  => ReaderTTask.pure(Provided(()))
       case RenameFailed(_, _, ex) => ReaderTTask.raiseError(ex)
     }
+
+  override def renameNx(key: String, newKey: String): ReaderTTaskRedisConnection[Result[Boolean]] =
+    send(RenameNxRequest(UUID.randomUUID(), key, newKey)).flatMap {
+      case RenameNxSuspended(_, _)         => ReaderTTask.pure(Suspended)
+      case RenameNxSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case RenameNxFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+    }
+
   /**
-  * RENAMENX
   * RESTORE
   * SCAN
   * SORT
