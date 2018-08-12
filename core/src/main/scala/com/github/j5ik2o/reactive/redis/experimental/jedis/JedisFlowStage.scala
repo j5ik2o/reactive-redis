@@ -162,24 +162,10 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case p: PExpireRequest   => pexpire(p)
             case p: PExpireAtRequest => pexpireAt(p)
             case p: PTtlRequest      => pttl(p)
-            case r: RandomKeyRequest =>
-              transaction match {
-                case Some(tc) =>
-                  run(r)(tc.randomKey()) { result =>
-                    txState.append(ResponseF[String](result, { p =>
-                      RandomKeySucceeded(UUID.randomUUID(), r.id, Option(p.get))
-                    }))
-                    RandomKeySuspended(UUID.randomUUID(), r.id)
-                  } { t =>
-                    RandomKeyFailed(UUID.randomUUID(), r.id, RedisIOException(Some(t.getMessage), Some(t)))
-                  }()
-                case None =>
-                  run(r)(jedis.randomKey()) { result =>
-                    RandomKeySucceeded(UUID.randomUUID(), r.id, Option(result))
-                  } { t =>
-                    RandomKeyFailed(UUID.randomUUID(), r.id, RedisIOException(Some(t.getMessage), Some(t)))
-                  }()
-              }
+            case r: RandomKeyRequest => randomKey(r)
+            case r: RenameRequest    => rename(r)
+            case r: RenameNxRequest  => renameNx(r)
+
             // -- BLits
             case b: BLPopRequest => blPop(b)
             case b: BRPopRequest => brPop(b)
@@ -203,7 +189,67 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def migrate(m: MigrateRequest) = {
+      private def renameNx(r: RenameNxRequest): Future[CommandResponse] = {
+        transaction match {
+          case Some(tc) =>
+            run(r)(tc.renamenx(r.key, r.newKey)) { result =>
+              txState.append(ResponseF[java.lang.Long](result, { p =>
+                RenameNxSucceeded(UUID.randomUUID(), r.id, p.get == 1L)
+              }))
+              RenameNxSuspended(UUID.randomUUID(), r.id)
+            } { t =>
+              RenameNxFailed(UUID.randomUUID(), r.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(r)(jedis.renamenx(r.key, r.newKey)) { result =>
+              RenameNxSucceeded(UUID.randomUUID(), r.id, result == 1L)
+            } { t =>
+              RenameNxFailed(UUID.randomUUID(), r.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def rename(r: RenameRequest): Future[CommandResponse] = {
+        transaction match {
+          case Some(tc) =>
+            run(r)(tc.rename(r.key, r.newKey)) { result =>
+              txState.append(ResponseF[String](result, { _ =>
+                RenameSucceeded(UUID.randomUUID(), r.id)
+              }))
+              RenameSuspended(UUID.randomUUID(), r.id)
+            } { t =>
+              RenameFailed(UUID.randomUUID(), r.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(r)(jedis.rename(r.key, r.newKey)) { result =>
+              RenameSucceeded(UUID.randomUUID(), r.id)
+            } { t =>
+              RenameFailed(UUID.randomUUID(), r.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def randomKey(r: RandomKeyRequest): Future[CommandResponse] = {
+        transaction match {
+          case Some(tc) =>
+            run(r)(tc.randomKey()) { result =>
+              txState.append(ResponseF[String](result, { p =>
+                RandomKeySucceeded(UUID.randomUUID(), r.id, Option(p.get))
+              }))
+              RandomKeySuspended(UUID.randomUUID(), r.id)
+            } { t =>
+              RandomKeyFailed(UUID.randomUUID(), r.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(r)(jedis.randomKey()) { result =>
+              RandomKeySucceeded(UUID.randomUUID(), r.id, Option(result))
+            } { t =>
+              RandomKeyFailed(UUID.randomUUID(), r.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+        }
+      }
+
+      private def migrate(m: MigrateRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(m)(tc.migrate(m.host, m.port, m.key, m.toDbNo, m.timeout.toMillis.toInt)) { result =>
@@ -223,7 +269,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def move(m: MoveRequest) = {
+      private def move(m: MoveRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(m)(tc.move(m.key, m.db)) { result =>
@@ -243,7 +289,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def persist(p: PersistRequest) = {
+      private def persist(p: PersistRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(p)(tc.persist(p.key)) { result =>
@@ -263,7 +309,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def pttl(p: PTtlRequest) = {
+      private def pttl(p: PTtlRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(p)(tc.pttl(p.key)) { result =>

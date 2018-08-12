@@ -1,0 +1,33 @@
+package com.github.j5ik2o.reactive.redis.command.keys
+
+import java.util.UUID
+
+import com.github.j5ik2o.reactive.redis.RedisIOException
+import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandResponse, StringParsersSupport }
+import com.github.j5ik2o.reactive.redis.parser.StringParsers._
+import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
+import fastparse.all._
+
+final case class RenameRequest(id: UUID, key: String, newKey: String) extends CommandRequest with StringParsersSupport {
+
+  override type Response = RenameResponse
+  override val isMasterOnly: Boolean = true
+
+  override def asString: String = cs("RENAME", Some(key), Some(newKey))
+
+  override protected def responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
+
+  override protected def parseResponse: Handler = {
+    case (SimpleExpr(OK), next) =>
+      (RenameSucceeded(UUID.randomUUID(), id), next)
+    case (SimpleExpr(QUEUED), next) =>
+      (RenameSuspended(UUID.randomUUID(), id), next)
+    case (ErrorExpr(msg), next) =>
+      (RenameFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
+  }
+}
+
+sealed trait RenameResponse                                                    extends CommandResponse
+final case class RenameSucceeded(id: UUID, requestId: UUID)                    extends RenameResponse
+final case class RenameSuspended(id: UUID, requestId: UUID)                    extends RenameResponse
+final case class RenameFailed(id: UUID, requestId: UUID, ex: RedisIOException) extends RenameResponse

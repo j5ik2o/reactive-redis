@@ -34,6 +34,8 @@ trait KeysAPI[M[_]] {
   def pExpireAt(key: String, millisecondsTimestamp: ZonedDateTime): M[Result[Boolean]]
   def pTtl(key: String): M[Result[Duration]]
   def randomKey(): M[Result[Option[String]]]
+  def rename(key: String, newKey: String): M[Result[Unit]]
+  def renameNx(key: String, newKey: String): M[Result[Boolean]]
 }
 
 trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
@@ -143,9 +145,21 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
       case RandomKeyFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
+  override def rename(key: String, newKey: String): ReaderTTaskRedisConnection[Result[Unit]] =
+    send(RenameRequest(UUID.randomUUID(), key, newKey)).flatMap {
+      case RenameSuspended(_, _)  => ReaderTTask.pure(Suspended)
+      case RenameSucceeded(_, _)  => ReaderTTask.pure(Provided(()))
+      case RenameFailed(_, _, ex) => ReaderTTask.raiseError(ex)
+    }
+
+  override def renameNx(key: String, newKey: String): ReaderTTaskRedisConnection[Result[Boolean]] =
+    send(RenameNxRequest(UUID.randomUUID(), key, newKey)).flatMap {
+      case RenameNxSuspended(_, _)         => ReaderTTask.pure(Suspended)
+      case RenameNxSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case RenameNxFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+    }
+
   /**
-  * RENAME
-  * RENAMENX
   * RESTORE
   * SCAN
   * SORT
