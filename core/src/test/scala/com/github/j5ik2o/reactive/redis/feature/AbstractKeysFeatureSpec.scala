@@ -126,6 +126,7 @@ abstract class AbstractKeysFeatureSpec extends AbstractRedisClientSpec(ActorSyst
         result1._2.value shouldBe Some(v)
         result1._3.value shouldBe false
     }
+
   }
 
 }

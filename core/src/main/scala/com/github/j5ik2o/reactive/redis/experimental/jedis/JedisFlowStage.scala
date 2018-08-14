@@ -1,20 +1,20 @@
 package com.github.j5ik2o.reactive.redis.experimental.jedis
 
 import java.util.UUID
-import java.{ lang, util }
+import java.{lang, util}
 
 import akka.stream.stage._
-import akka.stream.{ Attributes, FlowShape, Inlet, Outlet }
+import akka.stream.{Attributes, FlowShape, Inlet, Outlet}
 import cats.Id
 import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command.connection._
 import com.github.j5ik2o.reactive.redis.command.hashes._
 import com.github.j5ik2o.reactive.redis.command.keys._
 import com.github.j5ik2o.reactive.redis.command.lists._
-import com.github.j5ik2o.reactive.redis.command.sets.{ SAddFailed, SAddRequest, SAddSucceeded, SAddSuspended }
-import com.github.j5ik2o.reactive.redis.command.strings.{ BitPosRequest, _ }
+import com.github.j5ik2o.reactive.redis.command.sets.{SAddFailed, SAddRequest, SAddSucceeded, SAddSuspended}
+import com.github.j5ik2o.reactive.redis.command.strings.{BitPosRequest, _}
 import com.github.j5ik2o.reactive.redis.command.transactions._
-import com.github.j5ik2o.reactive.redis.command.{ CommandRequestBase, CommandResponse }
+import com.github.j5ik2o.reactive.redis.command.{CommandRequestBase, CommandResponse}
 import redis.clients.jedis.Protocol.Command
 import redis.clients.jedis._
 import redis.clients.jedis.exceptions.JedisConnectionException
@@ -23,8 +23,8 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.Duration
-import scala.concurrent.{ ExecutionContext, Future, Promise }
-import scala.util.{ Failure, Success, Try }
+import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.util.{Failure, Success, Try}
 
 object JedisFlowStage {
   type CommandResponseF[A] = (Response[A]) => CommandResponse
@@ -32,6 +32,7 @@ object JedisFlowStage {
   final case class ResponseF[A](response: Response[A], f: CommandResponseF[A]) {
     def apply(): CommandResponse = f(response)
   }
+
   trait JedisEx[M[_]] {
     def pingArg(arg: Option[String]): M[String]
   }
@@ -48,9 +49,9 @@ object JedisFlowStage {
   )
 )
 class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration], socketTimeout: Option[Duration])(
-    implicit ec: ExecutionContext
+  implicit ec: ExecutionContext
 ) extends GraphStageWithMaterializedValue[FlowShape[CommandRequestBase, CommandResponse], Future[Jedis]] {
-  private val in  = Inlet[CommandRequestBase]("JedisFlow.in")
+  private val in = Inlet[CommandRequestBase]("JedisFlow.in")
   private val out = Outlet[CommandResponse]("JedisFlow.out")
 
   import JedisFlowStage._
@@ -64,9 +65,9 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
 
       private case class RequestWithResult(request: CommandRequestBase, result: Try[CommandResponse])
 
-      private val requests: mutable.Queue[CommandRequestBase]      = mutable.Queue.empty
-      private var inFlight: Int                                    = _
-      private var completionState: Option[Try[Unit]]               = _
+      private val requests: mutable.Queue[CommandRequestBase] = mutable.Queue.empty
+      private var inFlight: Int = _
+      private var completionState: Option[Try[Unit]] = _
       private var resultCallback: AsyncCallback[RequestWithResult] = _
 
       private var jedis: Jedis with JedisEx[Id] = _
@@ -74,12 +75,12 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
       private val DC = () => ()
 
       private def run[A, B](
-          req: CommandRequestBase
-      )(
-          cmd: => A
-      )(
-          onSuccess: A => CommandResponse
-      )(onFailure: Throwable => CommandResponse)(closer: () => Unit = DC): Future[CommandResponse] = {
+                             req: CommandRequestBase
+                           )(
+                             cmd: => A
+                           )(
+                             onSuccess: A => CommandResponse
+                           )(onFailure: Throwable => CommandResponse)(closer: () => Unit = DC): Future[CommandResponse] = {
         val f = Future(cmd)
           .map(result => onSuccess(result))
           .recover {
@@ -112,81 +113,90 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
           val request = requests.dequeue()
           request match {
             // connections
-            case q: QuitRequest   => quit(q)
-            case a: AuthRequest   => auth(a)
-            case p: PingRequest   => ping(p)
-            case e: EchoRequest   => echo(e)
+            case q: QuitRequest => quit(q)
+            case a: AuthRequest => auth(a)
+            case p: PingRequest => ping(p)
+            case e: EchoRequest => echo(e)
             case s: SelectRequest => select(s)
-            case s: SwapDBRequest => fail(out, new UnsupportedOperationException("swap is unsupported operation."))
+            case s: SwapDBRequest =>
+              fail(out, new UnsupportedOperationException("swap is unsupported operation."))
             // --- transactions
-            case m: MultiRequest   => multi(m)
-            case e: ExecRequest    => exec(e)
+            case m: MultiRequest => multi(m)
+            case e: ExecRequest => exec(e)
             case d: DiscardRequest => dicard(d)
             case u: UnwatchRequest => unwatch(u)
-            case w: WatchRequest   => watch(w)
+            case w: WatchRequest => watch(w)
             // --- strings
-            case a: AppendRequest      => append(a)
-            case bc: BitCountRequest   => bitCount(bc)
-            case bf: BitFieldRequest   => bitField(bf)
-            case bo: BitOpRequest      => bitOp(bo)
-            case bp: BitPosRequest     => bitPos(bp)
-            case d: DecrRequest        => decr(d)
-            case d: DecrByRequest      => decrBy(d)
-            case g: GetRequest         => get(g)
-            case g: GetBitRequest      => getBit(g)
-            case gr: GetRangeRequest   => getRange(gr)
-            case gs: GetSetRequest     => getSet(gs)
-            case i: IncrRequest        => incr(i)
-            case i: IncrByRequest      => incrBy(i)
+            case a: AppendRequest => append(a)
+            case bc: BitCountRequest => bitCount(bc)
+            case bf: BitFieldRequest => bitField(bf)
+            case bo: BitOpRequest => bitOp(bo)
+            case bp: BitPosRequest => bitPos(bp)
+            case d: DecrRequest => decr(d)
+            case d: DecrByRequest => decrBy(d)
+            case g: GetRequest => get(g)
+            case g: GetBitRequest => getBit(g)
+            case gr: GetRangeRequest => getRange(gr)
+            case gs: GetSetRequest => getSet(gs)
+            case i: IncrRequest => incr(i)
+            case i: IncrByRequest => incrBy(i)
             case i: IncrByFloatRequest => incrByFloat(i)
-            case mg: MGetRequest       => mGet(mg)
-            case ms: MSetRequest       => mSet(ms)
-            case ms: MSetNxRequest     => mSetNx(ms)
-            case p: PSetExRequest      => pSetEx(p)
-            case s: SetRequest         => set(s)
-            case s: SetBitRequest      => setBit(s)
-            case s: SetExRequest       => setEx(s)
-            case s: SetNxRequest       => setNx(s)
-            case s: SetRangeRequest    => setRange(s)
-            case s: StrLenRequest      => strLen(s)
+            case mg: MGetRequest => mGet(mg)
+            case ms: MSetRequest => mSet(ms)
+            case ms: MSetNxRequest => mSetNx(ms)
+            case p: PSetExRequest => pSetEx(p)
+            case s: SetRequest => set(s)
+            case s: SetBitRequest => setBit(s)
+            case s: SetExRequest => setEx(s)
+            case s: SetNxRequest => setNx(s)
+            case s: SetRangeRequest => setRange(s)
+            case s: StrLenRequest => strLen(s)
             // --- Keys
-            case d: DelRequest       => del(d)
-            case d: DumpRequest      => dump(d)
-            case e: ExistsRequest    => exists(e)
-            case e: ExpireRequest    => expire(e)
-            case e: ExpireAtRequest  => expireAt(e)
-            case k: KeysRequest      => keys(k)
-            case m: MigrateRequest   => migrate(m)
-            case m: MoveRequest      => move(m)
-            case p: PersistRequest   => persist(p)
-            case p: PExpireRequest   => pexpire(p)
+            case d: DelRequest => del(d)
+            case d: DumpRequest => dump(d)
+            case e: ExistsRequest => exists(e)
+            case e: ExpireRequest => expire(e)
+            case e: ExpireAtRequest => expireAt(e)
+            case k: KeysRequest => keys(k)
+            case m: MigrateRequest => migrate(m)
+            case m: MoveRequest => move(m)
+            case p: PersistRequest => persist(p)
+            case p: PExpireRequest => pexpire(p)
             case p: PExpireAtRequest => pexpireAt(p)
-            case p: PTtlRequest      => pttl(p)
+            case p: PTtlRequest => pttl(p)
             case r: RandomKeyRequest => randomKey(r)
-            case r: RenameRequest    => rename(r)
-            case r: RenameNxRequest  => renameNx(r)
-
+            case r: RenameRequest => rename(r)
+            case r: RenameNxRequest => renameNx(r)
+            case w: WaitReplicasRequest => waitReplicas(w)
             // -- BLits
             case b: BLPopRequest => blPop(b)
             case b: BRPopRequest => brPop(b)
             // -- Lits
-            case l: LPopRequest   => lPop(l)
-            case l: LPushRequest  => lPush(l)
-            case r: RPushRequest  => rpush(r)
+            case l: LPopRequest => lPop(l)
+            case l: LPushRequest => lPush(l)
+            case r: RPushRequest => rpush(r)
             case l: LRangeRequest => lrange(l)
-            case l: LLenRequest   => llen(l)
+            case l: LLenRequest => llen(l)
 
             // --- Hashes
-            case h: HDelRequest    => hDel(h)
+            case h: HDelRequest => hDel(h)
             case h: HExistsRequest => hExists(h)
-            case h: HGetRequest    => hGet(h)
+            case h: HGetRequest => hGet(h)
             case h: HGetAllRequest => hGetAll(h)
-            case h: HSetRequest    => hSet(h)
-            case h: HSetNxRequest  => hSetNx(h)
+            case h: HSetRequest => hSet(h)
+            case h: HSetNxRequest => hSetNx(h)
             // --- Sets
             case s: SAddRequest => sadd(s)
           }
         }
+      }
+
+      private def waitReplicas(w: WaitReplicasRequest) = {
+        run(w)(jedis.waitReplicas(w.numOfReplicas, w.timeout.toSeconds)) { result =>
+          WaitReplicasSucceeded(UUID.randomUUID(), w.id, result)
+        } { t =>
+          WaitReplicasFailed(UUID.randomUUID(), w.id, RedisIOException(Some(t.getMessage), Some(t)))
+        }()
       }
 
       private def renameNx(r: RenameNxRequest): Future[CommandResponse] = {
@@ -368,6 +378,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             }()
         }
       }
+
       private def pexpireAt(p: PExpireAtRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
@@ -1526,9 +1537,9 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             }
           case (Some(ct), Some(st)) =>
             new Jedis(host,
-                      port,
-                      if (ct.isFinite()) ct.toSeconds.toInt else 0,
-                      if (st.isFinite()) st.toSeconds.toInt else 0) with JedisEx[Id] {
+              port,
+              if (ct.isFinite()) ct.toSeconds.toInt else 0,
+              if (st.isFinite()) st.toSeconds.toInt else 0) with JedisEx[Id] {
               val custom = new Client(host, port) {
                 def pingArg(argOpt: Option[String]): Unit = {
                   argOpt match {
