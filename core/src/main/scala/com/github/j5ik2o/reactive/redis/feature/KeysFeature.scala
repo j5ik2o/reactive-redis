@@ -37,7 +37,7 @@ trait KeysAPI[M[_]] {
   def rename(key: String, newKey: String): M[Result[Unit]]
   def renameNx(key: String, newKey: String): M[Result[Boolean]]
 
-  def waitReplicas(numOfReplicas: Long, timeout: Duration): M[Result[Long]]
+  def waitReplicas(numOfReplicas: Int, timeout: Duration): M[Result[Long]]
 }
 
 trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
@@ -171,7 +171,7 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
     * UNLINK
     * WAIT
     */
-  override def waitReplicas(numOfReplicas: Long, timeout: Duration): ReaderTTaskRedisConnection[Result[Long]] =
+  override def waitReplicas(numOfReplicas: Int, timeout: Duration): ReaderTTaskRedisConnection[Result[Long]] =
     send(WaitReplicasRequest(UUID.randomUUID(), numOfReplicas, timeout)).flatMap {
       case WaitReplicasSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case WaitReplicasSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
