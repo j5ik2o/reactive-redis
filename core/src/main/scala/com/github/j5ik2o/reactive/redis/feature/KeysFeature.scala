@@ -36,6 +36,8 @@ trait KeysAPI[M[_]] {
   def randomKey(): M[Result[Option[String]]]
   def rename(key: String, newKey: String): M[Result[Unit]]
   def renameNx(key: String, newKey: String): M[Result[Boolean]]
+
+  def waitReplicas(numOfReplicas: Int, timeout: Duration): M[Result[Long]]
 }
 
 trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
@@ -160,13 +162,19 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
     }
 
   /**
-  * RESTORE
-  * SCAN
-  * SORT
-  * TOUCH
-  * TTL
-  * TYPE
-  * UNLINK
-  * WAIT
-  */
+    * RESTORE
+    * SCAN
+    * SORT
+    * TOUCH
+    * TTL
+    * TYPE
+    * UNLINK
+    * WAIT
+    */
+  override def waitReplicas(numOfReplicas: Int, timeout: Duration): ReaderTTaskRedisConnection[Result[Long]] =
+    send(WaitReplicasRequest(UUID.randomUUID(), numOfReplicas, timeout)).flatMap {
+      case WaitReplicasSuspended(_, _)         => ReaderTTask.pure(Suspended)
+      case WaitReplicasSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case WaitReplicasFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+    }
 }

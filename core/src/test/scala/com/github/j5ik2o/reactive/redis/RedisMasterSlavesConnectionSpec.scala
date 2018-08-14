@@ -8,6 +8,7 @@ import akka.routing.DefaultResizer
 import cats.data.NonEmptyList
 import cats.implicits._
 import monix.eval.Task
+import scala.concurrent.duration._
 
 class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("RedisClientSpec")) {
 
@@ -57,7 +58,7 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
   }
 
   "RedisMasterSlavesConnection" - {
-    "set & get" ignore {
+    "set & get" in {
       val key   = UUID.randomUUID().toString
       val value = UUID.randomUUID().toString
       val result = (for {
@@ -66,6 +67,15 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
         result <- redisClient.get(key)
       } yield result).run(connection).runAsync.futureValue
       result.value shouldBe Some(value)
+    }
+    "wait" in {
+      val key   = UUID.randomUUID().toString
+      val value = UUID.randomUUID().toString
+      val result = (for {
+        _      <- redisClient.set(key, value)
+        result <- redisClient.waitReplicas(1, 3 * timeFactor seconds)
+      } yield result).run(connection).runAsync.futureValue
+      result.value shouldBe 1L
     }
   }
 
