@@ -111,7 +111,7 @@ private[redis] class RedisConnectionImpl(val peerConfig: PeerConfig,
     protected lazy val sourceQueueWithKillSwitchRunnableGraph
       : RunnableGraph[(SourceQueueWithComplete[RequestContext], UniqueKillSwitch)] =
       Source
-        .queue[RequestContext](requestBufferSize, overflowStrategyOnQueueMode)
+        .queue[RequestContext](requestBufferSize, overflowStrategyOnSourceQueueMode)
         .via(connectionFlow)
         .via(InTxRequestsAggregationFlow())
         .async
@@ -138,12 +138,12 @@ private[redis] class RedisConnectionImpl(val peerConfig: PeerConfig,
         .toMat(Sink.ignore)(Keep.left)
         .withAttributes(ActorAttributes.dispatcher("reactive-redis.dispatcher"))
 
-    redisConnectionMode match {
-      case RedisConnectionMode.QueueMode =>
+    redisConnectionSourceMode match {
+      case RedisConnectionSourceMode.QueueMode =>
         val result = sourceQueueWithKillSwitchRunnableGraph.run()
         requestQueue = result._1
         killSwitch = result._2
-      case RedisConnectionMode.ActorMode =>
+      case RedisConnectionSourceMode.ActorMode =>
         val result = sourceActorWithKillSwitchRunnableGraph.run()
         requestActorRef = result._1
         killSwitch = result._2
@@ -203,10 +203,10 @@ private[redis] class RedisConnectionImpl(val peerConfig: PeerConfig,
 
     override def receive: Receive = {
       case cmd: CommandRequestBase =>
-        redisConnectionMode match {
-          case RedisConnectionMode.QueueMode =>
+        redisConnectionSourceMode match {
+          case RedisConnectionSourceMode.QueueMode =>
             sender() ! sendToQueue(cmd)
-          case RedisConnectionMode.ActorMode =>
+          case RedisConnectionSourceMode.ActorMode =>
             sender() ! sendToActor(cmd)
         }
       case ShutdownConnection =>

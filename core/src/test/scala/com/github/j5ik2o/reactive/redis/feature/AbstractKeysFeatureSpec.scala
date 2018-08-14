@@ -119,7 +119,7 @@ abstract class AbstractKeysFeatureSpec extends AbstractRedisClientSpec(ActorSyst
           k2 = s"$k-2"
           r1 <- redisClient.renameNx(k, k2)
           r2 <- redisClient.get(k2)
-          _ <- redisClient.set(k, v)
+          _  <- redisClient.set(k, v)
           r3 <- redisClient.renameNx(k, k2)
         } yield (r1, r2, r3))
         result1._1.value shouldBe true

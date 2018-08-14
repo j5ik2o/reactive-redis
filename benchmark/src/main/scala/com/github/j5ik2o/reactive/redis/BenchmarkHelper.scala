@@ -61,7 +61,7 @@ trait BenchmarkHelper {
       PeerConfig(
         new InetSocketAddress("127.0.0.1", redisTestServer.getPort),
         options = Vector(TcpNoDelay(true), KeepAlive(true), SendBufferSize(2048), ReceiveBufferSize(2048)),
-        overflowStrategyOnQueueMode = OverflowStrategy.dropNew,
+        overflowStrategyOnSourceQueueMode = OverflowStrategy.dropNew,
         requestBufferSize = Int.MaxValue
       )
     // _pool = StormpotPool.ofSingle(StormpotConfig(), peerConfig, RedisConnection(_, _))
@@ -70,14 +70,14 @@ trait BenchmarkHelper {
     //_pool = RedisConnectionPool.ofSingleRoundRobin(sizePerPeer, peerConfig, RedisConnection(_, _))
 
     _poolOfDefaultQueue =
-      CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig.withQueueConnectionMode, RedisConnection.apply)
+      CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig.withConnectionSourceQueueMode, RedisConnection.apply)
     _poolOfDefaultActor =
-      CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig.withActorConnectionMode, RedisConnection.apply)
+      CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig.withConnectionSourceActorMode, RedisConnection.apply)
 
     _poolOfJedisQueue =
-      CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig.withQueueConnectionMode, RedisConnection.ofJedis)
+      CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig.withConnectionSourceQueueMode, RedisConnection.ofJedis)
     _poolOfJedisActor =
-      CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig.withActorConnectionMode, RedisConnection.ofJedis)
+      CommonsPool.ofSingle(CommonsPoolConfig(), peerConfig.withConnectionSourceActorMode, RedisConnection.ofJedis)
 
     _rediscalaPool = _root_.redis.RedisClientPool(List(RedisServer("127.0.0.1", redisTestServer.getPort)))
     _scalaRedisPool = new com.redis.RedisClientPool("127.0.0.1", redisTestServer.getPort)

@@ -131,7 +131,7 @@ private[redis] class RedisConnectionOfJedis(val peerConfig: PeerConfig,
     private lazy val sourceQueueWithKillSwitchRunnableGraph =
       Source
         .queue[(CommandRequestBase, Promise[CommandResponse])](peerConfig.requestBufferSize,
-                                                               peerConfig.overflowStrategyOnQueueMode)
+                                                               peerConfig.overflowStrategyOnSourceQueueMode)
         .via(requestFlow)
         .map {
           case (res, promise) =>
@@ -152,12 +152,12 @@ private[redis] class RedisConnectionOfJedis(val peerConfig: PeerConfig,
         .toMat(Sink.ignore)(Keep.left)
         .withAttributes(ActorAttributes.dispatcher("reactive-redis.dispatcher"))
 
-    peerConfig.redisConnectionMode match {
-      case RedisConnectionMode.QueueMode =>
+    peerConfig.redisConnectionSourceMode match {
+      case RedisConnectionSourceMode.QueueMode =>
         val result = sourceQueueWithKillSwitchRunnableGraph.run()
         requestQueue = result._1
         killSwitch = result._2
-      case RedisConnectionMode.ActorMode =>
+      case RedisConnectionSourceMode.ActorMode =>
         val result = sourceActorWithKillSwitchRunnableGraph.run()
         requestActor = result._1
         killSwitch = result._2
@@ -173,10 +173,10 @@ private[redis] class RedisConnectionOfJedis(val peerConfig: PeerConfig,
 
     override def receive: Receive = {
       case cmd: CommandRequestBase =>
-        peerConfig.redisConnectionMode match {
-          case RedisConnectionMode.QueueMode =>
+        peerConfig.redisConnectionSourceMode match {
+          case RedisConnectionSourceMode.QueueMode =>
             sender() ! sendToQueue(cmd)
-          case RedisConnectionMode.ActorMode =>
+          case RedisConnectionSourceMode.ActorMode =>
             sender() ! sendToActor(cmd)
         }
       case ShutdownConnection =>
