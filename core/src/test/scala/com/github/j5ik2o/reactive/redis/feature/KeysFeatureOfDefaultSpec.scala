@@ -1,8 +1,10 @@
 package com.github.j5ik2o.reactive.redis.feature
+
 import akka.routing.DefaultResizer
 import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis.{ PeerConfig, RedisConnection, RedisConnectionPool }
 import monix.eval.Task
+import cats.implicits._
 
 class KeysFeatureOfDefaultSpec extends AbstractKeysFeatureSpec {
 
@@ -17,5 +19,15 @@ class KeysFeatureOfDefaultSpec extends AbstractKeysFeatureSpec {
       newConnection = RedisConnection.ofDefault,
       reSizer = reSizer
     )
+  }
+  "KeysFeatureOfDefaultSpec" - {
+    "unlink" in forAll(keyStrValueGen) {
+      case (k, v) =>
+        val result1 = runProgram(for {
+          _ <- redisClient.set(k, v)
+          r <- redisClient.unlink(k)
+        } yield r)
+        result1.value shouldBe 1
+    }
   }
 }

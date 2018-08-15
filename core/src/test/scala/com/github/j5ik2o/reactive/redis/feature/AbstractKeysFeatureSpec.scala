@@ -144,6 +144,7 @@ abstract class AbstractKeysFeatureSpec extends AbstractRedisClientSpec(ActorSyst
         } yield r)
         result1.value.toMillis <= 1000 shouldBe true
     }
+
   }
 
 }

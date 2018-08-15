@@ -38,7 +38,10 @@ trait KeysAPI[M[_]] {
   def renameNx(key: String, newKey: String): M[Result[Boolean]]
   def ttl(key: String): M[Result[Duration]]
   def `type`(key: String): M[Result[ValueType]]
+  def unlink(key: String, keys: String*): M[Result[Long]]
+  def unlink(keys: NonEmptyList[String]): M[Result[Long]]
   def waitReplicas(numOfReplicas: Int, timeout: Duration): M[Result[Long]]
+
 }
 
 trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
@@ -183,9 +186,15 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
     case TypeFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
   }
 
-  /*
-   * UNLINK
-   */
+  override def unlink(key: String, keys: String*): ReaderTTaskRedisConnection[Result[Long]] =
+    unlink(NonEmptyList.of(key, keys: _*))
+
+  override def unlink(keys: NonEmptyList[String]): ReaderTTaskRedisConnection[Result[Long]] =
+    send(UnlinkRequest(UUID.randomUUID(), keys)).flatMap {
+      case UnlinkSuspended(_, _)         => ReaderTTask.pure(Suspended)
+      case UnlinkSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case UnlinkFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+    }
 
   override def waitReplicas(numOfReplicas: Int, timeout: Duration): ReaderTTaskRedisConnection[Result[Long]] =
     send(WaitReplicasRequest(UUID.randomUUID(), numOfReplicas, timeout)).flatMap {

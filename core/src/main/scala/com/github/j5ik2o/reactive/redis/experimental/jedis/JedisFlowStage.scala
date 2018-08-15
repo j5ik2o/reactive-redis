@@ -119,7 +119,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case e: EchoRequest   => echo(e)
             case s: SelectRequest => select(s)
             case s: SwapDBRequest =>
-              fail(out, new UnsupportedOperationException("swap is unsupported operation."))
+              fail(out, new UnsupportedOperationException("swapdb is unsupported operation."))
             // --- transactions
             case m: MultiRequest   => multi(m)
             case e: ExecRequest    => exec(e)
@@ -170,6 +170,8 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case w: WaitReplicasRequest => waitReplicas(w)
             case t: TypeRequest         => `type`(t)
             case t: TtlRequest          => ttl(t)
+            case u: UnlinkRequest =>
+              fail(out, new UnsupportedOperationException("unlink is unsupported operation."))
             // -- BLits
             case b: BLPopRequest => blPop(b)
             case b: BRPopRequest => brPop(b)
