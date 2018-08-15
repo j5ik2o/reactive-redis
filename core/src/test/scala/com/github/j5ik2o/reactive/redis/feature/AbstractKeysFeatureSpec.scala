@@ -126,7 +126,15 @@ abstract class AbstractKeysFeatureSpec extends AbstractRedisClientSpec(ActorSyst
         result1._2.value shouldBe Some(v)
         result1._3.value shouldBe false
     }
-
+    "ttl" in forAll(keyStrValueGen) {
+      case (k, v) =>
+        val result1 = runProgram(for {
+          _ <- redisClient.set(k, v)
+          _ <- redisClient.expire(k, 1 seconds)
+          r <- redisClient.ttl(k)
+        } yield r)
+        result1.value.toMillis <= 1000 shouldBe true
+    }
   }
 
 }
