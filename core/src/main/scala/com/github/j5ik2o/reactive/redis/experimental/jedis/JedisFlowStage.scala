@@ -168,6 +168,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case r: RenameRequest       => rename(r)
             case r: RenameNxRequest     => renameNx(r)
             case w: WaitReplicasRequest => waitReplicas(w)
+            case t: TypeRequest         => `type`(t)
             case t: TtlRequest          => ttl(t)
             // -- BLits
             case b: BLPopRequest => blPop(b)
@@ -192,7 +193,28 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def ttl(t: TtlRequest) = {
+      private def `type`(t: TypeRequest): Future[CommandResponse] = {
+        transaction match {
+          case Some(tc) =>
+            run(t)(tc.`type`(t.key)) { result =>
+              txState.append(
+                ResponseF[String](result, { p =>
+                  TypeSucceeded(UUID.randomUUID(), t.id, ValueType.withName(p.get))
+                })
+              )
+              TypeSuspended(UUID.randomUUID(), t.id)
+            } { ex =>
+              TypeFailed(UUID.randomUUID(), t.id, RedisIOException(Some(ex.getMessage), Some(ex)))
+            }()
+          case None =>
+            run(t)(jedis.`type`(t.key)) { result =>
+              TypeSucceeded(UUID.randomUUID(), t.id, ValueType.withName(result))
+            } { ex =>
+              TypeFailed(UUID.randomUUID(), t.id, RedisIOException(Some(ex.getMessage), Some(ex)))
+            }()
+        }
+      }
+      private def ttl(t: TtlRequest): Future[CommandResponse] = {
         transaction match {
           case Some(tc) =>
             run(t)(tc.ttl(t.key)) { result =>
@@ -212,7 +234,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
         }
       }
 
-      private def waitReplicas(w: WaitReplicasRequest) = {
+      private def waitReplicas(w: WaitReplicasRequest): Future[CommandResponse] = {
         run(w)(jedis.waitReplicas(w.numOfReplicas, w.timeout.toSeconds)) { result =>
           WaitReplicasSucceeded(UUID.randomUUID(), w.id, result)
         } { t =>
