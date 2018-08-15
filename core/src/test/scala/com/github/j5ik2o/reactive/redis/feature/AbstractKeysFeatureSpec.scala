@@ -6,6 +6,7 @@ import akka.actor.ActorSystem
 import com.github.j5ik2o.reactive.redis._
 import org.scalacheck.Shrink
 import cats.implicits._
+import com.github.j5ik2o.reactive.redis.command.keys.ValueType
 
 import scala.concurrent.duration._
 
@@ -125,6 +126,14 @@ abstract class AbstractKeysFeatureSpec extends AbstractRedisClientSpec(ActorSyst
         result1._1.value shouldBe true
         result1._2.value shouldBe Some(v)
         result1._3.value shouldBe false
+    }
+    "type" in forAll(keyStrValueGen) {
+      case (k, v) =>
+        val result1 = runProgram(for {
+          _ <- redisClient.set(k, v)
+          r <- redisClient.`type`(k)
+        } yield r)
+        result1.value shouldBe ValueType.String
     }
     "ttl" in forAll(keyStrValueGen) {
       case (k, v) =>

@@ -37,6 +37,7 @@ trait KeysAPI[M[_]] {
   def rename(key: String, newKey: String): M[Result[Unit]]
   def renameNx(key: String, newKey: String): M[Result[Boolean]]
   def ttl(key: String): M[Result[Duration]]
+  def `type`(key: String): M[Result[ValueType]]
   def waitReplicas(numOfReplicas: Int, timeout: Duration): M[Result[Long]]
 }
 
@@ -174,10 +175,16 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
       case TtlFailed(_, _, ex)            => ReaderTTask.raiseError(ex)
     }
 
+  override def `type`(
+      key: String
+  ): ReaderTTaskRedisConnection[Result[ValueType]] = send(TypeRequest(UUID.randomUUID(), key)).flatMap {
+    case TypeSuspended(_, _)         => ReaderTTask.pure(Suspended)
+    case TypeSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+    case TypeFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+  }
+
   /*
-   * TYPE
    * UNLINK
-   * WAIT
    */
 
   override def waitReplicas(numOfReplicas: Int, timeout: Duration): ReaderTTaskRedisConnection[Result[Long]] =
