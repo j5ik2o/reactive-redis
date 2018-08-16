@@ -3,11 +3,11 @@ package com.github.j5ik2o.reactive.redis.parser
 import java.nio.charset.{ Charset, StandardCharsets }
 
 import com.github.j5ik2o.reactive.redis.parser.model.Expr
-import com.github.j5ik2o.reactive.redis.parser.util.instance.{ Reference, Sliceable }
+import com.github.j5ik2o.reactive.redis.parser.util.instance.Reference
 import fastparse.core.Parsed
 import org.scalatest.FreeSpec
 import scodec.bits.ByteVector
-import com.github.j5ik2o.reactive.redis.parser.util.instance.ReferenceTypes.Parser
+import fastparse.all._
 
 class ParsersSpec extends FreeSpec {
   val P = Reference
@@ -16,6 +16,13 @@ class ParsersSpec extends FreeSpec {
 
   implicit val enc: Charset = StandardCharsets.UTF_8
   "ParsersSpec" - {
+    "scan" in {
+      val s = "*2\r\n$1\r\n0\r\n*2\r\n$1\r\nb\r\n$1\r\na\r\n"
+      val r =
+        (StringParsers.arrayPrefixWithCrLf ~ StringParsers.stringOptArrayElement ~ StringParsers.crlf ~ StringParsers.stringArrayReply)
+          .parse(s)
+      println(r)
+    }
     "error" in {
       val expr = CustomParsers.getParer(P)
       printResult { P.run(expr)("-test\r\n") }

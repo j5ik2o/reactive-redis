@@ -144,7 +144,16 @@ abstract class AbstractKeysFeatureSpec extends AbstractRedisClientSpec(ActorSyst
         } yield r)
         result1.value.toMillis <= 1000 shouldBe true
     }
-
+    "scan" in {
+      val result1 = runProgram(for {
+        _ <- redisClient.set("a", "1")
+        _ <- redisClient.set("b", "2")
+        _ <- redisClient.set("b", "3")
+        r <- redisClient.scan("0")
+      } yield r)
+      result1.value.cursor should not be empty
+      result1.value.values should not be empty
+    }
   }
 
 }

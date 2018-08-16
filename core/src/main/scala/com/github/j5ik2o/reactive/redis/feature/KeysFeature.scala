@@ -5,6 +5,7 @@ import java.util.UUID
 
 import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis._
+import com.github.j5ik2o.reactive.redis.command.keys.ScanSucceeded.ScanResult
 import com.github.j5ik2o.reactive.redis.command.keys._
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
@@ -41,7 +42,7 @@ trait KeysAPI[M[_]] {
   def unlink(key: String, keys: String*): M[Result[Long]]
   def unlink(keys: NonEmptyList[String]): M[Result[Long]]
   def waitReplicas(numOfReplicas: Int, timeout: Duration): M[Result[Long]]
-
+  def scan(cursor: String): M[Result[ScanResult]]
 }
 
 trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
@@ -195,6 +196,14 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
       case UnlinkSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
       case UnlinkFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
+
+  override def scan(cursor: String): ReaderTTaskRedisConnection[Result[ScanResult]] = {
+    send(ScanRequest(UUID.randomUUID(), cursor)).flatMap {
+      case ScanSuspended(_, _)         => ReaderTTask.pure(Suspended)
+      case ScanSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case ScanFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+    }
+  }
 
   override def waitReplicas(numOfReplicas: Int, timeout: Duration): ReaderTTaskRedisConnection[Result[Long]] =
     send(WaitReplicasRequest(UUID.randomUUID(), numOfReplicas, timeout)).flatMap {
