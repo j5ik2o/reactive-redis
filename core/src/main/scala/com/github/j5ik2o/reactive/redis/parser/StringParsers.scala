@@ -1,6 +1,7 @@
 package com.github.j5ik2o.reactive.redis.parser
 
 import com.github.j5ik2o.reactive.redis.parser.model._
+import fastparse.core
 
 @SuppressWarnings(
   Array("org.wartremover.warts.Product",
@@ -20,7 +21,7 @@ object StringParsers {
   private val alpha: P0      = P(lowerAlpha | upperAlpha)
   private val alphaDigit: P0 = P(alpha | digit)
 
-  private val crlf: P0 = P("\r\n")
+  val crlf: P0 = P("\r\n")
 
   private val length: P[LengthExpr] = P("$" ~/ "-".!.? ~/ digit.rep(1).!).map {
     case (m, n) =>
@@ -46,7 +47,7 @@ object StringParsers {
         ArrayExpr(values)
     }
 
-  private val stringOptArrayElement: P[StringOptExpr] = P(length ~/ crlf).flatMap { l =>
+  val stringOptArrayElement: P[StringOptExpr] = P(length ~/ crlf).flatMap { l =>
     if (l.value == -1)
       End.map(_ => StringOptExpr(None))
     else
@@ -63,15 +64,21 @@ object StringParsers {
     }
   }
 
-  val errorReply: P[ErrorExpr]                         = P("-" ~/ (!crlf ~/ AnyChar).rep(1).! ~ crlf).map(ErrorExpr)
-  val simpleStringReply: P[SimpleExpr]                 = P(simple ~/ crlf)
-  val bulkStringReply: P[StringOptExpr]                = P((length ~/ crlf).flatMap(l => bulkStringRest(l.value)))
-  val integerReply: P[NumberExpr]                      = P(number ~/ crlf)
-  val arrayPrefixWithCrLf: P[ArraySizeExpr]            = P(arrayPrefix ~/ crlf).map(ArraySizeExpr)
+  val errorReply: P[ErrorExpr]              = P("-" ~/ (!crlf ~/ AnyChar).rep(1).! ~ crlf).map(ErrorExpr)
+  val simpleStringReply: P[SimpleExpr]      = P(simple ~/ crlf)
+  val bulkStringReply: P[StringOptExpr]     = P((length ~/ crlf).flatMap(l => bulkStringRest(l.value)))
+  val integerReply: P[NumberExpr]           = P(number ~/ crlf)
+  val arrayPrefixWithCrLf: P[ArraySizeExpr] = P(arrayPrefix ~/ crlf).map(ArraySizeExpr)
+
+  val integerArrayReply: P[ArrayExpr[NumberExpr]] = P(array(integerArrayElement) ~/ crlf.?)
+
   val stringOptArrayReply: P[ArrayExpr[StringOptExpr]] = P(array(stringOptArrayElement) ~/ crlf.?)
-  val integerArrayReply: P[ArrayExpr[NumberExpr]]      = P(array(integerArrayElement) ~/ crlf.?)
-  val stringArrayReply: P[Expr] = P(stringOptArrayReply).map { v =>
+  val stringArrayReply: P[ArrayExpr[StringExpr]] = P(stringOptArrayReply).map { v =>
     ArrayExpr(v.values.map(_.toStringExpr))
+  }
+
+  val scan: P[ScanExpr] = P(arrayPrefixWithCrLf ~ stringOptArrayElement ~ crlf ~ stringArrayReply).map { v =>
+    ScanExpr(v._2.value, v._3.values.map(_.value))
   }
 
 }

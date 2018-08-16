@@ -29,5 +29,6 @@ class KeysFeatureOfDefaultSpec extends AbstractKeysFeatureSpec {
         } yield r)
         result1.value shouldBe 1
     }
+
   }
 }

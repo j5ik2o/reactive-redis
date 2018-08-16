@@ -170,6 +170,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case w: WaitReplicasRequest => waitReplicas(w)
             case t: TypeRequest         => `type`(t)
             case t: TtlRequest          => ttl(t)
+            case s: ScanRequest         => scan(s)
             case u: UnlinkRequest =>
               fail(out, new UnsupportedOperationException("unlink is unsupported operation."))
             // -- BLits
@@ -193,6 +194,26 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case s: SAddRequest => sadd(s)
           }
         }
+      }
+
+      private def scan(s: ScanRequest): Future[CommandResponse] = {
+        def _scan(): ScanResult[String] = (s.matchOption, s.countOption) match {
+          case (None, None) =>
+            jedis.scan(s.cursor)
+          case (Some(mo), None) =>
+            jedis.scan(s.cursor, new ScanParams().`match`(mo.pattern))
+          case (None, Some(co)) =>
+            jedis.scan(s.cursor, new ScanParams().count(co.count))
+          case (Some(mo), Some(co)) =>
+            jedis.scan(s.cursor, new ScanParams().`match`(mo.pattern).count(co.count))
+        }
+
+        run(s)(_scan) { result =>
+          import ScanSucceeded._
+          ScanSucceeded(UUID.randomUUID(), s.id, ScanResult(Option(result.getStringCursor), result.getResult.asScala))
+        } { t =>
+          ScanFailed(UUID.randomUUID(), s.id, RedisIOException(Some(t.getMessage), Some(t)))
+        }()
       }
 
       private def `type`(t: TypeRequest): Future[CommandResponse] = {
