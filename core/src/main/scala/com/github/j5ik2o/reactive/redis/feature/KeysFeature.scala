@@ -6,6 +6,7 @@ import java.util.UUID
 import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis._
 import com.github.j5ik2o.reactive.redis.command.keys.ScanSucceeded.ScanResult
+import com.github.j5ik2o.reactive.redis.command.keys.SortResponse._
 import com.github.j5ik2o.reactive.redis.command.keys._
 
 import scala.concurrent.duration.{ Duration, FiniteDuration }
@@ -45,6 +46,19 @@ trait KeysAPI[M[_]] {
   def unlink(key: String, keys: String*): M[Result[Long]]
   def unlink(keys: NonEmptyList[String]): M[Result[Long]]
   def waitReplicas(numOfReplicas: Int, timeout: Duration): M[Result[Long]]
+  def sort(key: String,
+           byPattern: Option[ByPattern] = None,
+           limitOffset: Option[LimitOffset] = None,
+           getPatterns: Seq[GetPattern] = Seq.empty,
+           order: Option[Order] = None,
+           alpha: Boolean = false): M[Result[Seq[Option[String]]]]
+  def sortToDestination(key: String,
+                        byPattern: Option[ByPattern] = None,
+                        limitOffset: Option[LimitOffset] = None,
+                        getPatterns: Seq[GetPattern] = Seq.empty,
+                        order: Option[Order] = None,
+                        alpha: Boolean = false,
+                        destination: String): M[Result[Long]]
 }
 
 trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
@@ -179,9 +193,35 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
     }
   }
 
-  /**
-    * SORT
-    */
+  override def sort(key: String,
+                    byPattern: Option[ByPattern] = None,
+                    limitOffset: Option[LimitOffset] = None,
+                    getPatterns: Seq[GetPattern] = Seq.empty,
+                    order: Option[Order] = None,
+                    alpha: Boolean = false): ReaderTTaskRedisConnection[Result[Seq[Option[String]]]] =
+    send(SortRequest(UUID.randomUUID(), key, byPattern, limitOffset, getPatterns, order, alpha)).flatMap {
+      case SortSuspended(_, _)             => ReaderTTask.pure(Suspended)
+      case SortLongSucceeded(_, _, _)      => ReaderTTask.raiseError(new AssertionError("invalid result type"))
+      case SortListSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case SortFailed(_, _, ex)            => ReaderTTask.raiseError(ex)
+    }
+
+  override def sortToDestination(key: String,
+                                 byPattern: Option[ByPattern],
+                                 limitOffset: Option[LimitOffset],
+                                 getPatterns: Seq[GetPattern],
+                                 order: Option[Order],
+                                 alpha: Boolean,
+                                 destination: String): ReaderTTaskRedisConnection[Result[Long]] =
+    send(
+      SortRequest(UUID.randomUUID(), key, byPattern, limitOffset, getPatterns, order, alpha, Some(Store(destination)))
+    ).flatMap {
+      case SortSuspended(_, _)             => ReaderTTask.pure(Suspended)
+      case SortListSucceeded(_, _, _)      => ReaderTTask.raiseError(new AssertionError("invalid result type"))
+      case SortLongSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case SortFailed(_, _, ex)            => ReaderTTask.raiseError(ex)
+    }
+
   override def touch(key: String, keys: String*): ReaderTTaskRedisConnection[Result[Long]] =
     touch(NonEmptyList.of(key, keys: _*))
 
