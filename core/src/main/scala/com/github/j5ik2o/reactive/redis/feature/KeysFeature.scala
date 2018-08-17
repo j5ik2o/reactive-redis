@@ -37,12 +37,14 @@ trait KeysAPI[M[_]] {
   def randomKey(): M[Result[Option[String]]]
   def rename(key: String, newKey: String): M[Result[Unit]]
   def renameNx(key: String, newKey: String): M[Result[Boolean]]
+  def scan(cursor: String): M[Result[ScanResult]]
+  def touch(key: String, keys: String*): M[Result[Long]]
+  def touch(keys: NonEmptyList[String]): M[Result[Long]]
   def ttl(key: String): M[Result[Duration]]
   def `type`(key: String): M[Result[ValueType]]
   def unlink(key: String, keys: String*): M[Result[Long]]
   def unlink(keys: NonEmptyList[String]): M[Result[Long]]
   def waitReplicas(numOfReplicas: Int, timeout: Duration): M[Result[Long]]
-  def scan(cursor: String): M[Result[ScanResult]]
 }
 
 trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
@@ -168,10 +170,28 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
 
   /**
     * RESTORE
-    * SCAN
-    * SORT
-    * TOUCH
     */
+  override def scan(cursor: String): ReaderTTaskRedisConnection[Result[ScanResult]] = {
+    send(ScanRequest(UUID.randomUUID(), cursor)).flatMap {
+      case ScanSuspended(_, _)         => ReaderTTask.pure(Suspended)
+      case ScanSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case ScanFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+    }
+  }
+
+  /**
+    * SORT
+    */
+  override def touch(key: String, keys: String*): ReaderTTaskRedisConnection[Result[Long]] =
+    touch(NonEmptyList.of(key, keys: _*))
+
+  override def touch(keys: NonEmptyList[String]): ReaderTTaskRedisConnection[Result[Long]] =
+    send(TouchRequest(UUID.randomUUID(), keys)).flatMap {
+      case TouchSuspended(_, _)         => ReaderTTask.pure(Suspended)
+      case TouchSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case TouchFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
+    }
+
   override def ttl(key: String): ReaderTTaskRedisConnection[Result[Duration]] =
     send(TtlRequest(UUID.randomUUID(), key)).flatMap {
       case TtlSuspended(_, _)             => ReaderTTask.pure(Suspended)
@@ -196,14 +216,6 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
       case UnlinkSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
       case UnlinkFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
-
-  override def scan(cursor: String): ReaderTTaskRedisConnection[Result[ScanResult]] = {
-    send(ScanRequest(UUID.randomUUID(), cursor)).flatMap {
-      case ScanSuspended(_, _)         => ReaderTTask.pure(Suspended)
-      case ScanSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
-      case ScanFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
-    }
-  }
 
   override def waitReplicas(numOfReplicas: Int, timeout: Duration): ReaderTTaskRedisConnection[Result[Long]] =
     send(WaitReplicasRequest(UUID.randomUUID(), numOfReplicas, timeout)).flatMap {

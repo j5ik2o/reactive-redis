@@ -2,9 +2,9 @@ package com.github.j5ik2o.reactive.redis.feature
 
 import akka.routing.DefaultResizer
 import cats.data.NonEmptyList
+import cats.implicits._
 import com.github.j5ik2o.reactive.redis.{ PeerConfig, RedisConnection, RedisConnectionPool }
 import monix.eval.Task
-import cats.implicits._
 
 class KeysFeatureOfDefaultSpec extends AbstractKeysFeatureSpec {
 
@@ -29,6 +29,13 @@ class KeysFeatureOfDefaultSpec extends AbstractKeysFeatureSpec {
         } yield r)
         result1.value shouldBe 1
     }
-
+    "touch" in forAll(keyStrValueGen) {
+      case (k, v) =>
+        val result1 = runProgram(for {
+          _ <- redisClient.set(k, v)
+          r <- redisClient.touch(k)
+        } yield r)
+        result1.value shouldBe 1
+    }
   }
 }

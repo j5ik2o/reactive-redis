@@ -173,6 +173,8 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case s: ScanRequest         => scan(s)
             case u: UnlinkRequest =>
               fail(out, new UnsupportedOperationException("unlink is unsupported operation."))
+            case t: TouchRequest =>
+              fail(out, new UnsupportedOperationException("touch is unsupported operation."))
             // -- BLits
             case b: BLPopRequest => blPop(b)
             case b: BRPopRequest => brPop(b)
