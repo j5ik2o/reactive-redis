@@ -6,6 +6,7 @@ import akka.actor.ActorSystem
 import com.github.j5ik2o.reactive.redis._
 import org.scalacheck.Shrink
 import cats.implicits._
+import com.github.j5ik2o.reactive.redis.command.keys.SortResponse.ByPattern
 import com.github.j5ik2o.reactive.redis.command.keys.ValueType
 
 import scala.concurrent.duration._
@@ -153,6 +154,22 @@ abstract class AbstractKeysFeatureSpec extends AbstractRedisClientSpec(ActorSyst
       } yield r)
       result1.value.cursor should not be empty
       result1.value.values should not be empty
+    }
+    "sort" in {
+      val result1 = runProgram(for {
+        _ <- redisClient.lPush("foo", "2")
+        _ <- redisClient.lPush("foo", "3")
+        _ <- redisClient.lPush("foo", "1")
+        _ <- redisClient.set("bar1", "3")
+        _ <- redisClient.set("bar2", "2")
+        _ <- redisClient.set("bar3", "1")
+        r <- redisClient.sort("foo", byPattern = Some(ByPattern("bar*")))
+      } yield r)
+      result1.value shouldBe Seq(
+        Some("3"),
+        Some("2"),
+        Some("1")
+      )
     }
   }
 
