@@ -15,29 +15,28 @@ import fastparse.all._
 
 object ObjectRequest extends CommandRequestSupoprt {
 
-  sealed trait SubCommand[A] {
+  sealed trait SubCommand {
+    val key: String
     val asString: String
   }
 
-  final case class RefCount(key: String) extends SubCommand[Long] {
-    override val asString: String = cs("OBJECT", Some("REFCOUNT"), Some(key))
-  }
-  final case class Encoding(key: String) extends SubCommand[Option[String]] {
-    override val asString: String = cs("OJBECT", Some("ENCODING"), Some(key))
-  }
-  final case class IdleTime(key: String) extends SubCommand[Long] {
-    override val asString: String = cs("OBJECT", Some("IDLETIME"), Some(key))
-  }
-  final case class Freq(key: String) extends SubCommand[Option[String]] {
-    override val asString: String = cs("FREQ", Some(key))
-  }
-  final case object Help extends SubCommand[Option[String]] {
-    override val asString: String = cs("HELP")
-  }
+  private val commandName = "OBJECT"
 
+  final case class RefCount(key: String) extends SubCommand {
+    override val asString: String = cs(commandName, Some("REFCOUNT"), Some(key))
+  }
+  final case class Encoding(key: String) extends SubCommand {
+    override val asString: String = cs(commandName, Some("ENCODING"), Some(key))
+  }
+  final case class IdleTime(key: String) extends SubCommand {
+    override val asString: String = cs(commandName, Some("IDLETIME"), Some(key))
+  }
+  final case class Freq(key: String) extends SubCommand {
+    override val asString: String = cs(commandName, Some("FREQ"), Some(key))
+  }
 }
 
-final case class ObjectRequest(id: UUID, subCommand: SubCommand[_]) extends CommandRequest with StringParsersSupport {
+final case class ObjectRequest(id: UUID, subCommand: SubCommand) extends CommandRequest with StringParsersSupport {
 
   override type Response = ObjectResponse
   override val isMasterOnly: Boolean = true

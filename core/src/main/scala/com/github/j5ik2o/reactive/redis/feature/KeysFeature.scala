@@ -5,7 +5,6 @@ import java.util.UUID
 
 import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis._
-import com.github.j5ik2o.reactive.redis.command.keys.ObjectRequest.SubCommand
 import com.github.j5ik2o.reactive.redis.command.keys.ScanSucceeded.ScanResult
 import com.github.j5ik2o.reactive.redis.command.keys.SortResponse._
 import com.github.j5ik2o.reactive.redis.command.keys._
@@ -17,12 +16,19 @@ import scala.concurrent.duration.{ Duration, FiniteDuration }
   */
 trait KeysAPI[M[_]] {
   def del(key: String, keys: String*): M[Result[Long]]
+
   def del(keys: NonEmptyList[String]): M[Result[Long]]
+
   def dump(key: String): M[Result[Option[Array[Byte]]]]
+
   def exists(key: String): M[Result[Boolean]]
+
   def expire(key: String, seconds: FiniteDuration): M[Result[Boolean]]
+
   def expireAt(key: String, expiresAt: ZonedDateTime): M[Result[Boolean]]
+
   def keys(pattern: String): M[Result[Seq[String]]]
+
   def migrate(host: String,
               port: Int,
               key: String,
@@ -31,30 +37,52 @@ trait KeysAPI[M[_]] {
               copy: Boolean,
               replease: Boolean,
               keys: NonEmptyList[String]): M[Result[Status]]
+
   def move(key: String, db: Int): M[Result[Boolean]]
-  def `object`[A](subCommand: SubCommand[A]): M[Result[A]]
+
   def objectEncoding(key: String): M[Result[Option[String]]]
+
+  def objectIdleTime(key: String): M[Result[Long]]
+
+  def objectRefCount(key: String): M[Result[Long]]
+
   def persist(key: String): M[Result[Boolean]]
+
   def pExpire(key: String, milliseconds: FiniteDuration): M[Result[Boolean]]
+
   def pExpireAt(key: String, millisecondsTimestamp: ZonedDateTime): M[Result[Boolean]]
+
   def pTtl(key: String): M[Result[Duration]]
+
   def randomKey(): M[Result[Option[String]]]
+
   def rename(key: String, newKey: String): M[Result[Unit]]
+
   def renameNx(key: String, newKey: String): M[Result[Boolean]]
+
   def scan(cursor: String): M[Result[ScanResult]]
+
   def touch(key: String, keys: String*): M[Result[Long]]
+
   def touch(keys: NonEmptyList[String]): M[Result[Long]]
+
   def ttl(key: String): M[Result[Duration]]
+
   def `type`(key: String): M[Result[ValueType]]
+
   def unlink(key: String, keys: String*): M[Result[Long]]
+
   def unlink(keys: NonEmptyList[String]): M[Result[Long]]
+
   def waitReplicas(numOfReplicas: Int, timeout: Duration): M[Result[Long]]
+
   def sort(key: String,
            byPattern: Option[ByPattern] = None,
            limitOffset: Option[LimitOffset] = None,
            getPatterns: Seq[GetPattern] = Seq.empty,
            order: Option[Order] = None,
            alpha: Boolean = false): M[Result[Seq[Option[String]]]]
+
   def sortToDestination(key: String,
                         byPattern: Option[ByPattern] = None,
                         limitOffset: Option[LimitOffset] = None,
@@ -133,21 +161,29 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
       case MoveFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
-  override def `object`[A](
-      subCommand: SubCommand[A]
-  ): ReaderTTaskRedisConnection[Result[A]] =
-    send(ObjectRequest(UUID.randomUUID(), subCommand)).flatMap {
+  override def objectEncoding(key: String): ReaderTTaskRedisConnection[Result[Option[String]]] =
+    send(ObjectRequest(UUID.randomUUID(), ObjectRequest.Encoding(key))).flatMap {
       case ObjectSuspended(_, _)               => ReaderTTask.pure(Suspended)
-      case ObjectStringSucceeded(_, _, result) => ReaderTTask.pure(Provided(result.asInstanceOf[A]))
-      case ObjectStringSucceeded(_, _, result) => ReaderTTask.pure(Provided(result.asInstanceOf[A]))
+      case ObjectStringSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
       case ObjectFailed(_, _, ex)              => ReaderTTask.raiseError(ex)
+      case _                                   => ReaderTTask.raiseError(new AssertionError("invalid result type"))
     }
 
-  override def objectEncoding(
-      key: String
-  ): ReaderTTaskRedisConnection[
-    Result[Option[String]]
-  ] = `object`[Option[String]](ObjectRequest.Encoding(key))
+  override def objectIdleTime(key: String): ReaderTTaskRedisConnection[Result[Long]] =
+    send(ObjectRequest(UUID.randomUUID(), ObjectRequest.IdleTime(key))).flatMap {
+      case ObjectSuspended(_, _)                => ReaderTTask.pure(Suspended)
+      case ObjectIntegerSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case ObjectFailed(_, _, ex)               => ReaderTTask.raiseError(ex)
+      case _                                    => ReaderTTask.raiseError(new AssertionError("invalid result type"))
+    }
+
+  override def objectRefCount(key: String): ReaderTTaskRedisConnection[Result[Long]] =
+    send(ObjectRequest(UUID.randomUUID(), ObjectRequest.RefCount(key))).flatMap {
+      case ObjectSuspended(_, _)                => ReaderTTask.pure(Suspended)
+      case ObjectIntegerSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
+      case ObjectFailed(_, _, ex)               => ReaderTTask.raiseError(ex)
+      case _                                    => ReaderTTask.raiseError(new AssertionError("invalid result type"))
+    }
 
   override def persist(key: String): ReaderTTaskRedisConnection[Result[Boolean]] =
     send(PersistRequest(UUID.randomUUID(), key)).flatMap {

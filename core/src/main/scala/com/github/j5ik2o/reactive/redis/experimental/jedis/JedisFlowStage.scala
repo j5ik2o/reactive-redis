@@ -45,6 +45,7 @@ object JedisFlowStage {
     "org.wartremover.warts.Null",
     "org.wartremover.warts.Var",
     "org.wartremover.warts.Serializable",
+    "org.wartremover.warts.JavaSerializable",
     "org.wartremover.warts.ToString",
     "org.wartremover.warts.MutableDataStructures"
   )
@@ -176,6 +177,8 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
               fail(out, new UnsupportedOperationException("unlink is unsupported operation."))
             case t: TouchRequest =>
               fail(out, new UnsupportedOperationException("touch is unsupported operation."))
+            case o: ObjectRequest => `object`(o)
+
             case s: SortRequest => sort(s)
             // -- BLits
             case b: BLPopRequest => blPop(b)
@@ -197,6 +200,53 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             // --- Sets
             case s: SAddRequest => sadd(s)
           }
+        }
+      }
+
+      private def `object`(o: ObjectRequest): Future[CommandResponse] = {
+        transaction match {
+          case Some(tc) =>
+            run(o) {
+              o.subCommand match {
+                case _: ObjectRequest.Encoding =>
+                  tc.objectEncoding(o.subCommand.key)
+                case _: ObjectRequest.IdleTime =>
+                  tc.objectIdletime(o.subCommand.key)
+                case _: ObjectRequest.RefCount =>
+                  tc.objectRefcount(o.subCommand.key)
+              }
+            } {
+              case result: Response[lang.Long] =>
+                txState.append(ResponseF[java.lang.Long](result, { p =>
+                  ObjectIntegerSucceeded(UUID.randomUUID(), o.id, p.get)
+                }))
+                ObjectSuspended(UUID.randomUUID(), o.id)
+              case result: Response[String] =>
+                txState.append(ResponseF[String](result, { p =>
+                  ObjectStringSucceeded(UUID.randomUUID(), o.id, Option(p.get))
+                }))
+                ObjectSuspended(UUID.randomUUID(), o.id)
+            } { t =>
+              ObjectFailed(UUID.randomUUID(), o.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
+          case None =>
+            run(o) {
+              o.subCommand match {
+                case _: ObjectRequest.Encoding =>
+                  jedis.objectEncoding(o.subCommand.key)
+                case _: ObjectRequest.IdleTime =>
+                  jedis.objectIdletime(o.subCommand.key)
+                case _: ObjectRequest.RefCount =>
+                  jedis.objectRefcount(o.subCommand.key)
+              }
+            } {
+              case result: lang.Long =>
+                ObjectIntegerSucceeded(UUID.randomUUID(), o.id, result)
+              case result: String =>
+                ObjectStringSucceeded(UUID.randomUUID(), o.id, Option(result))
+            } { t =>
+              ObjectFailed(UUID.randomUUID(), o.id, RedisIOException(Some(t.getMessage), Some(t)))
+            }()
         }
       }
 
