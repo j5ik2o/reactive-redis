@@ -30,7 +30,7 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11"
 ```scala
 resolvers += "Sonatype OSS Snapshot Repository" at "https://oss.sonatype.org/content/repositories/snapshots/"
 
-libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SNAPSHOT"
+libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.12-SNAPSHOT"
 ```
 
 ## Support Commands
