@@ -176,48 +176,7 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
               fail(out, new UnsupportedOperationException("unlink is unsupported operation."))
             case t: TouchRequest =>
               fail(out, new UnsupportedOperationException("touch is unsupported operation."))
-            case s: SortRequest =>
-              def createOp = (s.byPattern, s.limitOffset, s.getPatterns, s.order) match {
-                case (None, None, Nil, None) =>
-                  None
-                case _ =>
-                  val defaultOp = new SortingParams()
-                  val op1       = s.byPattern.fold(defaultOp)(v => defaultOp.by(v.pattern))
-                  val op2       = s.limitOffset.fold(op1)(v => op1.limit(v.offset, v.count))
-                  val op3       = if (s.getPatterns.nonEmpty) op2.get(s.getPatterns.map(_.pattern): _*) else op2
-                  val op4 = s.order
-                    .map { o =>
-                      if (o == Order.Asc) op3.asc() else op3.desc()
-                    }
-                    .getOrElse(op3)
-                  Some(op4)
-              }
-
-              run(s) {
-                s.store match {
-                  case None =>
-                    createOp match {
-                      case None =>
-                        jedis.sort(s.key)
-                      case Some(op) =>
-                        jedis.sort(s.key, op)
-                    }
-                  case Some(destination) =>
-                    createOp match {
-                      case None =>
-                        jedis.sort(s.key, destination.destination)
-                      case Some(op) =>
-                        jedis.sort(s.key, op, destination.destination)
-                    }
-                }
-              } {
-                case results: java.util.List[String] =>
-                  SortListSucceeded(UUID.randomUUID(), s.id, results.asScala.map(Option(_)))
-                case result: java.lang.Long =>
-                  SortLongSucceeded(UUID.randomUUID(), s.id, result)
-              } { t =>
-                SortFailed(UUID.randomUUID(), s.id, RedisIOException(Some(t.getMessage), Some(t)))
-              }()
+            case s: SortRequest => sort(s)
             // -- BLits
             case b: BLPopRequest => blPop(b)
             case b: BRPopRequest => brPop(b)
@@ -239,6 +198,50 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             case s: SAddRequest => sadd(s)
           }
         }
+      }
+
+      private def sort(s: SortRequest): Future[CommandResponse] = {
+        def createOp = (s.byPattern, s.limitOffset, s.getPatterns, s.order) match {
+          case (None, None, Nil, None) =>
+            None
+          case _ =>
+            val defaultOp = new SortingParams()
+            val op1 = s.byPattern.fold(defaultOp)(v => defaultOp.by(v.pattern))
+            val op2 = s.limitOffset.fold(op1)(v => op1.limit(v.offset, v.count))
+            val op3 = if (s.getPatterns.nonEmpty) op2.get(s.getPatterns.map(_.pattern): _*) else op2
+            val op4 = s.order
+              .map { o =>
+                if (o == Order.Asc) op3.asc() else op3.desc()
+              }
+              .getOrElse(op3)
+            Some(op4)
+        }
+
+        run(s) {
+          s.store match {
+            case None =>
+              createOp match {
+                case None =>
+                  jedis.sort(s.key)
+                case Some(op) =>
+                  jedis.sort(s.key, op)
+              }
+            case Some(store) =>
+              createOp match {
+                case None =>
+                  jedis.sort(s.key, store.destination)
+                case Some(op) =>
+                  jedis.sort(s.key, op, store.destination)
+              }
+          }
+        } {
+          case results: util.List[String] =>
+            SortListSucceeded(UUID.randomUUID(), s.id, results.asScala.map(Option(_)))
+          case result: lang.Long =>
+            SortLongSucceeded(UUID.randomUUID(), s.id, result)
+        } { t =>
+          SortFailed(UUID.randomUUID(), s.id, RedisIOException(Some(t.getMessage), Some(t)))
+        }()
       }
 
       private def scan(s: ScanRequest): Future[CommandResponse] = {
