@@ -171,6 +171,30 @@ abstract class AbstractKeysFeatureSpec extends AbstractRedisClientSpec(ActorSyst
         Some("1")
       )
     }
+    "objectEncoding" in {
+      val key = "foo"
+      val result1 = runProgram(for {
+        _ <- redisClient.lPush(key, "hello world")
+        r <- redisClient.objectEncoding(key)
+      } yield r)
+      result1.value shouldBe Some("quicklist")
+    }
+    "objectIdleTime" in {
+      val key = "foo"
+      val result1 = runProgram(for {
+        _ <- redisClient.lPush(key, "hello world")
+        r <- redisClient.objectIdleTime(key)
+      } yield r)
+      result1.value shouldBe 0L
+    }
+    "objectRefCount" in {
+      val key = "foo"
+      val result1 = runProgram(for {
+        _ <- redisClient.lPush(key, "hello world")
+        r <- redisClient.objectRefCount(key)
+      } yield r)
+      result1.value shouldBe 1
+    }
   }
 
 }
