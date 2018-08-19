@@ -325,7 +325,7 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
   </tr>
   <tr>
     <td>OBJECT</td>
-    <td>TODO</td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>PERSIST</td>
@@ -361,15 +361,15 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
   </tr>
   <tr>
     <td>SCAN</td>
-    <td>TODO</td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>SORT</td>
-    <td>TODO</td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>TOUCH</td>
-    <td>TODO</td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>TTL</td>
@@ -377,11 +377,11 @@ libraryDependencies += "com.github.j5ik2o" %% "reactive-redis-core" % "1.0.11-SN
   </tr>
   <tr>
     <td>TYPE</td>
-    <td>TODO</td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>UNLINK</td>
-    <td>TODO</td>
+    <td>Supported</td>
   </tr>
   <tr>
     <td>WAIT</td>
