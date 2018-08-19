@@ -5,6 +5,7 @@ import java.util.UUID
 
 import cats.data.NonEmptyList
 import com.github.j5ik2o.reactive.redis._
+import com.github.j5ik2o.reactive.redis.command.keys.ObjectRequest.SubCommand
 import com.github.j5ik2o.reactive.redis.command.keys.ScanSucceeded.ScanResult
 import com.github.j5ik2o.reactive.redis.command.keys.SortResponse._
 import com.github.j5ik2o.reactive.redis.command.keys._
@@ -31,6 +32,8 @@ trait KeysAPI[M[_]] {
               replease: Boolean,
               keys: NonEmptyList[String]): M[Result[Status]]
   def move(key: String, db: Int): M[Result[Boolean]]
+  def `object`[A](subCommand: SubCommand[A]): M[Result[A]]
+  def objectEncoding(key: String): M[Result[Option[String]]]
   def persist(key: String): M[Result[Boolean]]
   def pExpire(key: String, milliseconds: FiniteDuration): M[Result[Boolean]]
   def pExpireAt(key: String, millisecondsTimestamp: ZonedDateTime): M[Result[Boolean]]
@@ -130,7 +133,21 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
       case MoveFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
-  // object
+  override def `object`[A](
+      subCommand: SubCommand[A]
+  ): ReaderTTaskRedisConnection[Result[A]] =
+    send(ObjectRequest(UUID.randomUUID(), subCommand)).flatMap {
+      case ObjectSuspended(_, _)               => ReaderTTask.pure(Suspended)
+      case ObjectStringSucceeded(_, _, result) => ReaderTTask.pure(Provided(result.asInstanceOf[A]))
+      case ObjectStringSucceeded(_, _, result) => ReaderTTask.pure(Provided(result.asInstanceOf[A]))
+      case ObjectFailed(_, _, ex)              => ReaderTTask.raiseError(ex)
+    }
+
+  override def objectEncoding(
+      key: String
+  ): ReaderTTaskRedisConnection[
+    Result[Option[String]]
+  ] = `object`[Option[String]](ObjectRequest.Encoding(key))
 
   override def persist(key: String): ReaderTTaskRedisConnection[Result[Boolean]] =
     send(PersistRequest(UUID.randomUUID(), key)).flatMap {

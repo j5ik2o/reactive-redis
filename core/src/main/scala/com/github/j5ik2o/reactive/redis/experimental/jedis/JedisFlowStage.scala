@@ -206,9 +206,9 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
             None
           case _ =>
             val defaultOp = new SortingParams()
-            val op1 = s.byPattern.fold(defaultOp)(v => defaultOp.by(v.pattern))
-            val op2 = s.limitOffset.fold(op1)(v => op1.limit(v.offset, v.count))
-            val op3 = if (s.getPatterns.nonEmpty) op2.get(s.getPatterns.map(_.pattern): _*) else op2
+            val op1       = s.byPattern.fold(defaultOp)(v => defaultOp.by(v.pattern))
+            val op2       = s.limitOffset.fold(op1)(v => op1.limit(v.offset, v.count))
+            val op3       = if (s.getPatterns.nonEmpty) op2.get(s.getPatterns.map(_.pattern): _*) else op2
             val op4 = s.order
               .map { o =>
                 if (o == Order.Asc) op3.asc() else op3.desc()

@@ -12,10 +12,7 @@ trait Decoder[+T, Elem, Repr] extends Serializable {
   def parse(input: Repr, index: Int = 0): Either[ParseException, (T, Int)]
 }
 
-trait CommandRequestBase {
-  type Elem
-  type Repr
-  type P[+T] = Decoder[T, Elem, Repr]
+trait CommandRequestSupoprt {
 
   def cs(param: String, params: Option[String]*): String = {
     val _params = Some(param) :: params.toList
@@ -23,6 +20,13 @@ trait CommandRequestBase {
     _params.collect { case Some(v) => "$" + v.length + "\r\n" + s"$v" + "\r\n" }.mkString
     result.stripSuffix("\r\n")
   }
+
+}
+
+trait CommandRequestBase extends CommandRequestSupoprt {
+  type Elem
+  type Repr
+  type P[+T] = Decoder[T, Elem, Repr]
 
   def fastParse[T](p: => fastparse.core.Parser[T, Elem, Repr]): Decoder[T, Elem, Repr] = new Decoder[T, Elem, Repr] {
     override def parse(input: Repr, index: Int): Either[ParseException, (T, Int)] = p.parse(input, index) match {
