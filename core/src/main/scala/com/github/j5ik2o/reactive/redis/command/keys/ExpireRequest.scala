@@ -11,7 +11,7 @@ import fastparse.all._
 
 import scala.concurrent.duration.FiniteDuration
 
-final case class ExpireRequest(id: UUID, key: String, seconds: FiniteDuration)
+final class ExpireRequest(val id: UUID, val key: String, val seconds: FiniteDuration)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -33,6 +33,33 @@ final case class ExpireRequest(id: UUID, key: String, seconds: FiniteDuration)
     case (ErrorExpr(msg), next) =>
       (ExpireFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: ExpireRequest =>
+      id == that.id &&
+      key == that.key &&
+      seconds == that.seconds
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, seconds)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"ExpireRequest($id, $key, $seconds)"
+
+}
+
+object ExpireRequest {
+
+  def apply(id: UUID, key: String, seconds: FiniteDuration): ExpireRequest = new ExpireRequest(id, key, seconds)
+
+  def unapply(self: ExpireRequest): Option[(UUID, String, FiniteDuration)] = Some((self.id, self.key, self.seconds))
+
+  def create(id: UUID, key: String, seconds: FiniteDuration): ExpireRequest = apply(id, key, seconds)
+
 }
 
 sealed trait ExpireResponse                                                    extends CommandResponse

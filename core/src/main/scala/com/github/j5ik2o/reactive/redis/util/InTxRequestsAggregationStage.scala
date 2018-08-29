@@ -11,7 +11,11 @@ import com.github.j5ik2o.reactive.redis.command.transactions.{ DiscardRequest, E
 import scala.collection.mutable.ListBuffer
 
 object InTxRequestsAggregationFlow {
+
   def apply(): Flow[ResponseContext, ResponseContext, NotUsed] = Flow.fromGraph(InTxRequestsAggregationStage())
+
+  def create(): Flow[ResponseContext, ResponseContext, NotUsed] = apply()
+
 }
 
 final case class InTxRequestsAggregationStage() extends GraphStage[FlowShape[ResponseContext, ResponseContext]] {

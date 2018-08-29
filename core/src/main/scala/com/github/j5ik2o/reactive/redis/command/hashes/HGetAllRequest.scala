@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model._
 import fastparse.all._
 
-final case class HGetAllRequest(id: UUID, key: String) extends CommandRequest with StringParsersSupport {
+final class HGetAllRequest(val id: UUID, val key: String) extends CommandRequest with StringParsersSupport {
 
   override type Response = HGetAllResponse
   override val isMasterOnly: Boolean = false
@@ -25,6 +25,30 @@ final case class HGetAllRequest(id: UUID, key: String) extends CommandRequest wi
     case (ErrorExpr(msg), next) =>
       (HGetAllFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: HGetAllRequest =>
+      id == that.id &&
+      key == that.key
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"HGetAllRequest($id, $key)"
+}
+
+object HGetAllRequest {
+
+  def apply(id: UUID, key: String): HGetAllRequest = new HGetAllRequest(id, key)
+
+  def unapply(self: HGetAllRequest): Option[(UUID, String)] = Some((self.id, self.key))
+
+  def create(id: UUID, key: String): HGetAllRequest = apply(id, key)
 
 }
 

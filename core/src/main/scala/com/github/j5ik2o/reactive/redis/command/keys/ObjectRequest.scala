@@ -5,7 +5,7 @@ import com.github.j5ik2o.reactive.redis.RedisIOException
 import com.github.j5ik2o.reactive.redis.command.keys.ObjectRequest.SubCommand
 import com.github.j5ik2o.reactive.redis.command.{
   CommandRequest,
-  CommandRequestSupoprt,
+  CommandRequestSupport,
   CommandResponse,
   StringParsersSupport
 }
@@ -13,7 +13,13 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model._
 import fastparse.all._
 
-object ObjectRequest extends CommandRequestSupoprt {
+object ObjectRequest extends CommandRequestSupport {
+
+  def apply(id: UUID, subCommand: SubCommand): ObjectRequest = new ObjectRequest(id, subCommand)
+
+  def unapply(self: ObjectRequest): Option[(UUID, SubCommand)] = Some((self.id, self.subCommand))
+
+  def create(id: UUID, subCommand: SubCommand): ObjectRequest = apply(id, subCommand)
 
   sealed trait SubCommand {
     val key: String
@@ -36,7 +42,7 @@ object ObjectRequest extends CommandRequestSupoprt {
   }
 }
 
-final case class ObjectRequest(id: UUID, subCommand: SubCommand) extends CommandRequest with StringParsersSupport {
+final class ObjectRequest(val id: UUID, val subCommand: SubCommand) extends CommandRequest with StringParsersSupport {
 
   override type Response = ObjectResponse
   override val isMasterOnly: Boolean = true
@@ -55,6 +61,21 @@ final case class ObjectRequest(id: UUID, subCommand: SubCommand) extends Command
     case (ErrorExpr(msg), next) =>
       (ObjectFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: ObjectRequest =>
+      id == that.id &&
+      subCommand == that.subCommand
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(id, subCommand)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"ObjectRequest($id, $subCommand)"
+
 }
 
 sealed trait ObjectResponse                                                     extends CommandResponse

@@ -8,7 +8,9 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr, StringOptExpr }
 import fastparse.all._
 
-final case class HGetRequest(id: UUID, key: String, field: String) extends CommandRequest with StringParsersSupport {
+final class HGetRequest(val id: UUID, val key: String, val field: String)
+    extends CommandRequest
+    with StringParsersSupport {
 
   override type Response = HGetResponse
 
@@ -27,6 +29,31 @@ final case class HGetRequest(id: UUID, key: String, field: String) extends Comma
       (HGetFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
+  override def equals(other: Any): Boolean = other match {
+    case that: HGetRequest =>
+      id == that.id &&
+      key == that.key &&
+      field == that.field
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, field)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"HGetRequest($id, $key, $field)"
+
+}
+
+object HGetRequest {
+
+  def apply(id: UUID, key: String, field: String): HGetRequest = new HGetRequest(id, key, field)
+
+  def unapply(self: HGetRequest): Option[(UUID, String, String)] = Some((self.id, self.key, self.field))
+
+  def create(id: UUID, key: String, field: String): HGetRequest = apply(id, key, field)
 }
 
 sealed trait HGetResponse                                                        extends CommandResponse

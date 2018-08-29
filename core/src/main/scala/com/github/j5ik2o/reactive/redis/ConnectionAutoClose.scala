@@ -58,6 +58,10 @@ object ConnectionAutoClose {
       pool: RedisConnectionPool[M]
   )(a: RedisConnection => M[A])(implicit ME: MonadError[M, Throwable]): ConnectionAutoClose[M, A] = pure(pool)(a)
 
+  def create[M[_], A](
+      pool: RedisConnectionPool[M]
+  )(a: RedisConnection => M[A])(implicit ME: MonadError[M, Throwable]): ConnectionAutoClose[M, A] = apply(pool)(a)
+
   def unapply[A](arg: ConnectionAutoClose[Task, A]): Option[RedisConnectionPool[Task]] =
     Some(arg.pool)
 

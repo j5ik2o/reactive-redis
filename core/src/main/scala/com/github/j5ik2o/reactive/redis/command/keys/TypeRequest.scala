@@ -31,9 +31,9 @@ final case class TypeRequest(id: UUID, key: String) extends CommandRequest with 
 
   override def asString: String = cs("TYPE", Some(key))
 
-  override protected def responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (SimpleExpr(QUEUED), next) =>
       (TypeSuspended(UUID.randomUUID(), id), next)
     case (SimpleExpr(typeName), next) =>

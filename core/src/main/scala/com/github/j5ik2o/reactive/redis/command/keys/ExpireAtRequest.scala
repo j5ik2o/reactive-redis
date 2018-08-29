@@ -9,7 +9,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-final case class ExpireAtRequest(id: UUID, key: String, expiresAt: ZonedDateTime)
+final class ExpireAtRequest(val id: UUID, val key: String, val expiresAt: ZonedDateTime)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -29,6 +29,31 @@ final case class ExpireAtRequest(id: UUID, key: String, expiresAt: ZonedDateTime
     case (ErrorExpr(msg), next) =>
       (ExpireAtFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: ExpireAtRequest =>
+      id == that.id &&
+      key == that.key &&
+      expiresAt == that.expiresAt
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, expiresAt)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"ExpireAtRequest($id, $key, $expiresAt)"
+}
+
+object ExpireAtRequest {
+
+  def apply(id: UUID, key: String, expiresAt: ZonedDateTime): ExpireAtRequest = new ExpireAtRequest(id, key, expiresAt)
+
+  def unapply(self: ExpireAtRequest): Option[(UUID, String, ZonedDateTime)] = Some((self.id, self.key, self.expiresAt))
+
+  def create(id: UUID, key: String, expiresAt: ZonedDateTime): ExpireAtRequest = apply(id, key, expiresAt)
 
 }
 

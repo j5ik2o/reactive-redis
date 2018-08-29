@@ -214,6 +214,8 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
                   tc.objectIdletime(o.subCommand.key)
                 case _: ObjectRequest.RefCount =>
                   tc.objectRefcount(o.subCommand.key)
+                case _: ObjectRequest.Freq =>
+                  throw new UnsupportedOperationException("object freq is unsupported operation.")
               }
             } {
               case result: Response[lang.Long] =>
@@ -238,6 +240,8 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
                   jedis.objectIdletime(o.subCommand.key)
                 case _: ObjectRequest.RefCount =>
                   jedis.objectRefcount(o.subCommand.key)
+                case _: ObjectRequest.Freq =>
+                  throw new UnsupportedOperationException("object freq is unsupported operation.")
               }
             } {
               case result: lang.Long =>

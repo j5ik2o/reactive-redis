@@ -9,4 +9,6 @@ object ActorSource {
 
   def apply[E](bufferSize: Int): Source[E, Future[ActorRef]] = Source.fromGraph(new ActorSourceStage[E](bufferSize))
 
+  def create[E](bufferSize: Int): Source[Nothing, Future[ActorRef]] = apply(bufferSize)
+
 }

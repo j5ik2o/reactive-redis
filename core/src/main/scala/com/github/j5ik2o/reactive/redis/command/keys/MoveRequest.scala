@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-final case class MoveRequest(id: UUID, key: String, db: Int) extends CommandRequest with StringParsersSupport {
+final class MoveRequest(val id: UUID, val key: String, val db: Int) extends CommandRequest with StringParsersSupport {
 
   override type Response = MoveResponse
 
@@ -26,6 +26,31 @@ final case class MoveRequest(id: UUID, key: String, db: Int) extends CommandRequ
     case (ErrorExpr(msg), next) =>
       (MoveFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: MoveRequest =>
+      id == that.id &&
+      key == that.key &&
+      db == that.db
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(id, key, db)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"MoveRequest($id, $key, $db)"
+
+}
+
+object MoveRequest {
+
+  def apply(id: UUID, key: String, db: Int): MoveRequest = new MoveRequest(id, key, db)
+
+  def unapply(self: MoveRequest): Option[(UUID, String, Int)] = Some((self.id, self.key, self.db))
+
+  def create(id: UUID, key: String, db: Int): MoveRequest = apply(id, key, db)
 
 }
 

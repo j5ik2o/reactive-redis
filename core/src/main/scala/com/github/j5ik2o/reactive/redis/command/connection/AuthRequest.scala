@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 import fastparse.all._
 
-final case class AuthRequest(id: UUID, password: String) extends CommandRequest with StringParsersSupport {
+final class AuthRequest(val id: UUID, val password: String) extends CommandRequest with StringParsersSupport {
 
   override type Response = AuthResponse
 
@@ -24,6 +24,31 @@ final case class AuthRequest(id: UUID, password: String) extends CommandRequest 
     case (ErrorExpr(msg), next) =>
       (AuthFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: AuthRequest =>
+      id == that.id &&
+      password == that.password
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, password)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"AuthRequest($id, *****)"
+
+}
+
+object AuthRequest {
+
+  def apply(id: UUID, password: String): AuthRequest = new AuthRequest(id, password)
+
+  def unapply(self: AuthRequest): Option[(UUID, String)] = Some((self.id, self.password))
+
+  def create(id: UUID, password: String): AuthRequest = apply(id, password)
 
 }
 
