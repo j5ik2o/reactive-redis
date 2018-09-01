@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 import fastparse.all._
 
-final case class DiscardRequest(id: UUID) extends CommandRequest with StringParsersSupport {
+final class DiscardRequest(val id: UUID) extends CommandRequest with StringParsersSupport {
 
   override type Response = DiscardResponse
 
@@ -24,6 +24,30 @@ final case class DiscardRequest(id: UUID) extends CommandRequest with StringPars
     case (ErrorExpr(msg), next) =>
       (DiscardFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: DiscardRequest =>
+      id == that.id
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"DiscardRequest($id)"
+
+}
+
+object DiscardRequest {
+
+  def apply(id: UUID): DiscardRequest = new DiscardRequest(id)
+
+  def unapply(self: DiscardRequest): Option[UUID] = Some(self.id)
+
+  def create(id: UUID): DiscardRequest = apply(id)
 
 }
 

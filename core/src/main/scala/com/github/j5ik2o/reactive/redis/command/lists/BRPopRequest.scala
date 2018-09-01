@@ -18,9 +18,9 @@ final class BRPopRequest(val id: UUID, val keys: NonEmptyList[String], val timeo
   override type Response = BRPopResponse
   override val isMasterOnly: Boolean = true
 
-  private def timetoutToSeconds: Long = if (timeout.isFinite()) timeout.toSeconds else 0
+  private def timeoutToSeconds: Long = if (timeout.isFinite()) timeout.toSeconds else 0
 
-  override def asString: String = cs("BRPOP", keys.map(Some(_)).toList ++ List(Some(timetoutToSeconds.toString)): _*)
+  override def asString: String = cs("BRPOP", keys.map(Some(_)).toList ++ List(Some(timeoutToSeconds.toString)): _*)
 
   override protected lazy val responseParser: P[Expr] = fastParse(stringArrayReply | errorReply)
 

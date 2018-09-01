@@ -8,7 +8,10 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-final case class BitPosRequest(id: UUID, key: String, bit: Int, startAndEnd: Option[BitPosRequest.StartAndEnd] = None)
+final class BitPosRequest(val id: UUID,
+                          val key: String,
+                          val bit: Int,
+                          val startAndEnd: Option[BitPosRequest.StartAndEnd] = None)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -37,9 +40,35 @@ final case class BitPosRequest(id: UUID, key: String, bit: Int, startAndEnd: Opt
       (BitPosFailed(UUID.randomUUID, id, RedisIOException(Some(msg))), next)
   }
 
+  override def equals(other: Any): Boolean = other match {
+    case that: BitPosRequest =>
+      id == that.id &&
+      key == that.key &&
+      bit == that.bit &&
+      startAndEnd == that.startAndEnd
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, bit, startAndEnd)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"BitPosRequest($id, $key, $bit, $startAndEnd)"
 }
 
 object BitPosRequest {
+
+  def apply(id: UUID, key: String, bit: Int, startAndEnd: Option[BitPosRequest.StartAndEnd] = None): BitPosRequest =
+    new BitPosRequest(id, key, bit, startAndEnd)
+
+  def unapply(self: BitPosRequest): Option[(UUID, String, Int, Option[StartAndEnd])] =
+    Some((self.id, self.key, self.bit, self.startAndEnd))
+
+  def create(id: UUID, key: String, bit: Int, startAndEnd: Option[BitPosRequest.StartAndEnd] = None): BitPosRequest =
+    apply(id, key, bit, startAndEnd)
+
   final case class StartAndEnd(start: Int, end: Option[Int] = None) {
     def asString: String = start + end.fold("") { v =>
       s" $v"

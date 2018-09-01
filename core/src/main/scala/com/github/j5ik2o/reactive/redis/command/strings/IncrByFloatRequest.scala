@@ -7,8 +7,9 @@ import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandRespons
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr, StringOptExpr }
 import fastparse.all._
+
 @SuppressWarnings(Array("org.wartremover.warts.ToString"))
-final case class IncrByFloatRequest(id: UUID, key: String, value: Double)
+final class IncrByFloatRequest(val id: UUID, val key: String, val value: Double)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -28,6 +29,31 @@ final case class IncrByFloatRequest(id: UUID, key: String, value: Double)
     case (ErrorExpr(msg), next) =>
       (IncrByFloatFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: IncrByFloatRequest =>
+      id == that.id &&
+      key == that.key &&
+      value == that.value
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, value)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"IncrByFloatRequest($id, $key, $value)"
+}
+
+object IncrByFloatRequest {
+
+  def apply(id: UUID, key: String, value: Double): IncrByFloatRequest = new IncrByFloatRequest(id, key, value)
+
+  def unapply(self: IncrByFloatRequest): Option[(UUID, String, Double)] = Some((self.id, self.key, self.value))
+
+  def create(id: UUID, key: String, value: Double): IncrByFloatRequest = apply(id, key, value)
 
 }
 

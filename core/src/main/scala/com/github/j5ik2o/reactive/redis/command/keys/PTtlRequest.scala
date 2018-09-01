@@ -11,7 +11,7 @@ import fastparse.all._
 
 import scala.concurrent.duration.Duration
 
-final case class PTtlRequest(id: UUID, key: String) extends CommandRequest with StringParsersSupport {
+final class PTtlRequest(val id: UUID, val key: String) extends CommandRequest with StringParsersSupport {
 
   override type Response = PTtlResponse
   override val isMasterOnly: Boolean = true
@@ -28,6 +28,30 @@ final case class PTtlRequest(id: UUID, key: String) extends CommandRequest with 
     case (ErrorExpr(msg), next) =>
       (PTtlFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: PTtlRequest =>
+      id == that.id &&
+      key == that.key
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"PTtlRequest($id, $key)"
+}
+
+object PTtlRequest {
+
+  def apply(id: UUID, key: String): PTtlRequest = new PTtlRequest(id, key)
+
+  def unapply(self: PTtlRequest): Option[(UUID, String)] = Some((self.id, self.key))
+
+  def create(id: UUID, key: String): PTtlRequest = apply(id, key)
 
 }
 

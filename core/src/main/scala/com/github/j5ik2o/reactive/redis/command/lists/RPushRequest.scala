@@ -30,13 +30,37 @@ final class RPushRequest(val id: UUID, val key: String, val values: NonEmptyList
       (RPushFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
+  override def equals(other: Any): Boolean = other match {
+    case that: RPushRequest =>
+      id == that.id &&
+      key == that.key &&
+      values == that.values
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, values)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"RPushRequest($id, $key, $values)"
 }
 
 object RPushRequest {
+
   def apply[A](id: UUID, key: String, value: A)(implicit s: Show[A]): RPushRequest =
     new RPushRequest(id, key, NonEmptyList.one(s.show(value)))
+
   def apply[A](id: UUID, key: String, values: NonEmptyList[A])(implicit s: Show[A]): RPushRequest =
     new RPushRequest(id, key, values.map(v => s.show(v)))
+
+  def unapply(self: RPushRequest): Option[(UUID, String, NonEmptyList[String])] = Some((self.id, self.key, self.values))
+
+  def create[A](id: UUID, key: String, value: A, s: Show[A]): RPushRequest = apply(id, key, value)(s)
+
+  def create[A](id: UUID, key: String, values: NonEmptyList[A], s: Show[A]): RPushRequest = apply(id, key, values)(s)
+
 }
 
 sealed trait RPushResponse                                                    extends CommandResponse

@@ -30,6 +30,21 @@ final class WatchRequest(val id: UUID, val keys: NonEmptyList[String])
       (WatchFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
+  override def equals(other: Any): Boolean = other match {
+    case that: WatchRequest =>
+      id == that.id &&
+      keys == that.keys
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, keys)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"WatchRequest($id, $keys)"
+
 }
 
 object WatchRequest {

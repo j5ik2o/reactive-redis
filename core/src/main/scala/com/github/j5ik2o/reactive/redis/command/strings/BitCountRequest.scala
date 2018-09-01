@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-final case class BitCountRequest(id: UUID, key: String, startAndEnd: Option[StartAndEnd] = None)
+final class BitCountRequest(val id: UUID, val key: String, val startAndEnd: Option[StartAndEnd] = None)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -30,6 +30,34 @@ final case class BitCountRequest(id: UUID, key: String, startAndEnd: Option[Star
     case (ErrorExpr(msg), next) =>
       (BitCountFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: BitCountRequest =>
+      id == that.id &&
+      key == that.key &&
+      startAndEnd == that.startAndEnd
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, startAndEnd)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"BitCountRequest($id, $key, $startAndEnd)"
+}
+
+object BitCountRequest {
+
+  def apply(id: UUID, key: String, startAndEnd: Option[StartAndEnd] = None): BitCountRequest =
+    new BitCountRequest(id, key, startAndEnd)
+
+  def unapply(self: BitCountRequest): Option[(UUID, String, Option[StartAndEnd])] =
+    Some((self.id, self.key, self.startAndEnd))
+
+  def create(id: UUID, key: String, startAndEnd: Option[StartAndEnd] = None): BitCountRequest =
+    apply(id, key, startAndEnd)
 
 }
 

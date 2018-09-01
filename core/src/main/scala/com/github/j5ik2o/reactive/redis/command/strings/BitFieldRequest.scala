@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model._
 import fastparse.all._
 
-final case class BitFieldRequest(id: UUID, key: String, options: BitFieldRequest.SubOption*)
+final class BitFieldRequest(val id: UUID, val key: String, val options: BitFieldRequest.SubOption*)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -31,9 +31,33 @@ final case class BitFieldRequest(id: UUID, key: String, options: BitFieldRequest
       (BitFieldFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
+  override def equals(other: Any): Boolean = other match {
+    case that: BitFieldRequest =>
+      id == that.id &&
+      key == that.key &&
+      options == that.options
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, options)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"BitFieldRequest($id, $key, $options)"
+
 }
 
 object BitFieldRequest {
+
+  def apply(id: UUID, key: String, options: BitFieldRequest.SubOption*): BitFieldRequest =
+    new BitFieldRequest(id, key, options: _*)
+
+  def unapply(self: BitFieldRequest): Option[(UUID, String, Seq[SubOption])] = Some((self.id, self.key, self.options))
+
+  def create(id: UUID, key: String, options: BitFieldRequest.SubOption*): BitFieldRequest =
+    apply(id, key, options: _*)
 
   sealed trait BitType {
     def toSeq: Seq[String]

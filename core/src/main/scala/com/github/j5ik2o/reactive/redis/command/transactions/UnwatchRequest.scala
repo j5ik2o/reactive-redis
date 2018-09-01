@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 import fastparse.all._
 
-final case class UnwatchRequest(id: UUID) extends CommandRequest with StringParsersSupport {
+final class UnwatchRequest(val id: UUID) extends CommandRequest with StringParsersSupport {
 
   override type Response = UnwatchResponse
 
@@ -24,6 +24,30 @@ final case class UnwatchRequest(id: UUID) extends CommandRequest with StringPars
     case (ErrorExpr(msg), next) =>
       (UnwatchFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: UnwatchRequest =>
+      id == that.id
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"UnwatchRequest($id)"
+
+}
+
+object UnwatchRequest {
+
+  def apply(id: UUID): UnwatchRequest = new UnwatchRequest(id)
+
+  def unapply(self: UnwatchRequest): Option[UUID] = Some(self.id)
+
+  def create(id: UUID): UnwatchRequest = apply(id)
 
 }
 

@@ -29,7 +29,21 @@ final class UnlinkRequest(val id: UUID, val keys: NonEmptyList[String])
       (UnlinkFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
+  override def equals(other: Any): Boolean = other match {
+    case that: UnlinkRequest =>
+      id == that.id &&
+      keys == that.keys
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, keys)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
   override def toString: String = s"UnlinkRequest($id, $keys)"
+
 }
 
 object UnlinkRequest {
@@ -37,6 +51,12 @@ object UnlinkRequest {
   def apply(id: UUID, key: String, keys: String*): UnlinkRequest = apply(id, NonEmptyList.of(key, keys: _*))
 
   def apply(id: UUID, keys: NonEmptyList[String]): UnlinkRequest = new UnlinkRequest(id, keys)
+
+  def unapply(self: UnlinkRequest): Option[(UUID, NonEmptyList[String])] = Some((self.id, self.keys))
+
+  def create(id: UUID, key: String, keys: String*): UnlinkRequest = apply(id, key, keys: _*)
+
+  def create(id: UUID, keys: NonEmptyList[String]): UnlinkRequest = apply(id, keys)
 
 }
 

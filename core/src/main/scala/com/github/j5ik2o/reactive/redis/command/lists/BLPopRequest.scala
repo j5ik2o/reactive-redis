@@ -34,12 +34,35 @@ final class BLPopRequest(val id: UUID, val keys: NonEmptyList[String], val timeo
       (BLPopFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
+  override def equals(other: Any): Boolean = other match {
+    case that: BLPopRequest =>
+      id == that.id &&
+      keys == that.keys &&
+      timeout == that.timeout
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, keys, timeout)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"BLPopRequest($id, $keys, $timeout)"
+
 }
 
 object BLPopRequest {
+
   def apply(id: UUID, key: String, timeout: Duration): BLPopRequest =
     new BLPopRequest(id, NonEmptyList.one(key), timeout)
+
   def apply(id: UUID, keys: NonEmptyList[String], timeout: Duration): BLPopRequest = new BLPopRequest(id, keys, timeout)
+
+  def unapply(self: BLPopRequest): Option[(UUID, NonEmptyList[String], Duration)] =
+    Some((self.id, self.keys, self.timeout))
+
+  def create(id: UUID, key: String, timeout: Duration): BLPopRequest = apply(id, key, timeout)
 }
 
 sealed trait BLPopResponse                                                      extends CommandResponse

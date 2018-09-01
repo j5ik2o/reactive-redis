@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-final case class DecrRequest(id: UUID, key: String) extends CommandRequest with StringParsersSupport {
+final class DecrRequest(val id: UUID, val key: String) extends CommandRequest with StringParsersSupport {
 
   override type Response = DecrResponse
 
@@ -26,6 +26,31 @@ final case class DecrRequest(id: UUID, key: String) extends CommandRequest with 
     case (ErrorExpr(msg), next) =>
       (DecrFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: DecrRequest =>
+      id == that.id &&
+      key == that.key
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"DecrRequest($id, $key)"
+
+}
+
+object DecrRequest {
+
+  def apply(id: UUID, key: String): DecrRequest = new DecrRequest(id, key)
+
+  def unapply(self: DecrRequest): Option[(UUID, String)] = Some((self.id, self.key))
+
+  def create(id: UUID, key: String): DecrRequest = apply(id, key)
 
 }
 
