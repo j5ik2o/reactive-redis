@@ -8,7 +8,9 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-final case class HExistsRequest(id: UUID, key: String, field: String) extends CommandRequest with StringParsersSupport {
+final class HExistsRequest(val id: UUID, val key: String, val field: String)
+    extends CommandRequest
+    with StringParsersSupport {
 
   override type Response = HExistsResponse
   override val isMasterOnly: Boolean = false
@@ -25,6 +27,32 @@ final case class HExistsRequest(id: UUID, key: String, field: String) extends Co
     case (ErrorExpr(msg), next) =>
       (HExistsFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: HExistsRequest =>
+      id == that.id &&
+      key == that.key &&
+      field == that.field
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, field)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"HExistsRequest($id, $key, $field)"
+
+}
+
+object HExistsRequest {
+
+  def apply(id: UUID, key: String, field: String): HExistsRequest = new HExistsRequest(id, key, field)
+
+  def unapply(self: HExistsRequest): Option[(UUID, String, String)] = Some((self.id, self.key, self.field))
+
+  def create(id: UUID, key: String, field: String): HExistsRequest = apply(id, key, field)
 
 }
 

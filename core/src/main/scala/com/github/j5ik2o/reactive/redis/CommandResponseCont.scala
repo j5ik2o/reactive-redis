@@ -12,6 +12,10 @@ object CommandResponseCont {
     f(v)
   }
 
+  def create[M[_], A](f: (A => M[CommandResponse]) => M[CommandResponse])(
+      implicit F: MonadError[M, Throwable]
+  ): ContT[M, CommandResponse, A] = apply(f)
+
   def fromM[M[_], A](task: => M[A])(implicit F: MonadError[M, Throwable]): ContT[M, CommandResponse, A] =
     ContT(F.flatMap(task))
 

@@ -28,12 +28,34 @@ final class SAddRequest(val id: UUID, val key: String, val values: NonEmptyList[
       (SAddFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
+  override def equals(other: Any): Boolean = other match {
+    case that: SAddRequest =>
+      id == that.id &&
+      key == that.key &&
+      values == that.values
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, values)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"SAddRequest($id, $key, $values)"
 }
 
 object SAddRequest {
+
   def apply(id: UUID, key: String, value: String, values: String*): SAddRequest =
     new SAddRequest(id, key, NonEmptyList.of(value, values: _*))
+
   def apply(id: UUID, key: String, values: NonEmptyList[String]): SAddRequest = new SAddRequest(id, key, values)
+
+  def create(id: UUID, key: String, value: String, values: String*): SAddRequest = apply(id, key, value, values: _*)
+
+  def create(id: UUID, key: String, values: NonEmptyList[String]): SAddRequest = apply(id, key, values)
+
 }
 
 sealed trait SAddResponse                                                    extends CommandResponse

@@ -8,7 +8,9 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 import fastparse.all._
 
-final case class RenameRequest(id: UUID, key: String, newKey: String) extends CommandRequest with StringParsersSupport {
+final class RenameRequest(val id: UUID, val key: String, val newKey: String)
+    extends CommandRequest
+    with StringParsersSupport {
 
   override type Response = RenameResponse
   override val isMasterOnly: Boolean = true
@@ -25,6 +27,31 @@ final case class RenameRequest(id: UUID, key: String, newKey: String) extends Co
     case (ErrorExpr(msg), next) =>
       (RenameFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: RenameRequest =>
+      id == that.id &&
+      key == that.key &&
+      newKey == that.newKey
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, newKey)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"RenameRequest($id, $key, $newKey)"
+}
+
+object RenameRequest {
+
+  def apply(id: UUID, key: String, newKey: String): RenameRequest = new RenameRequest(id, key, newKey)
+
+  def unapply(self: RenameRequest): Option[(UUID, String, String)] = Some((self.id, self.key, self.newKey))
+
+  def create(id: UUID, key: String, newKey: String): RenameRequest = new RenameRequest(id, key, newKey)
 }
 
 sealed trait RenameResponse                                                    extends CommandResponse

@@ -8,7 +8,9 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-final case class GetBitRequest(id: UUID, key: String, offset: Int) extends CommandRequest with StringParsersSupport {
+final class GetBitRequest(val id: UUID, val key: String, val offset: Int)
+    extends CommandRequest
+    with StringParsersSupport {
 
   override type Response = GetBitResponse
 
@@ -26,6 +28,31 @@ final case class GetBitRequest(id: UUID, key: String, offset: Int) extends Comma
     case (ErrorExpr(msg), next) =>
       (GetBitFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: GetBitRequest =>
+      id == that.id &&
+      key == that.key &&
+      offset == that.offset
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, offset)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"GetBitRequest($id, $key, $offset)"
+}
+
+object GetBitRequest {
+
+  def apply(id: UUID, key: String, offset: Int): GetBitRequest = new GetBitRequest(id, key, offset)
+
+  def unapply(self: GetBitRequest): Option[(UUID, String, Int)] = Some((self.id, self.key, self.offset))
+
+  def create(id: UUID, key: String, offset: Int): GetBitRequest = apply(id, key, offset)
 
 }
 

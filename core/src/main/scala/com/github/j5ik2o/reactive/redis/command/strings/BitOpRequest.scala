@@ -11,11 +11,11 @@ import fastparse.all._
 
 import scala.collection.immutable
 
-final case class BitOpRequest(id: UUID,
-                              operand: BitOpRequest.Operand,
-                              outputKey: String,
-                              inputKey1: String,
-                              inputKey2: String)
+final class BitOpRequest(val id: UUID,
+                         val operand: BitOpRequest.Operand,
+                         val outputKey: String,
+                         val inputKey1: String,
+                         val inputKey2: String)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -37,9 +37,42 @@ final case class BitOpRequest(id: UUID,
       (BitOpFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
+  override def equals(other: Any): Boolean = other match {
+    case that: BitOpRequest =>
+      id == that.id &&
+      operand == that.operand &&
+      outputKey == that.outputKey &&
+      inputKey1 == that.inputKey1 &&
+      inputKey2 == that.inputKey2
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, operand, outputKey, inputKey1, inputKey2)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"BitOpRequest($id, $operand, $outputKey, $inputKey1, $inputKey2)"
 }
 
 object BitOpRequest {
+
+  def apply(id: UUID,
+            operand: BitOpRequest.Operand,
+            outputKey: String,
+            inputKey1: String,
+            inputKey2: String): BitOpRequest =
+    new BitOpRequest(id, operand, outputKey, inputKey1, inputKey2)
+
+  def unapply(self: BitOpRequest): Option[(UUID, Operand, String, String, String)] =
+    Some((self.id, self.operand, self.outputKey, self.inputKey1, self.inputKey2))
+
+  def create(id: UUID,
+             operand: BitOpRequest.Operand,
+             outputKey: String,
+             inputKey1: String,
+             inputKey2: String): BitOpRequest = apply(id, operand, outputKey, inputKey1, inputKey2)
 
   sealed abstract class Operand(override val entryName: String) extends EnumEntry
 

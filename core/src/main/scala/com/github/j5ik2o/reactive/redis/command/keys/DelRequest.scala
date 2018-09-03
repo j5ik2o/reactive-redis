@@ -11,8 +11,6 @@ import fastparse.all._
 
 final class DelRequest(val id: UUID, val keys: NonEmptyList[String]) extends CommandRequest with StringParsersSupport {
 
-  // val key: String = keys.head
-
   override type Response = DelResponse
 
   override val isMasterOnly: Boolean = true
@@ -30,6 +28,21 @@ final class DelRequest(val id: UUID, val keys: NonEmptyList[String]) extends Com
       (DelFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
+  override def equals(other: Any): Boolean = other match {
+    case that: DelRequest =>
+      id == that.id &&
+      keys == that.keys
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, keys)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"DelRequest($id, $keys)"
+
 }
 
 object DelRequest {
@@ -37,6 +50,12 @@ object DelRequest {
   def apply(id: UUID, key: String, keys: String*): DelRequest = new DelRequest(id, NonEmptyList.of(key, keys: _*))
 
   def apply(id: UUID, keys: NonEmptyList[String]): DelRequest = new DelRequest(id, keys)
+
+  def unapply(self: DelRequest): Option[(UUID, NonEmptyList[String])] = Some((self.id, self.keys))
+
+  def create(id: UUID, key: String, keys: String*): DelRequest = apply(id, key, keys: _*)
+
+  def create(id: UUID, keys: NonEmptyList[String]): DelRequest = apply(id, keys)
 
 }
 

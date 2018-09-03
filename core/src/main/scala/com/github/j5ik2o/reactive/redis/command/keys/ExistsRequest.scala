@@ -35,8 +35,17 @@ final class ExistsRequest(val id: UUID, val keys: NonEmptyList[String])
 }
 
 object ExistsRequest {
+
   def apply(id: UUID, keys: NonEmptyList[String]): ExistsRequest = new ExistsRequest(id, keys)
+
   def apply(id: UUID, key: String, keys: String*): ExistsRequest = apply(id, NonEmptyList.of(key, keys: _*))
+
+  def unapply(self: ExistsRequest): Option[(UUID, NonEmptyList[String])] = Some((self.id, self.keys))
+
+  def create(id: UUID, keys: NonEmptyList[String]): ExistsRequest = apply(id, keys)
+
+  def create(id: UUID, key: String, keys: String*): ExistsRequest = apply(id, key, keys: _*)
+
 }
 
 sealed trait ExistsResponse                                                    extends CommandResponse

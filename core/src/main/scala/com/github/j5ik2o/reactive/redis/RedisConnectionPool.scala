@@ -108,6 +108,15 @@ object RedisConnectionPool {
   ): RedisConnectionPool[Task] =
     new AkkaPool(pool, peerConfigs, newConnection, supervisionDecider, passingTimeout)(system, scheduler)
 
+  def create(pool: Pool,
+             peerConfigs: NonEmptyList[PeerConfig],
+             newConnection: NewRedisConnection,
+             supervisionDecider: Option[Supervision.Decider] = None,
+             passingTimeout: FiniteDuration = 3 seconds)(
+      implicit system: ActorSystem,
+      scheduler: Scheduler
+  ): RedisConnectionPool[Task] = apply(pool, peerConfigs, newConnection, supervisionDecider, passingTimeout)
+
   private class AkkaPool(
       pool: Pool,
       val peerConfigs: NonEmptyList[PeerConfig],

@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model._
 import fastparse.all._
 
-final case class RandomKeyRequest(id: UUID) extends CommandRequest with StringParsersSupport {
+final class RandomKeyRequest(val id: UUID) extends CommandRequest with StringParsersSupport {
 
   override type Response = RandomKeyResponse
   override val isMasterOnly: Boolean = true
@@ -25,6 +25,30 @@ final case class RandomKeyRequest(id: UUID) extends CommandRequest with StringPa
     case (ErrorExpr(msg), next) =>
       (RandomKeyFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: RandomKeyRequest =>
+      id == that.id
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"RandomKeyRequest($id)"
+
+}
+
+object RandomKeyRequest {
+
+  def apply(id: UUID): RandomKeyRequest = new RandomKeyRequest(id)
+
+  def unapply(self: RandomKeyRequest): Option[UUID] = Some(self.id)
+
+  def create(id: UUID): RandomKeyRequest = apply(id)
 
 }
 

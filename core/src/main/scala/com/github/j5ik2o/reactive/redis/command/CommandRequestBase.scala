@@ -12,7 +12,7 @@ trait Decoder[+T, Elem, Repr] extends Serializable {
   def parse(input: Repr, index: Int = 0): Either[ParseException, (T, Int)]
 }
 
-trait CommandRequestSupoprt {
+trait CommandRequestSupport {
 
   def cs(param: String, params: Option[String]*): String = {
     val _params = Some(param) :: params.toList
@@ -23,7 +23,7 @@ trait CommandRequestSupoprt {
 
 }
 
-trait CommandRequestBase extends CommandRequestSupoprt {
+trait CommandRequestBase extends CommandRequestSupport with Serializable {
   type Elem
   type Repr
   type P[+T] = Decoder[T, Elem, Repr]

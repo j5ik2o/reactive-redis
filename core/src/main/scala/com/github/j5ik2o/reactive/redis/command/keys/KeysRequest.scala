@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model._
 import fastparse.all._
 
-final case class KeysRequest(id: UUID, pattern: String) extends CommandRequest with StringParsersSupport {
+final class KeysRequest(val id: UUID, val pattern: String) extends CommandRequest with StringParsersSupport {
 
   override type Response = KeysResponse
 
@@ -28,6 +28,16 @@ final case class KeysRequest(id: UUID, pattern: String) extends CommandRequest w
     case (ErrorExpr(msg), next) =>
       (KeysFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+}
+
+object KeysRequest {
+
+  def apply(id: UUID, pattern: String): KeysRequest = new KeysRequest(id, pattern)
+
+  def unapply(self: KeysRequest): Option[(UUID, String)] = Some((self.id, self.pattern))
+
+  def create(id: UUID, pattern: String): KeysRequest = apply(id, pattern)
 
 }
 

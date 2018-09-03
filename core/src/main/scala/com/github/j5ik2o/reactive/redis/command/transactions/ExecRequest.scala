@@ -10,7 +10,7 @@ import scodec.bits.ByteVector
 import fastparse.all._
 
 @SuppressWarnings(Array("org.wartremover.warts.EitherProjectionPartial"))
-final case class ExecRequest(id: UUID) extends TransactionalCommandRequest with StringParsersSupport {
+final class ExecRequest(val id: UUID) extends TransactionalCommandRequest with StringParsersSupport {
 
   override type Response = ExecResponse
 
@@ -35,6 +35,31 @@ final case class ExecRequest(id: UUID) extends TransactionalCommandRequest with 
   }
 
   override val isMasterOnly: Boolean = true
+
+  override def equals(other: Any): Boolean = other match {
+    case that: ExecRequest =>
+      id == that.id
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"ExecRequest($id)"
+
+}
+
+object ExecRequest {
+
+  def apply(id: UUID): ExecRequest = new ExecRequest(id)
+
+  def unapply(self: ExecRequest): Option[UUID] = Some(self.id)
+
+  def create(id: UUID): ExecRequest = apply(id)
+
 }
 
 sealed trait ExecResponse                                                                 extends CommandResponse

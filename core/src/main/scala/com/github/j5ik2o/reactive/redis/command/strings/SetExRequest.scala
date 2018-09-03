@@ -11,7 +11,7 @@ import fastparse.all._
 
 import scala.concurrent.duration.FiniteDuration
 
-final case class SetExRequest(id: UUID, key: String, expires: FiniteDuration, value: String)
+final class SetExRequest(val id: UUID, val key: String, val expires: FiniteDuration, val value: String)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -32,11 +32,34 @@ final case class SetExRequest(id: UUID, key: String, expires: FiniteDuration, va
       (SetExFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
+  override def equals(other: Any): Boolean = other match {
+    case that: SetExRequest =>
+      id == that.id &&
+      key == that.key &&
+      expires == that.expires &&
+      value == that.value
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, expires, value)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"SetExRequest($id, $key, $expires, $value)"
+
 }
 
 object SetExRequest {
 
   def apply[A](id: UUID, key: String, expires: FiniteDuration, value: A)(implicit s: Show[A]): SetExRequest =
+    new SetExRequest(id, key, expires, s.show(value))
+
+  def unapply(self: SetExRequest): Option[(UUID, String, FiniteDuration, String)] =
+    Some((self.id, self.key, self.expires, self.value))
+
+  def create[A](id: UUID, key: String, expires: FiniteDuration, value: A, s: Show[A]): SetExRequest =
     new SetExRequest(id, key, expires, s.show(value))
 
 }

@@ -23,11 +23,11 @@ object SetOption extends Enum[SetOption] {
   case object XX extends SetOption
 }
 
-final case class SetRequest(id: UUID,
-                            key: String,
-                            value: String,
-                            expiration: Option[SetExpiration],
-                            setOption: Option[SetOption])
+final class SetRequest(val id: UUID,
+                       val key: String,
+                       val value: String,
+                       val expiration: Option[SetExpiration],
+                       val setOption: Option[SetOption])
     extends CommandRequest
     with StringParsersSupport {
 
@@ -54,6 +54,24 @@ final case class SetRequest(id: UUID,
       (SetFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
+  override def equals(other: Any): Boolean = other match {
+    case that: SetRequest =>
+      id == that.id &&
+      key == that.key &&
+      value == that.value &&
+      expiration == that.expiration &&
+      setOption == that.setOption
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, value, expiration, setOption)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"SetRequest($id, $key, $value, $expiration, $setOption)"
+
 }
 
 object SetRequest {
@@ -63,6 +81,17 @@ object SetRequest {
                value: A,
                expiration: Option[SetExpiration] = None,
                setOption: Option[SetOption] = None)(implicit s: Show[A]): SetRequest =
+    new SetRequest(id, key, s.show(value), expiration, setOption)
+
+  def unapply(self: SetRequest): Option[(UUID, String, String, Option[SetExpiration], Option[SetOption])] =
+    Some((self.id, self.key, self.value, self.expiration, self.setOption))
+
+  def create[A](id: UUID,
+                key: String,
+                value: A,
+                expiration: Option[SetExpiration],
+                setOption: Option[SetOption],
+                s: Show[A]): SetRequest =
     new SetRequest(id, key, s.show(value), expiration, setOption)
 
 }

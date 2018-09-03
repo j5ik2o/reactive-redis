@@ -7,7 +7,7 @@ import com.github.j5ik2o.reactive.redis.command.{ CommandRequest, CommandRespons
 import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 
-final case class QuitRequest(id: UUID) extends CommandRequest with StringParsersSupport {
+final class QuitRequest(val id: UUID) extends CommandRequest with StringParsersSupport {
 
   override type Response = QuitResponse
   override val isMasterOnly: Boolean = false
@@ -22,6 +22,28 @@ final case class QuitRequest(id: UUID) extends CommandRequest with StringParsers
     case (ErrorExpr(msg), next) =>
       (QuitFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: QuitRequest =>
+      id == that.id
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"QuitRequest($id)"
+
+}
+
+object QuitRequest {
+
+  def apply(id: UUID): QuitRequest = new QuitRequest(id)
+
+  def create(id: UUID): QuitRequest = apply(id)
 
 }
 

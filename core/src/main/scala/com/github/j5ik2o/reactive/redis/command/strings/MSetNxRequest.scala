@@ -9,7 +9,7 @@ import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberEx
 import fastparse.all._
 
 @SuppressWarnings(Array("org.wartremover.warts.ToString"))
-final case class MSetNxRequest(id: UUID, values: Map[String, Any]) extends CommandRequest with StringParsersSupport {
+final class MSetNxRequest(val id: UUID, val values: Map[String, Any]) extends CommandRequest with StringParsersSupport {
 
   override type Response = MSetNxResponse
 
@@ -30,6 +30,31 @@ final case class MSetNxRequest(id: UUID, values: Map[String, Any]) extends Comma
     case (ErrorExpr(msg), next) =>
       (MSetNxFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: MSetNxRequest =>
+      id == that.id &&
+      values == that.values
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, values)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"MSetNxRequest($id, $values)"
+
+}
+
+object MSetNxRequest {
+
+  def apply(id: UUID, values: Map[String, Any]): MSetNxRequest = new MSetNxRequest(id, values)
+
+  def unapply(self: MSetNxRequest): Option[(UUID, Map[String, Any])] = Some((self.id, self.values))
+
+  def create(id: UUID, values: Map[String, Any]): MSetNxRequest = apply(id, values)
 
 }
 

@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-final case class IncrRequest(id: UUID, key: String) extends CommandRequest with StringParsersSupport {
+final class IncrRequest(val id: UUID, val key: String) extends CommandRequest with StringParsersSupport {
 
   override type Response = IncrResponse
 
@@ -26,6 +26,30 @@ final case class IncrRequest(id: UUID, key: String) extends CommandRequest with 
     case (ErrorExpr(msg), next) =>
       (IncrFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: IncrRequest =>
+      id == that.id &&
+      key == that.key
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"IncrRequest($id, $key)"
+}
+
+object IncrRequest {
+
+  def apply(id: UUID, key: String): IncrRequest = new IncrRequest(id, key)
+
+  def unapply(self: IncrRequest): Option[(UUID, String)] = Some((self.id, self.key))
+
+  def create(id: UUID, key: String): IncrRequest = apply(id, key)
 
 }
 

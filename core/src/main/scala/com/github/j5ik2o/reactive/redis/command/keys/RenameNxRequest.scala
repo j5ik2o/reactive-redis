@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-final case class RenameNxRequest(id: UUID, key: String, newKey: String)
+final class RenameNxRequest(val id: UUID, val key: String, val newKey: String)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -27,6 +27,33 @@ final case class RenameNxRequest(id: UUID, key: String, newKey: String)
     case (ErrorExpr(msg), next) =>
       (RenameNxFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: RenameNxRequest =>
+      id == that.id &&
+      key == that.key &&
+      newKey == that.newKey
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, newKey)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"RenameNxRequest($id, $key, $newKey)"
+
+}
+
+object RenameNxRequest {
+
+  def apply(id: UUID, key: String, newKey: String): RenameNxRequest = new RenameNxRequest(id, key, newKey)
+
+  def unapply(self: RenameNxRequest): Option[(UUID, String, String)] = Some((self.id, self.key, self.newKey))
+
+  def create(id: UUID, key: String, newKey: String): RenameNxRequest = apply(id, key, newKey)
+
 }
 
 sealed trait RenameNxResponse                                                     extends CommandResponse

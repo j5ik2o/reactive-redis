@@ -24,16 +24,16 @@ object ValueType extends Enum[ValueType] {
 
 }
 
-final case class TypeRequest(id: UUID, key: String) extends CommandRequest with StringParsersSupport {
+final class TypeRequest(val id: UUID, val key: String) extends CommandRequest with StringParsersSupport {
 
   override type Response = TypeResponse
   override val isMasterOnly: Boolean = true
 
   override def asString: String = cs("TYPE", Some(key))
 
-  override protected def responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
+  override protected lazy val responseParser: P[Expr] = fastParse(simpleStringReply | errorReply)
 
-  override protected def parseResponse: Handler = {
+  override protected lazy val parseResponse: Handler = {
     case (SimpleExpr(QUEUED), next) =>
       (TypeSuspended(UUID.randomUUID(), id), next)
     case (SimpleExpr(typeName), next) =>
@@ -41,6 +41,31 @@ final case class TypeRequest(id: UUID, key: String) extends CommandRequest with 
     case (ErrorExpr(msg), next) =>
       (TypeFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: TypeRequest =>
+      id == that.id &&
+      key == that.key
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"TypeRequest($id, $key)"
+
+}
+
+object TypeRequest {
+
+  def apply(id: UUID, key: String): TypeRequest = new TypeRequest(id, key)
+
+  def unapply(self: TtlRequest): Option[(UUID, String)] = Some((self.id, self.key))
+
+  def create(id: UUID, key: String): TypeRequest = apply(id, key)
 
 }
 

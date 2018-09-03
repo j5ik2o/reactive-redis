@@ -10,7 +10,7 @@ import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberEx
 import scala.concurrent.duration.Duration
 import fastparse.all._
 
-final case class WaitReplicasRequest(id: UUID, numOfReplicas: Int, timeout: Duration)
+final class WaitReplicasRequest(val id: UUID, val numOfReplicas: Int, val timeout: Duration)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -29,6 +29,33 @@ final case class WaitReplicasRequest(id: UUID, numOfReplicas: Int, timeout: Dura
     case (ErrorExpr(msg), next) =>
       (WaitReplicasFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: WaitReplicasRequest =>
+      id == that.id &&
+      numOfReplicas == that.numOfReplicas &&
+      timeout == that.timeout
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(id, numOfReplicas, timeout)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"WaitReplicasRequest($id, $numOfReplicas, $timeout)"
+
+}
+
+object WaitReplicasRequest {
+
+  def apply(id: UUID, numOfReplicas: Int, timeout: Duration): WaitReplicasRequest =
+    new WaitReplicasRequest(id, numOfReplicas, timeout)
+
+  def unapply(self: WaitReplicasRequest): Option[(UUID, Int, Duration)] =
+    Some((self.id, self.numOfReplicas, self.timeout))
+
+  def create(id: UUID, numOfReplicas: Int, timeout: Duration): WaitReplicasRequest = apply(id, numOfReplicas, timeout)
 
 }
 

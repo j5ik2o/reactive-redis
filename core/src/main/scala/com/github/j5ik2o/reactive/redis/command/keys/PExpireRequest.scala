@@ -10,7 +10,7 @@ import fastparse.all._
 
 import scala.concurrent.duration.FiniteDuration
 
-final case class PExpireRequest(id: UUID, key: String, milliseconds: FiniteDuration)
+final class PExpireRequest(val id: UUID, val key: String, val milliseconds: FiniteDuration)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -30,6 +30,35 @@ final case class PExpireRequest(id: UUID, key: String, milliseconds: FiniteDurat
     case (ErrorExpr(msg), next) =>
       (PExpireFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: PExpireRequest =>
+      id == that.id &&
+      key == that.key &&
+      milliseconds == that.milliseconds
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, milliseconds)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"PExpireRequest($id, $key, $milliseconds)"
+
+}
+
+object PExpireRequest {
+
+  def apply(id: UUID, key: String, milliseconds: FiniteDuration): PExpireRequest =
+    new PExpireRequest(id, key, milliseconds)
+
+  def unapply(self: PExpireRequest): Option[(UUID, String, FiniteDuration)] =
+    Some((self.id, self.key, self.milliseconds))
+
+  def create(id: UUID, key: String, milliseconds: FiniteDuration): PExpireRequest = apply(id, key, milliseconds)
+
 }
 
 sealed trait PExpireResponse                                                    extends CommandResponse

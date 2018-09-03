@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model._
 import fastparse.all._
 
-final case class LRangeRequest(id: UUID, key: String, start: Long, stop: Long)
+final class LRangeRequest(val id: UUID, val key: String, val start: Long, val stop: Long)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -27,6 +27,33 @@ final case class LRangeRequest(id: UUID, key: String, start: Long, stop: Long)
     case (ErrorExpr(msg), next) =>
       (LRangeFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: LRangeRequest =>
+      id == that.id &&
+      key == that.key &&
+      start == that.start &&
+      stop == that.stop
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, start, stop)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"LRangeRequest($id, $key, $start, $stop)"
+}
+
+object LRangeRequest {
+
+  def apply(id: UUID, key: String, start: Long, stop: Long): LRangeRequest = new LRangeRequest(id, key, start, stop)
+
+  def unapply(self: LRangeRequest): Option[(UUID, String, Long, Long)] =
+    Some((self.id, self.key, self.start, self.stop))
+
+  def create(id: UUID, key: String, start: Long, stop: Long): LRangeRequest = new LRangeRequest(id, key, start, stop)
 }
 
 sealed trait LRangeResponse extends CommandResponse

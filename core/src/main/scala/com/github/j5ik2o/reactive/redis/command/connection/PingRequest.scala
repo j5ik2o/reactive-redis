@@ -8,9 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model._
 import fastparse.all._
 
-final case class PingRequest(id: UUID, message: Option[String] = None)
-    extends CommandRequest
-    with StringParsersSupport {
+final class PingRequest(val id: UUID, val message: Option[String]) extends CommandRequest with StringParsersSupport {
   require(!message.contains(""))
 
   override type Response = PingResponse
@@ -31,6 +29,30 @@ final case class PingRequest(id: UUID, message: Option[String] = None)
     case (ErrorExpr(msg), next) =>
       (PingFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: PingRequest =>
+      id == that.id &&
+      message == that.message
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, message)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"PingRequest($id, $message)"
+}
+
+object PingRequest {
+
+  def apply(id: UUID, message: Option[String] = None): PingRequest = new PingRequest(id, message)
+
+  def unapply(self: PingRequest): Option[(UUID, Option[String])] = Some((self.id, self.message))
+
+  def create(id: UUID, message: Option[String] = None): PingRequest = apply(id, message)
 
 }
 

@@ -16,6 +16,10 @@ object RedisConnectionPoolFlow {
   ): Flow[CommandRequestBase, CommandResponse, NotUsed] =
     new RedisConnectionPoolFlow(redisConnectionPool, parallelism).toFlow
 
+  def create(redisConnectionPool: RedisConnectionPool[Task], parallelism: Int = 1)(
+      implicit system: ActorSystem,
+      scheduler: Scheduler
+  ): Flow[CommandRequestBase, CommandResponse, NotUsed] = apply(redisConnectionPool, parallelism)
 }
 
 class RedisConnectionPoolFlow(redisConnectionPool: RedisConnectionPool[Task], parallelism: Int)(

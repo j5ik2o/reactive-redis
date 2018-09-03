@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, SimpleExpr }
 import fastparse.all._
 
-final case class FlushAllRequest(id: UUID, async: Boolean = false) extends CommandRequest with StringParsersSupport {
+final class FlushAllRequest(val id: UUID, val async: Boolean) extends CommandRequest with StringParsersSupport {
 
   override type Response = FlushAllResponse
 
@@ -26,6 +26,30 @@ final case class FlushAllRequest(id: UUID, async: Boolean = false) extends Comma
     case (ErrorExpr(msg), next) =>
       (FlushAllFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: FlushAllRequest =>
+      id == that.id &&
+      async == that.async
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(id, async)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"FlushAllRequest($id, $async)"
+
+}
+
+object FlushAllRequest {
+
+  def apply(id: UUID, async: Boolean = false): FlushAllRequest = new FlushAllRequest(id, async)
+
+  def unapply(self: FlushAllRequest): Option[(UUID, Boolean)] = Some((self.id, self.async))
+
+  def create(id: UUID, async: Boolean = false): FlushAllRequest = apply(id, async)
 
 }
 

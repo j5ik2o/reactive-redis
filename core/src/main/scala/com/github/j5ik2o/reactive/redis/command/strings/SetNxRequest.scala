@@ -9,7 +9,9 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-final case class SetNxRequest(id: UUID, key: String, value: String) extends CommandRequest with StringParsersSupport {
+final class SetNxRequest(val id: UUID, val key: String, val value: String)
+    extends CommandRequest
+    with StringParsersSupport {
 
   override type Response = SetNxResponse
 
@@ -28,11 +30,31 @@ final case class SetNxRequest(id: UUID, key: String, value: String) extends Comm
       (SetNxFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
 
+  override def equals(other: Any): Boolean = other match {
+    case that: SetNxRequest =>
+      id == that.id &&
+      key == that.key &&
+      value == that.value
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, value)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"SetNxRequest($id, $key, $value)"
 }
 
 object SetNxRequest {
 
   def apply[A](id: UUID, key: String, value: A)(implicit s: Show[A]): SetNxRequest =
+    new SetNxRequest(id, key, s.show(value))
+
+  def unapply(self: SetNxRequest): Option[(UUID, String, String)] = Some((self.id, self.key, self.value))
+
+  def create[A](id: UUID, key: String, value: A, s: Show[A]): SetNxRequest =
     new SetNxRequest(id, key, s.show(value))
 
 }

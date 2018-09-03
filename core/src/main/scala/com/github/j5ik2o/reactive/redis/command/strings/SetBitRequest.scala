@@ -8,7 +8,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-final case class SetBitRequest(id: UUID, key: String, offset: Long, value: Long)
+final class SetBitRequest(val id: UUID, val key: String, val offset: Long, val value: Long)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -28,6 +28,32 @@ final case class SetBitRequest(id: UUID, key: String, offset: Long, value: Long)
     case (ErrorExpr(msg), next) =>
       (SetBitFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: SetBitRequest =>
+      id == that.id &&
+      key == that.key &&
+      offset == that.offset &&
+      value == that.value
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(id, key, offset, value)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"SetBitRequest($id, $key, $offset, $value)"
+}
+
+object SetBitRequest {
+
+  def apply(id: UUID, key: String, offset: Long, value: Long): SetBitRequest = new SetBitRequest(id, key, offset, value)
+
+  def unapply(self: SetBitRequest): Option[(UUID, String, Long, Long)] =
+    Some((self.id, self.key, self.offset, self.value))
+
+  def create(id: UUID, key: String, offset: Long, value: Long): SetBitRequest = apply(id, key, offset, value)
 
 }
 

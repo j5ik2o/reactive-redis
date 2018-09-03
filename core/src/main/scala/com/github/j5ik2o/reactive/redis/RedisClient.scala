@@ -16,6 +16,8 @@ object RedisClient {
 
   def apply()(implicit system: ActorSystem): RedisClient = new RedisClient()
 
+  def create()(implicit system: ActorSystem): RedisClient = apply()
+
 }
 
 class RedisClient()(implicit system: ActorSystem)

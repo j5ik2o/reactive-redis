@@ -11,7 +11,7 @@ import fastparse.all._
 
 import scala.concurrent.duration.Duration
 
-final case class TtlRequest(id: UUID, key: String) extends CommandRequest with StringParsersSupport {
+final class TtlRequest(val id: UUID, val key: String) extends CommandRequest with StringParsersSupport {
 
   override type Response = TtlResponse
   override val isMasterOnly: Boolean = true
@@ -28,6 +28,31 @@ final case class TtlRequest(id: UUID, key: String) extends CommandRequest with S
     case (ErrorExpr(msg), next) =>
       (TtlFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: TtlRequest =>
+      id == that.id &&
+      key == that.key
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"TtlRequest($id, $key)"
+
+}
+
+object TtlRequest {
+
+  def apply(id: UUID, key: String): TtlRequest = new TtlRequest(id, key)
+
+  def unapply(self: TtlRequest): Option[(UUID, String)] = Some((self.id, self.key))
+
+  def create(id: UUID, key: String): TtlRequest = apply(id, key)
 
 }
 

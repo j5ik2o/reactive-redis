@@ -9,7 +9,7 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model.{ ErrorExpr, Expr, NumberExpr, SimpleExpr }
 import fastparse.all._
 
-final case class PExpireAtRequest(id: UUID, key: String, millisecondsTimestamp: ZonedDateTime)
+final class PExpireAtRequest(val id: UUID, val key: String, val millisecondsTimestamp: ZonedDateTime)
     extends CommandRequest
     with StringParsersSupport {
 
@@ -30,6 +30,36 @@ final case class PExpireAtRequest(id: UUID, key: String, millisecondsTimestamp: 
     case (ErrorExpr(msg), next) =>
       (PExpireAtFailed(UUID.randomUUID(), id, RedisIOException(Some(msg))), next)
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: PExpireAtRequest =>
+      id == that.id &&
+      key == that.key &&
+      millisecondsTimestamp == that.millisecondsTimestamp
+    case _ => false
+  }
+
+  @SuppressWarnings(Array("org.wartremover.warts.JavaSerializable"))
+  override def hashCode(): Int = {
+    val state = Seq(id, key, millisecondsTimestamp)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  override def toString: String = s"PExpireAtRequest($id, $key, $millisecondsTimestamp)"
+
+}
+
+object PExpireAtRequest {
+
+  def apply(id: UUID, key: String, millisecondsTimestamp: ZonedDateTime): PExpireAtRequest =
+    new PExpireAtRequest(id, key, millisecondsTimestamp)
+
+  def unapply(self: PExpireAtRequest): Option[(UUID, String, ZonedDateTime)] =
+    Some((self.id, self.key, self.millisecondsTimestamp))
+
+  def create(id: UUID, key: String, millisecondsTimestamp: ZonedDateTime): PExpireAtRequest =
+    apply(id, key, millisecondsTimestamp)
+
 }
 
 sealed trait PExpireAtResponse                                                    extends CommandResponse
