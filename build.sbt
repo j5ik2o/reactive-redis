@@ -71,7 +71,6 @@ val coreSettings = Seq(
     "org.typelevel"  %% "cats-free"      % "1.1.0",
     "com.beachape"   %% "enumeratum"     % "1.5.13",
     "org.slf4j"      % "slf4j-api"       % "1.7.25",
-    "danslapman"     %% "cats-conts"     % "0.4",
     "org.scalatest"  %% "scalatest"      % "3.0.5" % Test,
     "org.scalacheck" %% "scalacheck"     % "1.14.0" % Test,
     "ch.qos.logback" % "logback-classic" % "1.2.3" % Test
