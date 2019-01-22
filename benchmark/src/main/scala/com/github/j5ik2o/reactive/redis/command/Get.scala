@@ -19,14 +19,14 @@ class Get extends BenchmarkHelper {
   override def fixture(): Unit = {
     Await.result(reactiveRedisPoolOfJedisQueue.withConnectionF { con =>
       client.set("A", "value").run(con)
-    }.runAsync, Duration.Inf)
+    }.runToFuture, Duration.Inf)
   }
 
   @Benchmark
   def reactiveRedisOfDefaultQueue(): Unit = {
     Await.result(reactiveRedisPoolOfDefaultQueue.withConnectionF { con =>
       client.get("A").run(con)
-    }.runAsync, Duration.Inf)
+    }.runToFuture, Duration.Inf)
     ()
   }
 
@@ -34,7 +34,7 @@ class Get extends BenchmarkHelper {
   def reactiveRedisOfDefaultActor(): Unit = {
     Await.result(reactiveRedisPoolOfDefaultActor.withConnectionF { con =>
       client.get("A").run(con)
-    }.runAsync, Duration.Inf)
+    }.runToFuture, Duration.Inf)
     ()
   }
 
@@ -42,7 +42,7 @@ class Get extends BenchmarkHelper {
   def reactiveRedisOfJedisQueue(): Unit = {
     Await.result(reactiveRedisPoolOfJedisQueue.withConnectionF { con =>
       client.get("A").run(con)
-    }.runAsync, Duration.Inf)
+    }.runToFuture, Duration.Inf)
     ()
   }
 
@@ -50,7 +50,7 @@ class Get extends BenchmarkHelper {
   def reactiveRedisOfJedisActor(): Unit = {
     Await.result(reactiveRedisPoolOfJedisActor.withConnectionF { con =>
       client.get("A").run(con)
-    }.runAsync, Duration.Inf)
+    }.runToFuture, Duration.Inf)
     ()
   }
 
@@ -60,7 +60,7 @@ class Get extends BenchmarkHelper {
       val jedis = jedisPool.getResource
       jedis.get("A")
       jedis.close()
-    }.runAsync, Duration.Inf)
+    }.runToFuture, Duration.Inf)
     ()
   }
 
@@ -76,7 +76,7 @@ class Get extends BenchmarkHelper {
       scalaRedisPool.withClient { client =>
         client.get("A")
       }
-    }.runAsync, Duration.Inf)
+    }.runToFuture, Duration.Inf)
     ()
   }
 

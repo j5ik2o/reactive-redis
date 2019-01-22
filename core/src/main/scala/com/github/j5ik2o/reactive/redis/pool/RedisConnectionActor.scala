@@ -74,7 +74,7 @@ final class RedisConnectionActor(
 
   override def receive: Receive = {
     case cmdReq: CommandRequestBase =>
-      connection.send(cmdReq).runAsync.mapTo[CommandResponse].pipeTo(sender())
+      connection.send(cmdReq).runToFuture.mapTo[CommandResponse].pipeTo(sender())
     case BorrowConnection =>
       sender() ! ConnectionGotten(connection)
   }

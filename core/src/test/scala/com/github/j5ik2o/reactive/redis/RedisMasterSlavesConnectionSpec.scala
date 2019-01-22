@@ -65,7 +65,7 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
         _      <- redisClient.set(key, value)
         _      <- ReaderTTask.pure(waitFor())
         result <- redisClient.get(key)
-      } yield result).run(connection).runAsync.futureValue
+      } yield result).run(connection).runToFuture.futureValue
       result.value shouldBe Some(value)
     }
     "wait" in {
@@ -74,7 +74,7 @@ class RedisMasterSlavesConnectionSpec extends AbstractActorSpec(ActorSystem("Red
       val result = (for {
         _      <- redisClient.set(key, value)
         result <- redisClient.waitReplicas(1, 3 * timeFactor seconds)
-      } yield result).run(connection).runAsync.futureValue
+      } yield result).run(connection).runToFuture.futureValue
       result.value shouldBe 1L
     }
   }
