@@ -41,7 +41,7 @@ abstract class AbstractRedisConnectionPoolSpec(systemName: String) extends Abstr
           }
         }
         r <- ConnectionAutoClose(pool)(_.send(GetRequest(UUID.randomUUID(), "a")))
-      } yield r).run().runAsync.futureValue
+      } yield r).run().runToFuture.futureValue
       println(result)
     }
   }

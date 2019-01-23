@@ -55,34 +55,34 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnection
       val key = UUID.randomUUID().toString
       connection
         .send(AppendRequest(UUID.randomUUID(), key, "a"))
-        .runAsync
+        .runToFuture
         .futureValue
         .asInstanceOf[AppendSucceeded]
         .value shouldBe 1
       connection
         .send(AppendRequest(UUID.randomUUID(), key, "b"))
-        .runAsync
+        .runToFuture
         .futureValue
         .asInstanceOf[AppendSucceeded]
         .value shouldBe 2
       connection
         .send(AppendRequest(UUID.randomUUID(), key, "c"))
-        .runAsync
+        .runToFuture
         .futureValue
         .asInstanceOf[AppendSucceeded]
         .value shouldBe 3
       val result =
-        redisClient.get(key).run(connection).runAsync.futureValue
+        redisClient.get(key).run(connection).runToFuture.futureValue
       result.value shouldBe Some("abc")
     }
     "bitcount" in forAll(keyStrValueGen) {
       case (k, v) =>
-        redisClient.set(k, v).run(connection).runAsync.futureValue
+        redisClient.set(k, v).run(connection).runToFuture.futureValue
         val end = v.length / 2
         val result2 =
           connection
             .send(BitCountRequest(UUID.randomUUID(), k, startAndEnd = Some(StartAndEnd(0, end))))
-            .runAsync
+            .runToFuture
             .futureValue
             .asInstanceOf[BitCountSucceeded]
         result2.value shouldBe BitUtil.getBitCount(v, startAndEnd = Some(StartAndEnd(0, end)))
@@ -91,7 +91,7 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnection
       val key = UUID.randomUUID().toString
       val result = connection
         .send(BitFieldRequest(UUID.randomUUID(), key, BitFieldRequest.IncrBy(SingedBitType(5), 100, 1)))
-        .runAsync
+        .runToFuture
         .futureValue
         .asInstanceOf[BitFieldSucceeded]
       result.values shouldBe List(1)
@@ -100,14 +100,14 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnection
       val key1 = UUID.randomUUID().toString
       val key2 = UUID.randomUUID().toString
       val key3 = UUID.randomUUID().toString
-      redisClient.set(key1, "foobar").run(connection).runAsync.futureValue
-      redisClient.set(key2, "abcdef").run(connection).runAsync.futureValue
+      redisClient.set(key1, "foobar").run(connection).runToFuture.futureValue
+      redisClient.set(key2, "abcdef").run(connection).runToFuture.futureValue
       val result = connection
         .send(BitOpRequest(UUID.randomUUID(), BitOpRequest.Operand.AND, key3, key1, key2))
-        .runAsync
+        .runToFuture
         .futureValue
         .asInstanceOf[BitOpSucceeded]
-      val value = redisClient.get(key3).run(connection).runAsync.futureValue
+      val value = redisClient.get(key3).run(connection).runToFuture.futureValue
       result.value shouldBe 6
       value.value shouldBe Some("`bc`ab")
     }
@@ -120,38 +120,39 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnection
 //    }
     "decr" in {
       val key = UUID.randomUUID().toString
-      redisClient.set(key, 10).run(connection).runAsync.futureValue
-      val result = connection.send(DecrRequest(UUID.randomUUID(), key)).runAsync.futureValue.asInstanceOf[DecrSucceeded]
+      redisClient.set(key, 10).run(connection).runToFuture.futureValue
+      val result =
+        connection.send(DecrRequest(UUID.randomUUID(), key)).runToFuture.futureValue.asInstanceOf[DecrSucceeded]
       result.value shouldBe 9
     }
     "decrby" in {
       val key = UUID.randomUUID().toString
-      redisClient.set(key, 10).run(connection).runAsync.futureValue
+      redisClient.set(key, 10).run(connection).runToFuture.futureValue
       val result =
-        connection.send(DecrByRequest(UUID.randomUUID(), key, 2)).runAsync.futureValue.asInstanceOf[DecrBySucceeded]
+        connection.send(DecrByRequest(UUID.randomUUID(), key, 2)).runToFuture.futureValue.asInstanceOf[DecrBySucceeded]
       result.value shouldBe 8
     }
     "get" in {
       val key   = UUID.randomUUID().toString
       val value = "1"
-      redisClient.set(key, value).run(connection).runAsync.futureValue
-      val result2 = connection.send(GetRequest(UUID.randomUUID(), key)).runAsync.futureValue
+      redisClient.set(key, value).run(connection).runToFuture.futureValue
+      val result2 = connection.send(GetRequest(UUID.randomUUID(), key)).runToFuture.futureValue
       result2.isInstanceOf[GetSucceeded] shouldBe true
       result2.asInstanceOf[GetSucceeded].value shouldBe Some(value)
     }
     "getbit" in {
       val key = UUID.randomUUID().toString
       val result =
-        connection.send(GetBitRequest(UUID.randomUUID(), key, 1)).runAsync.futureValue.asInstanceOf[GetBitSucceeded]
+        connection.send(GetBitRequest(UUID.randomUUID(), key, 1)).runToFuture.futureValue.asInstanceOf[GetBitSucceeded]
       result.value shouldBe 0
     }
     "getrange" in {
       val key   = UUID.randomUUID().toString
       val value = "This is a string"
-      redisClient.set(key, value).run(connection).runAsync.futureValue
+      redisClient.set(key, value).run(connection).runToFuture.futureValue
       val result = connection
         .send(GetRangeRequest(UUID.randomUUID(), key, StartAndEnd(0, 3)))
-        .runAsync
+        .runToFuture
         .futureValue
         .asInstanceOf[GetRangeSucceeded]
       result.value shouldBe Some("This")
@@ -159,11 +160,15 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnection
     "getset" in {
       val key   = UUID.randomUUID().toString
       val value = "a"
-      redisClient.set(key, value).run(connection).runAsync.futureValue
+      redisClient.set(key, value).run(connection).runToFuture.futureValue
       val result =
-        connection.send(GetSetRequest(UUID.randomUUID(), key, "b")).runAsync.futureValue.asInstanceOf[GetSetSucceeded]
+        connection
+          .send(GetSetRequest(UUID.randomUUID(), key, "b"))
+          .runToFuture
+          .futureValue
+          .asInstanceOf[GetSetSucceeded]
       result.value shouldBe Some("a")
-      val result2 = redisClient.get(key).run(connection).runAsync.futureValue
+      val result2 = redisClient.get(key).run(connection).runToFuture.futureValue
       result2.value shouldBe Some("b")
     }
     "incr" in {}
@@ -181,26 +186,26 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnection
     "dump" in {
       val key   = UUID.randomUUID().toString
       val value = "a"
-      redisClient.set(key, value).run(connection).runAsync.futureValue
-      val result = redisClient.dump(key).run(connection).runAsync.futureValue
+      redisClient.set(key, value).run(connection).runToFuture.futureValue
+      val result = redisClient.dump(key).run(connection).runToFuture.futureValue
       println(result)
     }
     "keys" in {
-      redisClient.set("test-1", UUID.randomUUID().toString).run(connection).runAsync.futureValue
-      redisClient.set("test-2", UUID.randomUUID().toString).run(connection).runAsync.futureValue
-      redisClient.set("test-3", UUID.randomUUID().toString).run(connection).runAsync.futureValue
+      redisClient.set("test-1", UUID.randomUUID().toString).run(connection).runToFuture.futureValue
+      redisClient.set("test-2", UUID.randomUUID().toString).run(connection).runToFuture.futureValue
+      redisClient.set("test-3", UUID.randomUUID().toString).run(connection).runToFuture.futureValue
       val result =
-        connection.send(KeysRequest(UUID.randomUUID(), "test-*")).runAsync.futureValue.asInstanceOf[KeysSucceeded]
+        connection.send(KeysRequest(UUID.randomUUID(), "test-*")).runToFuture.futureValue.asInstanceOf[KeysSucceeded]
       result.values shouldBe Seq("test-1", "test-2", "test-3")
     }
     "tx" in {
       val resultStart =
-        connection.send(MultiRequest(UUID.randomUUID())).runAsync.futureValue.asInstanceOf[MultiSucceeded]
-      redisClient.set("test-1", UUID.randomUUID().toString).run(connection).runAsync.futureValue
-      redisClient.ping(Some("test")).run(connection).runAsync.futureValue
-      redisClient.get("test-1").run(connection).runAsync.futureValue
+        connection.send(MultiRequest(UUID.randomUUID())).runToFuture.futureValue.asInstanceOf[MultiSucceeded]
+      redisClient.set("test-1", UUID.randomUUID().toString).run(connection).runToFuture.futureValue
+      redisClient.ping(Some("test")).run(connection).runToFuture.futureValue
+      redisClient.get("test-1").run(connection).runToFuture.futureValue
       val resultFinish =
-        connection.send(ExecRequest(UUID.randomUUID())).runAsync.futureValue
+        connection.send(ExecRequest(UUID.randomUUID())).runToFuture.futureValue
       resultFinish match {
         case es: ExecSucceeded =>
           println(es)

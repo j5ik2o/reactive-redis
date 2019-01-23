@@ -20,7 +20,7 @@ class Ping extends BenchmarkHelper {
   def reactiveRedisOfDefaultQueue(): Unit = {
     Await.result(reactiveRedisPoolOfDefaultQueue.withConnectionF { con =>
       client.ping().run(con)
-    }.runAsync, Duration.Inf)
+    }.runToFuture, Duration.Inf)
     ()
   }
 
@@ -28,7 +28,7 @@ class Ping extends BenchmarkHelper {
   def reactiveRedisOfDefaultActor(): Unit = {
     Await.result(reactiveRedisPoolOfDefaultActor.withConnectionF { con =>
       client.ping().run(con)
-    }.runAsync, Duration.Inf)
+    }.runToFuture, Duration.Inf)
     ()
   }
 
@@ -36,7 +36,7 @@ class Ping extends BenchmarkHelper {
   def reactiveRedisOfJedisQueue(): Unit = {
     Await.result(reactiveRedisPoolOfJedisQueue.withConnectionF { con =>
       client.ping().run(con)
-    }.runAsync, Duration.Inf)
+    }.runToFuture, Duration.Inf)
     ()
   }
 
@@ -44,7 +44,7 @@ class Ping extends BenchmarkHelper {
   def reactiveRedisOfJedisActor(): Unit = {
     Await.result(reactiveRedisPoolOfJedisActor.withConnectionF { con =>
       client.ping().run(con)
-    }.runAsync, Duration.Inf)
+    }.runToFuture, Duration.Inf)
     ()
   }
 
@@ -54,7 +54,7 @@ class Ping extends BenchmarkHelper {
       val jedis = jedisPool.getResource
       jedis.ping()
       jedis.close()
-    }.runAsync, Duration.Inf)
+    }.runToFuture, Duration.Inf)
     ()
   }
 
@@ -70,7 +70,7 @@ class Ping extends BenchmarkHelper {
       scalaRedisPool.withClient { client =>
         client.ping
       }
-    }.runAsync, Duration.Inf)
+    }.runToFuture, Duration.Inf)
     ()
   }
 
