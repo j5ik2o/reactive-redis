@@ -1,5 +1,7 @@
 package com.github.j5ik2o.reactive.redis
 
+import java.util.concurrent.Executors
+
 import org.scalatest.{ BeforeAndAfterAll, Suite }
 
 import scala.collection.mutable.ArrayBuffer
@@ -57,7 +59,7 @@ trait RedisSpecSupport extends Suite with BeforeAndAfterAll {
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    import scala.concurrent.ExecutionContext.Implicits.global
+    implicit val ec: ExecutionContext = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
     startMasterServer()
   }
 
