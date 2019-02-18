@@ -122,7 +122,7 @@ lazy val core = (project in file("core")).settings(
       "com.lihaoyi"        %% "fastparse"                           % "1.0.0",
       "com.lihaoyi"        %% "fastparse-byte"                      % "1.0.0",
       "redis.clients"      % "jedis"                                % "2.9.0",
-      "org.apache.commons" % "commons-lang3"                        % "3.7",
+      "org.apache.commons" % "commons-lang3"                        % "3.8.1",
       "com.github.j5ik2o"  %% "akka-backoff-supervisor-enhancement" % "1.0.2"
     )
   )
@@ -155,7 +155,7 @@ lazy val `pool-stormpot` = (project in file("pool-stormpot"))
     coreSettings ++ Seq(
       name := "reactive-redis-pool-stormpot",
       libraryDependencies ++= Seq(
-        "com.github.chrisvest" % "stormpot" % "2.4"
+        "com.github.chrisvest" % "stormpot" % "2.4.1"
       )
     )
   )
