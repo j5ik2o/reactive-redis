@@ -1,35 +1,27 @@
-# Scala CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/sample-config/ for more details
-#
 version: 2
 jobs:
   build:
-    branches:
-      ignore:
-        - master
-        - develop
-    docker:
-      # specify the version you desire here
-      - image: circleci/openjdk:8-jdk
-
-    working_directory: ~/repo
-
     environment:
-      SBT_OPTS: -Xss2m -Xms1g -Xmx3g -XX:MaxMetaspaceSize=512m
-      TERM: dumb
-
+      - JAVA_OPTS: "-XX:ReservedCodeCacheSize=256M -Xms1g -Xmx3g -Xss2m"
+    branches:
+      only:
+        - /feature\/.*/
+    machine: true
     steps:
+      - run:
+          command: |
+            sudo apt-get update -qq && sudo apt-get install -y libaio1 libevent-dev
+            sudo apt-get install -y software-properties-common
+            sudo add-apt-repository -y ppa:webupd8team/java
+            sudo apt-get update -qq
+            echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections
+            sudo apt-get install -y oracle-java8-installer
+            sudo apt-get install -y sbt
       - checkout
-
       - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "build.sbt" }}
-      - run:  sbt +core/test:compile && sbt +pool-commons/test:compile && sbt +pool-fop/test:compile && sbt +pool-scala/test:compile && sbt +pool-stormpot/test:compile
-
+          key: scala-library-dependencies-{{ checksum "build.sbt" }}
+      - run: sbt +core/test:compile && sbt +pool-commons/test:compile && sbt +pool-fop/test:compile && sbt +pool-scala/test:compile && sbt +pool-stormpot/test:compile
       - save_cache:
-          paths:
-            - "~/.ivy2/cache"
-            - "~/.sbt"
-          key: v1-dependencies--{{ checksum "build.sbt" }}
+          paths: [ "~/.sbt/boot", "~/.ivy2", "~/.wixMySQL" ]
+          key: scala-library-dependencies-{{ checksum "build.sbt" }}
       - run: sbt +core/test && sbt +pool-commons/test && sbt +pool-fop/test && sbt +pool-scala/test && sbt +pool-stormpot/test
