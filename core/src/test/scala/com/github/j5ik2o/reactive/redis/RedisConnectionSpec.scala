@@ -38,8 +38,10 @@ class RedisConnectionSpec extends AbstractActorSpec(ActorSystem("RedisConnection
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     connection = RedisConnection(
-      peerConfig = PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.getPort),
-                              connectionBackoffConfig = Some(BackoffConfig(maxRestarts = 1))),
+      peerConfig = PeerConfig(
+        new InetSocketAddress("127.0.0.1", redisMasterServer.getPort),
+        connectionBackoffConfig = Some(BackoffConfig(maxRestarts = 1))
+      ),
       supervisionDecider = None,
       listeners = Seq.empty
     )

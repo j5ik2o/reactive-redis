@@ -6,6 +6,7 @@ import akka.testkit.TestKit
 import cats.data.NonEmptyList
 import monix.eval.Task
 import monix.execution.Scheduler
+import org.scalactic.anyvals.PosInt
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.prop.PropertyChecks
@@ -28,9 +29,12 @@ abstract class AbstractActorSpec(_system: ActorSystem)
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  override def waitFor(): Unit = Thread.sleep((100 * timeFactor).toInt)
+  override def waitFor(): Unit = Thread.sleep((500 * timeFactor milliseconds).toMillis)
 
-  implicit override val patienceConfig: PatienceConfig = PatienceConfig(60 * timeFactor seconds)
+  implicit override val patienceConfig: PatienceConfig =
+    PatienceConfig(60 * timeFactor seconds, 1 * timeFactor seconds)
+
+  override implicit val generatorDrivenConfig = PropertyCheckConfiguration(minSuccessful = PosInt(5))
 
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
@@ -39,8 +43,8 @@ abstract class AbstractActorSpec(_system: ActorSystem)
   }
 
   override protected def afterAll(): Unit = {
-    shutdown()
     super.afterAll()
+    shutdown()
   }
 
   protected def createConnectionPool(peerConfigs: NonEmptyList[PeerConfig]): RedisConnectionPool[Task]
