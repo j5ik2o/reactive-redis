@@ -17,9 +17,9 @@ abstract class AbstractConnectionFeatureSpec extends AbstractRedisClientSpec(Act
         if (n == 0) Future.successful(())
         else {
 
-          Thread.sleep((1 * timeFactor seconds).toMillis)
+          Thread.sleep((50 * timeFactor milliseconds).toMillis)
           redisMasterServer.stop()
-          Thread.sleep((1 * timeFactor seconds).toMillis)
+          Thread.sleep((50 * timeFactor milliseconds).toMillis)
           redisMasterServer.start(Some(redisMasterServer.getPort))
           stopAndStart(n - 1)
         }
