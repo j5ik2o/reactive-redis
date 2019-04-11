@@ -36,9 +36,10 @@ abstract class AbstractRedisClientSpec(system: ActorSystem) extends AbstractActo
   }
 
   protected def runProgram[A](program: ReaderTTaskRedisConnection[A]): A = {
-    connectionPool.withConnectionF { con =>
-      program.run(con)
-    }.runToFuture.futureValue
+    connectionPool
+      .withConnectionF { con =>
+        program.run(con)
+      }.runToFuture.futureValue
 
   }
 
