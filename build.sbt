@@ -1,3 +1,6 @@
+val scalaVersion211 = "2.11.12"
+val scalaVersion212 = "2.12.8"
+
 val compileScalaStyle = taskKey[Unit]("compileScalaStyle")
 
 lazy val scalaStyleSettings = Seq(
@@ -9,8 +12,8 @@ lazy val scalaStyleSettings = Seq(
 val coreSettings = Seq(
   sonatypeProfileName := "com.github.j5ik2o",
   organization := "com.github.j5ik2o",
-  scalaVersion := "2.11.12",
-  crossScalaVersions ++= Seq("2.11.12", "2.12.8"),
+  scalaVersion := scalaVersion211,
+  crossScalaVersions ++= Seq(scalaVersion211, scalaVersion212),
   scalacOptions ++= {
     Seq(
       "-feature",
@@ -19,6 +22,9 @@ val coreSettings = Seq(
       "-encoding",
       "UTF-8",
       "-language:_",
+    "-Ypartial-unification",
+    "-Ydelambdafy:method",
+    "-target:jvm-1.8"
     ) ++ {
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2L, scalaMajor)) if scalaMajor == 12 =>
@@ -61,17 +67,16 @@ val coreSettings = Seq(
     Credentials(ivyCredentials) :: Nil
   },
   scalafmtOnCompile in ThisBuild := true,
-  scalafmtTestOnCompile in ThisBuild := true,
   resolvers += Resolver.bintrayRepo("danslapman", "maven"),
   resolvers += Resolver.sonatypeRepo("releases"),
-  addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
+  addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.10"),
   libraryDependencies ++= Seq(
     "io.monix"       %% "monix"          % "3.0.0-RC2",
     "org.typelevel"  %% "cats-core"      % "1.5.0",
     "org.typelevel"  %% "cats-free"      % "1.5.0",
     "com.beachape"   %% "enumeratum"     % "1.5.13",
-    "org.slf4j"      % "slf4j-api"       % "1.7.25",
-    "org.scalatest"  %% "scalatest"      % "3.0.5" % Test,
+    "org.slf4j"      % "slf4j-api"       % "1.7.26",
+    "org.scalatest"  %% "scalatest"      % "3.0.7" % Test,
     "org.scalacheck" %% "scalacheck"     % "1.14.0" % Test,
     "ch.qos.logback" % "logback-classic" % "1.2.3" % Test
   ),
@@ -106,7 +111,7 @@ lazy val test = (project in file("test"))
       libraryDependencies ++= Seq(
         "com.google.guava" % "guava"      % "25.1-jre",
         "commons-io"       % "commons-io" % "2.6",
-        "org.scalatest"    %% "scalatest" % "3.0.5" % Provided
+        "org.scalatest"    %% "scalatest" % "3.0.7" % Provided
       )
     )
   )
