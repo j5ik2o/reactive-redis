@@ -14,16 +14,17 @@ import fastparse.all._
 import scala.collection.immutable
 import scala.concurrent.duration.FiniteDuration
 
-final class MigrateRequest(val id: UUID,
-                           val host: String,
-                           val port: Int,
-                           val key: String,
-                           val toDbNo: Int,
-                           val timeout: FiniteDuration,
-                           val copy: Boolean,
-                           val replace: Boolean,
-                           val keys: NonEmptyList[String])
-    extends CommandRequest
+final class MigrateRequest(
+    val id: UUID,
+    val host: String,
+    val port: Int,
+    val key: String,
+    val toDbNo: Int,
+    val timeout: FiniteDuration,
+    val copy: Boolean,
+    val replace: Boolean,
+    val keys: NonEmptyList[String]
+) extends CommandRequest
     with StringParsersSupport {
 
   override type Response = MigrateResponse
@@ -80,15 +81,17 @@ final class MigrateRequest(val id: UUID,
 
 object MigrateRequest {
 
-  def apply(id: UUID,
-            host: String,
-            port: Int,
-            key: String,
-            toDbNo: Int,
-            timeout: FiniteDuration,
-            copy: Boolean,
-            replace: Boolean,
-            keys: NonEmptyList[String]): MigrateRequest =
+  def apply(
+      id: UUID,
+      host: String,
+      port: Int,
+      key: String,
+      toDbNo: Int,
+      timeout: FiniteDuration,
+      copy: Boolean,
+      replace: Boolean,
+      keys: NonEmptyList[String]
+  ): MigrateRequest =
     new MigrateRequest(id, host, port, key, toDbNo, timeout, copy, replace, keys)
 
   def unapply(
@@ -96,19 +99,22 @@ object MigrateRequest {
   ): Option[(UUID, String, Int, String, Int, FiniteDuration, Boolean, Boolean, NonEmptyList[String])] =
     Some((self.id, self.host, self.port, self.key, self.toDbNo, self.timeout, self.copy, self.replace, self.keys))
 
-  def create(id: UUID,
-             host: String,
-             port: Int,
-             key: String,
-             toDbNo: Int,
-             timeout: FiniteDuration,
-             copy: Boolean,
-             replace: Boolean,
-             keys: NonEmptyList[String]): MigrateRequest =
+  def create(
+      id: UUID,
+      host: String,
+      port: Int,
+      key: String,
+      toDbNo: Int,
+      timeout: FiniteDuration,
+      copy: Boolean,
+      replace: Boolean,
+      keys: NonEmptyList[String]
+  ): MigrateRequest =
     apply(id, host, port, key, toDbNo, timeout, copy, replace, keys)
 }
 
 sealed trait Status extends EnumEntry
+
 object Status extends Enum[Status] {
   override def values: immutable.IndexedSeq[Status] = findValues
   case object Ok    extends Status

@@ -56,9 +56,11 @@ trait ListsFeature extends ListsAPI[ReaderTTaskRedisConnection] {
       case BRPopFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
-  override def brPopLPush(source: String,
-                          destination: String,
-                          timeout: Duration): ReaderTTaskRedisConnection[Result[Option[String]]] =
+  override def brPopLPush(
+      source: String,
+      destination: String,
+      timeout: Duration
+  ): ReaderTTaskRedisConnection[Result[Option[String]]] =
     send(BRPopLPushRequest(UUID.randomUUID(), source, destination, timeout)).flatMap {
       case BRPopLPushSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case BRPopLPushSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))

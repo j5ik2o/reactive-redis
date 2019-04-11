@@ -4,10 +4,12 @@ import com.github.j5ik2o.reactive.redis.parser.model._
 import fastparse.core
 
 @SuppressWarnings(
-  Array("org.wartremover.warts.Product",
-        "org.wartremover.warts.Serializable",
-        "org.wartremover.warts.Equals",
-        "org.wartremover.warts.EitherProjectionPartial")
+  Array(
+    "org.wartremover.warts.Product",
+    "org.wartremover.warts.Serializable",
+    "org.wartremover.warts.Equals",
+    "org.wartremover.warts.EitherProjectionPartial"
+  )
 )
 object StringParsers {
   import fastparse.all._
@@ -73,6 +75,7 @@ object StringParsers {
   val integerArrayReply: P[ArrayExpr[NumberExpr]] = P(array(integerArrayElement) ~/ crlf.?)
 
   val stringOptArrayReply: P[ArrayExpr[StringOptExpr]] = P(array(stringOptArrayElement) ~/ crlf.?)
+
   val stringArrayReply: P[ArrayExpr[StringExpr]] = P(stringOptArrayReply).map { v =>
     ArrayExpr(v.values.map(_.toStringExpr))
   }

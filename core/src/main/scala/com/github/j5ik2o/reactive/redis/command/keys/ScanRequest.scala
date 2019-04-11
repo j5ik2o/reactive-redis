@@ -10,20 +10,23 @@ import com.github.j5ik2o.reactive.redis.parser.StringParsers._
 import com.github.j5ik2o.reactive.redis.parser.model._
 import fastparse.all._
 
-final class ScanRequest(val id: UUID,
-                        val cursor: String,
-                        val matchOption: Option[MatchOption],
-                        val countOption: Option[CountOption])
-    extends CommandRequest
+final class ScanRequest(
+    val id: UUID,
+    val cursor: String,
+    val matchOption: Option[MatchOption],
+    val countOption: Option[CountOption]
+) extends CommandRequest
     with StringParsersSupport {
 
   override type Response = ScanResponse
   override val isMasterOnly: Boolean = false
 
   override def asString: String = {
-    cs("SCAN",
-       Some(cursor) :: matchOption.map(_.toList.map(Some(_))).getOrElse(Nil)
-       ++ countOption.map(_.toList.map(Some(_))).getOrElse(Nil): _*)
+    cs(
+      "SCAN",
+      Some(cursor) :: matchOption.map(_.toList.map(Some(_))).getOrElse(Nil)
+      ++ countOption.map(_.toList.map(Some(_))).getOrElse(Nil): _*
+    )
   }
 
   override protected def responseParser: P[Expr] = fastParse(scan | simpleStringReply | errorReply)
@@ -58,19 +61,23 @@ final class ScanRequest(val id: UUID,
 
 object ScanRequest {
 
-  def apply(id: UUID,
-            cursor: String,
-            matchOption: Option[MatchOption] = None,
-            countOption: Option[CountOption] = None): ScanRequest =
+  def apply(
+      id: UUID,
+      cursor: String,
+      matchOption: Option[MatchOption] = None,
+      countOption: Option[CountOption] = None
+  ): ScanRequest =
     new ScanRequest(id, cursor, matchOption, countOption)
 
   def unapply(self: ScanRequest): Option[(UUID, String, Option[MatchOption], Option[CountOption])] =
     Some((self.id, self.cursor, self.matchOption, self.countOption))
 
-  def create(id: UUID,
-             cursor: String,
-             matchOption: Option[MatchOption] = None,
-             countOption: Option[CountOption] = None): ScanRequest = apply(id, cursor, matchOption, countOption)
+  def create(
+      id: UUID,
+      cursor: String,
+      matchOption: Option[MatchOption] = None,
+      countOption: Option[CountOption] = None
+  ): ScanRequest = apply(id, cursor, matchOption, countOption)
 
   final case class MatchOption(pattern: String) {
     protected[keys] def toList: List[String] = List("MATCH", pattern)

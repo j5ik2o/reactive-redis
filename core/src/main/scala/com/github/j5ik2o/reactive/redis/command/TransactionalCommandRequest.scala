@@ -7,9 +7,11 @@ import scodec.bits.ByteVector
 
 trait TransactionalCommandRequest extends CommandRequestBase {
 
-  def parse(text: ByteVector,
-            index: Int = 0,
-            requests: Seq[CommandRequest] = Seq.empty): Either[ParseException, (Response, Int)] = {
+  def parse(
+      text: ByteVector,
+      index: Int = 0,
+      requests: Seq[CommandRequest] = Seq.empty
+  ): Either[ParseException, (Response, Int)] = {
     val repr: Repr = convertToParseSource(text)
     responseParser.parse(repr, index).map {
       case (v, i) =>

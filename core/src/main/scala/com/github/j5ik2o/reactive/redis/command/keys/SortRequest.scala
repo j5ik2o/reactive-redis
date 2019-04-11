@@ -12,15 +12,16 @@ import fastparse.all._
 
 import scala.collection.immutable
 
-final class SortRequest(val id: UUID,
-                        val key: String,
-                        val byPattern: Option[ByPattern] = None,
-                        val limitOffset: Option[LimitOffset] = None,
-                        val getPatterns: Seq[GetPattern] = Seq.empty,
-                        val order: Option[Order] = None,
-                        val alpha: Boolean = false,
-                        val store: Option[Store] = None)
-    extends CommandRequest
+final class SortRequest(
+    val id: UUID,
+    val key: String,
+    val byPattern: Option[ByPattern] = None,
+    val limitOffset: Option[LimitOffset] = None,
+    val getPatterns: Seq[GetPattern] = Seq.empty,
+    val order: Option[Order] = None,
+    val alpha: Boolean = false,
+    val store: Option[Store] = None
+) extends CommandRequest
     with StringParsersSupport {
 
   override type Response = SortResponse
@@ -75,14 +76,16 @@ final class SortRequest(val id: UUID,
 
 object SortRequest {
 
-  def apply(id: UUID,
-            key: String,
-            byPattern: Option[ByPattern] = None,
-            limitOffset: Option[LimitOffset] = None,
-            getPatterns: Seq[GetPattern] = Seq.empty,
-            order: Option[Order] = None,
-            alpha: Boolean = false,
-            store: Option[Store] = None): SortRequest =
+  def apply(
+      id: UUID,
+      key: String,
+      byPattern: Option[ByPattern] = None,
+      limitOffset: Option[LimitOffset] = None,
+      getPatterns: Seq[GetPattern] = Seq.empty,
+      order: Option[Order] = None,
+      alpha: Boolean = false,
+      store: Option[Store] = None
+  ): SortRequest =
     new SortRequest(id, key, byPattern, limitOffset, getPatterns, order, alpha, store)
 
   def unapply(self: SortRequest): Option[
@@ -90,14 +93,16 @@ object SortRequest {
   ] =
     Some((self.id, self.key, self.byPattern, self.limitOffset, self.getPatterns, self.order, self.alpha, self.store))
 
-  def create(id: UUID,
-             key: String,
-             byPattern: Option[ByPattern] = None,
-             limitOffset: Option[LimitOffset] = None,
-             getPatterns: Seq[GetPattern] = Seq.empty,
-             order: Option[Order] = None,
-             alpha: Boolean = false,
-             store: Option[Store] = None): SortRequest =
+  def create(
+      id: UUID,
+      key: String,
+      byPattern: Option[ByPattern] = None,
+      limitOffset: Option[LimitOffset] = None,
+      getPatterns: Seq[GetPattern] = Seq.empty,
+      order: Option[Order] = None,
+      alpha: Boolean = false,
+      store: Option[Store] = None
+  ): SortRequest =
     apply(id, key, byPattern, limitOffset, getPatterns, order, alpha, store)
 
 }

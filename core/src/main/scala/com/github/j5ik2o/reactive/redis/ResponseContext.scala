@@ -29,11 +29,12 @@ trait ResponseBase {
     requestContext.promise.complete(result)
 }
 
-final case class ResponseContext(byteString: ByteString,
-                                 requestContext: RequestContext,
-                                 requestsInTx: Seq[CommandRequest] = Seq.empty,
-                                 responseAt: ZonedDateTime = ZonedDateTime.now)
-    extends ResponseBase {
+final case class ResponseContext(
+    byteString: ByteString,
+    requestContext: RequestContext,
+    requestsInTx: Seq[CommandRequest] = Seq.empty,
+    responseAt: ZonedDateTime = ZonedDateTime.now
+) extends ResponseBase {
 
   val commandRequest: CommandRequestBase = requestContext.commandRequest
 

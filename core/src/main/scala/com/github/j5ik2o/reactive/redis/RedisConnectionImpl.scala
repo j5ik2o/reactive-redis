@@ -41,9 +41,11 @@ import scala.concurrent.{ Future, Promise }
     "org.wartremover.warts.Recursion"
   )
 )
-private[redis] class RedisConnectionImpl(val peerConfig: PeerConfig,
-                                         val supervisionDecider: Option[Supervision.Decider],
-                                         val listeners: Seq[Event => Unit])(
+private[redis] class RedisConnectionImpl(
+    val peerConfig: PeerConfig,
+    val supervisionDecider: Option[Supervision.Decider],
+    val listeners: Seq[Event => Unit]
+)(
     implicit val system: ActorSystem
 ) extends RedisConnection
     with RedisConnectionSupport {
@@ -109,7 +111,7 @@ private[redis] class RedisConnectionImpl(val peerConfig: PeerConfig,
     private var killSwitch: UniqueKillSwitch                          = _
 
     protected lazy val sourceQueueWithKillSwitchRunnableGraph
-      : RunnableGraph[(SourceQueueWithComplete[RequestContext], UniqueKillSwitch)] =
+        : RunnableGraph[(SourceQueueWithComplete[RequestContext], UniqueKillSwitch)] =
       Source
         .queue[RequestContext](requestBufferSize, overflowStrategyOnSourceQueueMode)
         .via(connectionFlow)

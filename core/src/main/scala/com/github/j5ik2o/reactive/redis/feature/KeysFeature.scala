@@ -29,14 +29,16 @@ trait KeysAPI[M[_]] {
 
   def keys(pattern: String): M[Result[Seq[String]]]
 
-  def migrate(host: String,
-              port: Int,
-              key: String,
-              toDbNo: Int,
-              timeout: FiniteDuration,
-              copy: Boolean,
-              replease: Boolean,
-              keys: NonEmptyList[String]): M[Result[Status]]
+  def migrate(
+      host: String,
+      port: Int,
+      key: String,
+      toDbNo: Int,
+      timeout: FiniteDuration,
+      copy: Boolean,
+      replease: Boolean,
+      keys: NonEmptyList[String]
+  ): M[Result[Status]]
 
   def move(key: String, db: Int): M[Result[Boolean]]
 
@@ -76,20 +78,24 @@ trait KeysAPI[M[_]] {
 
   def waitReplicas(numOfReplicas: Int, timeout: Duration): M[Result[Long]]
 
-  def sort(key: String,
-           byPattern: Option[ByPattern] = None,
-           limitOffset: Option[LimitOffset] = None,
-           getPatterns: Seq[GetPattern] = Seq.empty,
-           order: Option[Order] = None,
-           alpha: Boolean = false): M[Result[Seq[Option[String]]]]
+  def sort(
+      key: String,
+      byPattern: Option[ByPattern] = None,
+      limitOffset: Option[LimitOffset] = None,
+      getPatterns: Seq[GetPattern] = Seq.empty,
+      order: Option[Order] = None,
+      alpha: Boolean = false
+  ): M[Result[Seq[Option[String]]]]
 
-  def sortToDestination(key: String,
-                        byPattern: Option[ByPattern] = None,
-                        limitOffset: Option[LimitOffset] = None,
-                        getPatterns: Seq[GetPattern] = Seq.empty,
-                        order: Option[Order] = None,
-                        alpha: Boolean = false,
-                        destination: String): M[Result[Long]]
+  def sortToDestination(
+      key: String,
+      byPattern: Option[ByPattern] = None,
+      limitOffset: Option[LimitOffset] = None,
+      getPatterns: Seq[GetPattern] = Seq.empty,
+      order: Option[Order] = None,
+      alpha: Boolean = false,
+      destination: String
+  ): M[Result[Long]]
 }
 
 trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
@@ -140,14 +146,16 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
       case KeysFailed(_, _, ex)         => ReaderTTask.raiseError(ex)
     }
 
-  override def migrate(host: String,
-                       port: Int,
-                       key: String,
-                       toDbNo: Int,
-                       timeout: FiniteDuration,
-                       copy: Boolean,
-                       replease: Boolean,
-                       keys: NonEmptyList[String]): ReaderTTaskRedisConnection[Result[Status]] =
+  override def migrate(
+      host: String,
+      port: Int,
+      key: String,
+      toDbNo: Int,
+      timeout: FiniteDuration,
+      copy: Boolean,
+      replease: Boolean,
+      keys: NonEmptyList[String]
+  ): ReaderTTaskRedisConnection[Result[Status]] =
     send(MigrateRequest(UUID.randomUUID(), host, port, key, toDbNo, timeout, copy, replease, keys)).flatMap {
       case MigrateSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case MigrateSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
@@ -199,8 +207,10 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
       case PExpireFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
-  override def pExpireAt(key: String,
-                         millisecondsTimestamp: ZonedDateTime): ReaderTTaskRedisConnection[Result[Boolean]] =
+  override def pExpireAt(
+      key: String,
+      millisecondsTimestamp: ZonedDateTime
+  ): ReaderTTaskRedisConnection[Result[Boolean]] =
     send(PExpireAtRequest(UUID.randomUUID(), key, millisecondsTimestamp)).flatMap {
       case PExpireAtSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case PExpireAtSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
@@ -246,12 +256,14 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
     }
   }
 
-  override def sort(key: String,
-                    byPattern: Option[ByPattern] = None,
-                    limitOffset: Option[LimitOffset] = None,
-                    getPatterns: Seq[GetPattern] = Seq.empty,
-                    order: Option[Order] = None,
-                    alpha: Boolean = false): ReaderTTaskRedisConnection[Result[Seq[Option[String]]]] =
+  override def sort(
+      key: String,
+      byPattern: Option[ByPattern] = None,
+      limitOffset: Option[LimitOffset] = None,
+      getPatterns: Seq[GetPattern] = Seq.empty,
+      order: Option[Order] = None,
+      alpha: Boolean = false
+  ): ReaderTTaskRedisConnection[Result[Seq[Option[String]]]] =
     send(SortRequest(UUID.randomUUID(), key, byPattern, limitOffset, getPatterns, order, alpha)).flatMap {
       case SortSuspended(_, _)             => ReaderTTask.pure(Suspended)
       case SortLongSucceeded(_, _, _)      => ReaderTTask.raiseError(new AssertionError("invalid result type"))
@@ -259,13 +271,15 @@ trait KeysFeature extends KeysAPI[ReaderTTaskRedisConnection] {
       case SortFailed(_, _, ex)            => ReaderTTask.raiseError(ex)
     }
 
-  override def sortToDestination(key: String,
-                                 byPattern: Option[ByPattern],
-                                 limitOffset: Option[LimitOffset],
-                                 getPatterns: Seq[GetPattern],
-                                 order: Option[Order],
-                                 alpha: Boolean,
-                                 destination: String): ReaderTTaskRedisConnection[Result[Long]] =
+  override def sortToDestination(
+      key: String,
+      byPattern: Option[ByPattern],
+      limitOffset: Option[LimitOffset],
+      getPatterns: Seq[GetPattern],
+      order: Option[Order],
+      alpha: Boolean,
+      destination: String
+  ): ReaderTTaskRedisConnection[Result[Long]] =
     send(
       SortRequest(UUID.randomUUID(), key, byPattern, limitOffset, getPatterns, order, alpha, Some(Store(destination)))
     ).flatMap {

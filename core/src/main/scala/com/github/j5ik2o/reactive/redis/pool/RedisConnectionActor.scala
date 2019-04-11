@@ -14,10 +14,12 @@ import scala.concurrent.duration._
 
 object RedisConnectionActor {
 
-  def props(peerConfig: PeerConfig,
-            newConnection: NewRedisConnection,
-            supervisionDecider: Option[Supervision.Decider],
-            passingTimeout: FiniteDuration)(
+  def props(
+      peerConfig: PeerConfig,
+      newConnection: NewRedisConnection,
+      supervisionDecider: Option[Supervision.Decider],
+      passingTimeout: FiniteDuration
+  )(
       implicit scheduler: Scheduler
   ): Props =
     Props(new RedisConnectionActor(peerConfig, newConnection, supervisionDecider, passingTimeout))
@@ -26,11 +28,14 @@ object RedisConnectionActor {
   final case class ConnectionGotten(redisConnection: RedisConnection)
 
 }
+
 @SuppressWarnings(
-  Array("org.wartremover.warts.Null",
-        "org.wartremover.warts.Var",
-        "org.wartremover.warts.Serializable",
-        "org.wartremover.warts.MutableDataStructures")
+  Array(
+    "org.wartremover.warts.Null",
+    "org.wartremover.warts.Var",
+    "org.wartremover.warts.Serializable",
+    "org.wartremover.warts.MutableDataStructures"
+  )
 )
 final class RedisConnectionActor(
     peerConfig: PeerConfig,
@@ -64,10 +69,12 @@ final class RedisConnectionActor(
   override def postStop(): Unit = {
     log.debug("postStop: {}:{}", peerConfig.remoteAddress.getHostName, peerConfig.remoteAddress.getPort)
     if (connection != null) {
-      log.debug("connection_id = {}: postStop: {}:{}",
-                connection.id,
-                peerConfig.remoteAddress.getHostName,
-                peerConfig.remoteAddress.getPort)
+      log.debug(
+        "connection_id = {}: postStop: {}:{}",
+        connection.id,
+        peerConfig.remoteAddress.getHostName,
+        peerConfig.remoteAddress.getPort
+      )
       connection.shutdown()
     }
   }

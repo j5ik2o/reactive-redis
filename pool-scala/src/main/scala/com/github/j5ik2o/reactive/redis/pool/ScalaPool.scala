@@ -14,19 +14,23 @@ import scala.concurrent.duration._
 
 object ScalaPool {
 
-  def ofSingle(connectionPoolConfig: ScalaPoolConfig,
-               peerConfig: PeerConfig,
-               newConnection: NewRedisConnection,
-               supervisionDecider: Option[Supervision.Decider] = None)(
+  def ofSingle(
+      connectionPoolConfig: ScalaPoolConfig,
+      peerConfig: PeerConfig,
+      newConnection: NewRedisConnection,
+      supervisionDecider: Option[Supervision.Decider] = None
+  )(
       implicit system: ActorSystem,
       scheduler: Scheduler
   ): ScalaPool =
     new ScalaPool(connectionPoolConfig, NonEmptyList.of(peerConfig), newConnection, supervisionDecider)
 
-  def ofMultiple(connectionPoolConfig: ScalaPoolConfig,
-                 peerConfigs: NonEmptyList[PeerConfig],
-                 newConnection: NewRedisConnection,
-                 supervisionDecider: Option[Supervision.Decider] = None)(
+  def ofMultiple(
+      connectionPoolConfig: ScalaPoolConfig,
+      peerConfigs: NonEmptyList[PeerConfig],
+      newConnection: NewRedisConnection,
+      supervisionDecider: Option[Supervision.Decider] = None
+  )(
       implicit system: ActorSystem,
       scheduler: Scheduler
   ): ScalaPool =

@@ -23,7 +23,7 @@ final class IncrByFloatRequest(val id: UUID, val key: String, val value: Double)
 
   override protected lazy val parseResponse: Handler = {
     case (StringOptExpr(s), next) =>
-      (IncrByFloatSucceeded(UUID.randomUUID(), id, s.fold(0.0D)(_.toDouble)), next)
+      (IncrByFloatSucceeded(UUID.randomUUID(), id, s.fold(0.0d)(_.toDouble)), next)
     case (SimpleExpr(QUEUED), next) =>
       (IncrByFloatSuspended(UUID.randomUUID(), id), next)
     case (ErrorExpr(msg), next) =>

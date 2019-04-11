@@ -9,10 +9,12 @@ import akka.stream.stage._
 import scala.concurrent.{ Future, Promise }
 
 @SuppressWarnings(
-  Array("org.wartremover.warts.Null",
-        "org.wartremover.warts.Var",
-        "org.wartremover.warts.Serializable",
-        "org.wartremover.warts.MutableDataStructures")
+  Array(
+    "org.wartremover.warts.Null",
+    "org.wartremover.warts.Var",
+    "org.wartremover.warts.Serializable",
+    "org.wartremover.warts.MutableDataStructures"
+  )
 )
 class ActorSourceStage[E](bufferSize: Int) extends GraphStageWithMaterializedValue[SourceShape[E], Future[ActorRef]] {
   private val out = Outlet[E]("ActorSource.out")

@@ -9,9 +9,11 @@ import com.github.j5ik2o.reactive.redis.command.{ CommandRequestBase, CommandRes
 
 import scala.concurrent.Promise
 
-final case class RequestContext(commandRequest: CommandRequestBase,
-                                promise: Promise[CommandResponse],
-                                requestAt: ZonedDateTime) {
+final case class RequestContext(
+    commandRequest: CommandRequestBase,
+    promise: Promise[CommandResponse],
+    requestAt: ZonedDateTime
+) {
   lazy val id: UUID                     = commandRequest.id
   lazy val commandRequestString: String = commandRequest.asString
   def isQuit: Boolean                   = commandRequest.isInstanceOf[QuitRequest]

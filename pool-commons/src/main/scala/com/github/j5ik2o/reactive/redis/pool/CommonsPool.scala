@@ -183,25 +183,31 @@ final class CommonsPool private (
 
 object CommonsPool {
 
-  def ofSingle(connectionPoolConfig: CommonsPoolConfig,
-               peerConfig: PeerConfig,
-               newConnection: NewRedisConnection,
-               supervisionDecider: Option[Supervision.Decider] = None,
-               validationTimeout: FiniteDuration = 3 seconds)(
+  def ofSingle(
+      connectionPoolConfig: CommonsPoolConfig,
+      peerConfig: PeerConfig,
+      newConnection: NewRedisConnection,
+      supervisionDecider: Option[Supervision.Decider] = None,
+      validationTimeout: FiniteDuration = 3 seconds
+  )(
       implicit system: ActorSystem,
       scheduler: Scheduler
   ): CommonsPool =
-    new CommonsPool(connectionPoolConfig,
-                    NonEmptyList.of(peerConfig),
-                    newConnection,
-                    supervisionDecider,
-                    validationTimeout)
+    new CommonsPool(
+      connectionPoolConfig,
+      NonEmptyList.of(peerConfig),
+      newConnection,
+      supervisionDecider,
+      validationTimeout
+    )
 
-  def ofMultiple(connectionPoolConfig: CommonsPoolConfig,
-                 peerConfigs: NonEmptyList[PeerConfig],
-                 newConnection: NewRedisConnection,
-                 supervisionDecider: Option[Supervision.Decider] = None,
-                 validationTimeout: FiniteDuration = 3 seconds)(
+  def ofMultiple(
+      connectionPoolConfig: CommonsPoolConfig,
+      peerConfigs: NonEmptyList[PeerConfig],
+      newConnection: NewRedisConnection,
+      supervisionDecider: Option[Supervision.Decider] = None,
+      validationTimeout: FiniteDuration = 3 seconds
+  )(
       implicit system: ActorSystem,
       scheduler: Scheduler
   ): CommonsPool =

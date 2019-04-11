@@ -16,19 +16,23 @@ import scala.concurrent.duration._
 
 object StormpotPool {
 
-  def ofSingle(connectionPoolConfig: StormpotConfig,
-               peerConfig: PeerConfig,
-               newConnection: NewRedisConnection,
-               supervisionDecider: Option[Supervision.Decider] = None)(
+  def ofSingle(
+      connectionPoolConfig: StormpotConfig,
+      peerConfig: PeerConfig,
+      newConnection: NewRedisConnection,
+      supervisionDecider: Option[Supervision.Decider] = None
+  )(
       implicit system: ActorSystem,
       scheduler: Scheduler
   ): StormpotPool =
     new StormpotPool(connectionPoolConfig, NonEmptyList.of(peerConfig), newConnection, supervisionDecider)
 
-  def ofMultiple(connectionPoolConfig: StormpotConfig,
-                 peerConfigs: NonEmptyList[PeerConfig],
-                 newConnection: NewRedisConnection,
-                 supervisionDecider: Option[Supervision.Decider] = None)(
+  def ofMultiple(
+      connectionPoolConfig: StormpotConfig,
+      peerConfigs: NonEmptyList[PeerConfig],
+      newConnection: NewRedisConnection,
+      supervisionDecider: Option[Supervision.Decider] = None
+  )(
       implicit system: ActorSystem,
       scheduler: Scheduler
   ): StormpotPool =

@@ -11,12 +11,13 @@ import fastparse.all._
 
 import scala.collection.immutable
 
-final class BitOpRequest(val id: UUID,
-                         val operand: BitOpRequest.Operand,
-                         val outputKey: String,
-                         val inputKey1: String,
-                         val inputKey2: String)
-    extends CommandRequest
+final class BitOpRequest(
+    val id: UUID,
+    val operand: BitOpRequest.Operand,
+    val outputKey: String,
+    val inputKey1: String,
+    val inputKey2: String
+) extends CommandRequest
     with StringParsersSupport {
 
   override type Response = BitOpResponse
@@ -58,21 +59,25 @@ final class BitOpRequest(val id: UUID,
 
 object BitOpRequest {
 
-  def apply(id: UUID,
-            operand: BitOpRequest.Operand,
-            outputKey: String,
-            inputKey1: String,
-            inputKey2: String): BitOpRequest =
+  def apply(
+      id: UUID,
+      operand: BitOpRequest.Operand,
+      outputKey: String,
+      inputKey1: String,
+      inputKey2: String
+  ): BitOpRequest =
     new BitOpRequest(id, operand, outputKey, inputKey1, inputKey2)
 
   def unapply(self: BitOpRequest): Option[(UUID, Operand, String, String, String)] =
     Some((self.id, self.operand, self.outputKey, self.inputKey1, self.inputKey2))
 
-  def create(id: UUID,
-             operand: BitOpRequest.Operand,
-             outputKey: String,
-             inputKey1: String,
-             inputKey2: String): BitOpRequest = apply(id, operand, outputKey, inputKey1, inputKey2)
+  def create(
+      id: UUID,
+      operand: BitOpRequest.Operand,
+      outputKey: String,
+      inputKey1: String,
+      inputKey2: String
+  ): BitOpRequest = apply(id, operand, outputKey, inputKey1, inputKey2)
 
   sealed abstract class Operand(override val entryName: String) extends EnumEntry
 

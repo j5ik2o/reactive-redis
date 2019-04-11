@@ -17,18 +17,20 @@ sealed trait SetExpiration { val duration: Duration }
 final case class SetExExpiration(duration: Duration) extends SetExpiration
 final case class SetPxExpiration(duration: Duration) extends SetExpiration
 sealed trait SetOption                               extends EnumEntry
+
 object SetOption extends Enum[SetOption] {
   override def values: immutable.IndexedSeq[SetOption] = findValues
   case object NX extends SetOption
   case object XX extends SetOption
 }
 
-final class SetRequest(val id: UUID,
-                       val key: String,
-                       val value: String,
-                       val expiration: Option[SetExpiration],
-                       val setOption: Option[SetOption])
-    extends CommandRequest
+final class SetRequest(
+    val id: UUID,
+    val key: String,
+    val value: String,
+    val expiration: Option[SetExpiration],
+    val setOption: Option[SetOption]
+) extends CommandRequest
     with StringParsersSupport {
 
   override type Response = SetResponse
@@ -76,22 +78,26 @@ final class SetRequest(val id: UUID,
 
 object SetRequest {
 
-  def apply[A](id: UUID,
-               key: String,
-               value: A,
-               expiration: Option[SetExpiration] = None,
-               setOption: Option[SetOption] = None)(implicit s: Show[A]): SetRequest =
+  def apply[A](
+      id: UUID,
+      key: String,
+      value: A,
+      expiration: Option[SetExpiration] = None,
+      setOption: Option[SetOption] = None
+  )(implicit s: Show[A]): SetRequest =
     new SetRequest(id, key, s.show(value), expiration, setOption)
 
   def unapply(self: SetRequest): Option[(UUID, String, String, Option[SetExpiration], Option[SetOption])] =
     Some((self.id, self.key, self.value, self.expiration, self.setOption))
 
-  def create[A](id: UUID,
-                key: String,
-                value: A,
-                expiration: Option[SetExpiration],
-                setOption: Option[SetOption],
-                s: Show[A]): SetRequest =
+  def create[A](
+      id: UUID,
+      key: String,
+      value: A,
+      expiration: Option[SetExpiration],
+      setOption: Option[SetOption],
+      s: Show[A]
+  ): SetRequest =
     new SetRequest(id, key, s.show(value), expiration, setOption)
 
 }

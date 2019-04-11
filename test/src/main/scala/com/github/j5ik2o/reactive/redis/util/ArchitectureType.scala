@@ -9,10 +9,12 @@ import scala.collection.immutable
 sealed trait ArchitectureType extends EnumEntry
 
 @SuppressWarnings(
-  Array("org.wartremover.warts.Var",
-        "org.wartremover.warts.Null",
-        "org.wartremover.warts.Serializable",
-        "org.wartremover.warts.Equals")
+  Array(
+    "org.wartremover.warts.Var",
+    "org.wartremover.warts.Null",
+    "org.wartremover.warts.Serializable",
+    "org.wartremover.warts.Equals"
+  )
 )
 object ArchitectureType extends Enum[ArchitectureType] {
   override def values: immutable.IndexedSeq[ArchitectureType] = findValues
@@ -42,10 +44,12 @@ object ArchitectureType extends Enum[ArchitectureType] {
   }
 
   @SuppressWarnings(
-    Array("org.wartremover.warts.Var",
-          "org.wartremover.warts.Null",
-          "org.wartremover.Serializable",
-          "org.wartremover.Equals")
+    Array(
+      "org.wartremover.warts.Var",
+      "org.wartremover.warts.Null",
+      "org.wartremover.Serializable",
+      "org.wartremover.Equals"
+    )
   )
   private def getMacOSXArchitecture(): ArchitectureType = {
     var input: BufferedReader = null

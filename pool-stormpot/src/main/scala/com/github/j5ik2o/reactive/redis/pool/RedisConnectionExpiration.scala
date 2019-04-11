@@ -7,9 +7,10 @@ import stormpot.{ Expiration, SlotInfo }
 
 import scala.concurrent.duration.Duration
 
-final case class RedisConnectionExpiration(validationTimeout: Duration)(implicit system: ActorSystem,
-                                                                        scheduler: Scheduler)
-    extends Expiration[RedisConnectionPoolable] {
+final case class RedisConnectionExpiration(validationTimeout: Duration)(
+    implicit system: ActorSystem,
+    scheduler: Scheduler
+) extends Expiration[RedisConnectionPoolable] {
   private val redisClient = RedisClient()
   override def hasExpired(slotInfo: SlotInfo[_ <: RedisConnectionPoolable]): Boolean = {
     !redisClient.validate(validationTimeout).run(slotInfo.getPoolable.redisConnection)

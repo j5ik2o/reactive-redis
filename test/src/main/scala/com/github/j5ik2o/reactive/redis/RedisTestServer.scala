@@ -22,10 +22,12 @@ import scala.util.{ Failure, Success }
     "org.wartremover.warts.While"
   )
 )
-class RedisTestServer(mode: RedisMode = RedisMode.Standalone,
-                      portOpt: Option[Int] = None,
-                      masterPortOpt: Option[Int] = None,
-                      forbiddenPorts: Seq[Int] = 6300.until(7300)) {
+class RedisTestServer(
+    mode: RedisMode = RedisMode.Standalone,
+    portOpt: Option[Int] = None,
+    masterPortOpt: Option[Int] = None,
+    forbiddenPorts: Seq[Int] = 6300.until(7300)
+) {
   lazy val logger: Logger = LoggerFactory.getLogger(getClass)
 
   @volatile private[this] var process: Option[Process]      = None
@@ -77,9 +79,9 @@ class RedisTestServer(mode: RedisMode = RedisMode.Standalone,
     try {
       out = new PrintWriter(new BufferedWriter(new FileWriter(f)))
       val confs = Seq(
-        "protected-mode no",
-        s"port $port"
-      ) ++ masterPortOpt.map(v => Seq(s"slaveof 127.0.0.1 $v")).getOrElse(Seq.empty)
+          "protected-mode no",
+          s"port $port"
+        ) ++ masterPortOpt.map(v => Seq(s"slaveof 127.0.0.1 $v")).getOrElse(Seq.empty)
       confs.foreach { conf =>
         out.write(conf)
         out.println()
@@ -92,8 +94,9 @@ class RedisTestServer(mode: RedisMode = RedisMode.Standalone,
     f
   }
 
-  protected def logStreamFuture(br: BufferedReader,
-                                output: Boolean = true)(implicit ec: ExecutionContext): Future[Unit] = {
+  protected def logStreamFuture(br: BufferedReader, output: Boolean = true)(
+      implicit ec: ExecutionContext
+  ): Future[Unit] = {
     val f = Future {
       Iterator.continually(br.readLine()).takeWhile(_ != null).foreach(msg => if (output) logger.debug(msg))
     }

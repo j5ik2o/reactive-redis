@@ -14,10 +14,12 @@ object RedisConnectionPoolActor {
 }
 
 @SuppressWarnings(
-  Array("org.wartremover.warts.Null",
-        "org.wartremover.warts.Var",
-        "org.wartremover.warts.Serializable",
-        "org.wartremover.warts.MutableDataStructures")
+  Array(
+    "org.wartremover.warts.Null",
+    "org.wartremover.warts.Var",
+    "org.wartremover.warts.Serializable",
+    "org.wartremover.warts.MutableDataStructures"
+  )
 )
 final class RedisConnectionPoolActor(pool: Pool, connectionProps: NonEmptyList[Props]) extends Actor with ActorLogging {
 

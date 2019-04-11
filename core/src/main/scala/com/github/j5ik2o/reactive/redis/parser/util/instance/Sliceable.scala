@@ -47,6 +47,7 @@ object SliceableTypes {
     * implementing some of the combinators easier.
     */
   final case class ParseState(loc: Location, isSliced: Boolean) {
+
     // some convenience functions
     def advanceBy(numChars: Int): ParseState =
       copy(loc = loc.copy(offset = loc.offset + numChars))
@@ -72,16 +73,19 @@ object SliceableTypes {
   sealed trait Result[+A] {
     def extract(input: String): Either[ParseError, A]
     def slice: Result[String]
+
     /* Used by `attempt`. */
     def uncommit: Result[A] = this match {
       case Failure(e, true) => Failure(e, false)
       case _                => this
     }
+
     /* Used by `flatMap` */
     def addCommit(isCommitted: Boolean): Result[A] = this match {
       case Failure(e, c) => Failure(e, c || isCommitted)
       case _             => this
     }
+
     /* Used by `scope`, `label`. */
     def mapError(f: ParseError => ParseError): Result[A] = this match {
       case Failure(e, c) => Failure(f(e), c)
@@ -145,7 +149,7 @@ object Sliceable extends Parsers[Parser] {
       p(s) match {
         case Failure(e, false) => p2(s)
         case r                 => r // committed failure or success skips running `p2`
-    }
+      }
 
   /*
    * `Result` is an example of a Generalized Algebraic Data Type (GADT),
@@ -169,7 +173,7 @@ object Sliceable extends Parsers[Parser] {
         case Success(a, n)     => Success(f(a), n)
         case Slice(n)          => Success(f(s.slice(n).asInstanceOf[A]), n)
         case f @ Failure(_, _) => f
-    }
+      }
 
   /* See this gist for more information, examples, and discussion
    * of Scala's GADT support:
@@ -200,21 +204,20 @@ object Sliceable extends Parsers[Parser] {
           g(s.slice(n).asInstanceOf[A])(s.advanceBy(n).reslice(s))
             .advanceSuccess(n)
         case f @ Failure(_, _) => f
-    }
+      }
 
   // other functions are quite similar to impls in `Reference.scala`
 
   def string(w: String): Parser[String] = {
     val msg = "'" + w + "'"
-    s =>
-      {
-        val i = firstNonmatchingIndex(s.loc.input, w, s.loc.offset)
-        if (i == -1) { // they matched
-          if (s.isSliced) Slice(w.length)
-          else Success(w, w.length)
-        } else
-          Failure(s.loc.advanceBy(i).toError(msg), i != 0)
-      }
+    s => {
+      val i = firstNonmatchingIndex(s.loc.input, w, s.loc.offset)
+      if (i == -1) { // they matched
+        if (s.isSliced) Slice(w.length)
+        else Success(w, w.length)
+      } else
+        Failure(s.loc.advanceBy(i).toError(msg), i != 0)
+    }
   }
 
   // note, regex matching is 'all-or-nothing' - failures are
@@ -266,7 +269,7 @@ object Sliceable extends Parsers[Parser] {
             case f @ Failure(_, _) => f
           }
         case f @ Failure(_, _) => f
-    }
+      }
 
   override def product[A, B](p: Parser[A], p2: => Parser[B]): Parser[(A, B)] =
     map2(p, p2)((_, _))

@@ -41,12 +41,14 @@ trait RedisConnectionSupport {
     }
   }
 
-  protected def retryBackoff[A](source: Task[A],
-                                maxRetries: Int,
-                                retryCount: Int,
-                                minBackoff: FiniteDuration,
-                                maxBackoff: FiniteDuration,
-                                randomFactor: Double): Task[A] = {
+  protected def retryBackoff[A](
+      source: Task[A],
+      maxRetries: Int,
+      retryCount: Int,
+      minBackoff: FiniteDuration,
+      maxBackoff: FiniteDuration,
+      randomFactor: Double
+  ): Task[A] = {
     source.onErrorHandleWith {
       case ex: RedisRequestException =>
         if (maxRetries > 0) {

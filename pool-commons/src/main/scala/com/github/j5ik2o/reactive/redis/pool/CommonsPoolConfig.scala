@@ -16,13 +16,15 @@ import scala.concurrent.duration.Duration
   * @param logWriter
   * @param useUsageTracking
   */
-final case class CommonsAbandonedConfig(removeAbandonedOnBorrow: Option[Boolean] = None,
-                                        removeAbandonedOnMaintenance: Option[Boolean] = None,
-                                        removeAbandonedTimeout: Option[Duration] = None,
-                                        logAbandoned: Option[Boolean] = None,
-                                        requireFullStackTrace: Option[Boolean] = None,
-                                        logWriter: Option[PrintWriter] = None,
-                                        useUsageTracking: Option[Boolean] = None)
+final case class CommonsAbandonedConfig(
+    removeAbandonedOnBorrow: Option[Boolean] = None,
+    removeAbandonedOnMaintenance: Option[Boolean] = None,
+    removeAbandonedTimeout: Option[Duration] = None,
+    logAbandoned: Option[Boolean] = None,
+    requireFullStackTrace: Option[Boolean] = None,
+    logWriter: Option[PrintWriter] = None,
+    useUsageTracking: Option[Boolean] = None
+)
 
 /**
   *

@@ -17,8 +17,10 @@ final class BitCountRequest(val id: UUID, val key: String, val startAndEnd: Opti
   override val isMasterOnly: Boolean = false
 
   override def asString: String =
-    cs("BITCOUNT",
-       Some(key) :: startAndEnd.map(v => List(v.start.toString, v.end.toString).map(Some(_))).getOrElse(Nil): _*)
+    cs(
+      "BITCOUNT",
+      Some(key) :: startAndEnd.map(v => List(v.start.toString, v.end.toString).map(Some(_))).getOrElse(Nil): _*
+    )
 
   override protected lazy val responseParser: P[Expr] = fastParse(integerReply | simpleStringReply | errorReply)
 

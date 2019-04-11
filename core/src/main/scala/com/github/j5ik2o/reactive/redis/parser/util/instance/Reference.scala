@@ -5,6 +5,7 @@ import com.github.j5ik2o.reactive.redis.parser.util.{ Location, ParseError, Pars
 
 import scala.util.matching.Regex
 import ReferenceTypes._
+
 @SuppressWarnings(
   Array(
     "org.wartremover.warts.Product",
@@ -28,6 +29,7 @@ object ReferenceTypes {
     * to `ParseState`.
     */
   final case class ParseState(loc: Location) {
+
     def advanceBy(numChars: Int): ParseState =
       copy(loc = loc.copy(offset = loc.offset + numChars))
     def input: String         = loc.input.substring(loc.offset)
@@ -36,25 +38,30 @@ object ReferenceTypes {
 
   /* Likewise, we define a few helper functions on `Result`. */
   sealed trait Result[+A] {
+
     def extract: Either[ParseError, A] = this match {
       case Failure(e, _) => Left(e)
       case Success(a, _) => Right(a)
     }
+
     /* Used by `attempt`. */
     def uncommit: Result[A] = this match {
       case Failure(e, true) => Failure(e, false)
       case _                => this
     }
+
     /* Used by `flatMap` */
     def addCommit(isCommitted: Boolean): Result[A] = this match {
       case Failure(e, c) => Failure(e, c || isCommitted)
       case _             => this
     }
+
     /* Used by `scope`, `label`. */
     def mapError(f: ParseError => ParseError): Result[A] = this match {
       case Failure(e, c) => Failure(f(e), c)
       case _             => this
     }
+
     def advanceSuccess(n: Int): Result[A] = this match {
       case Success(a, m) => Success(a, n + m)
       case _             => this
@@ -76,6 +83,7 @@ object ReferenceTypes {
     else s1.length - offset
   }
 }
+
 @SuppressWarnings(
   Array(
     "org.wartremover.warts.Product",
@@ -101,7 +109,7 @@ object Reference extends Parsers[Parser] {
       p(s) match {
         case Failure(e, false) => p2(s)
         case r                 => r // committed failure or success skips running `p2`
-    }
+      }
 
   def flatMap[A, B](f: Parser[A])(g: A => Parser[B]): Parser[B] =
     s =>
@@ -111,18 +119,17 @@ object Reference extends Parsers[Parser] {
             .addCommit(n != 0)
             .advanceSuccess(n)
         case f @ Failure(_, _) => f
-    }
+      }
 
   def string(w: String): Parser[String] = {
     val msg = "'" + w + "'"
-    s =>
-      {
-        val i = firstNonmatchingIndex(s.loc.input, w, s.loc.offset)
-        if (i == -1) // they matched
-          Success(w, w.length)
-        else
-          Failure(s.loc.advanceBy(i).toError(msg), i != 0)
-      }
+    s => {
+      val i = firstNonmatchingIndex(s.loc.input, w, s.loc.offset)
+      if (i == -1) // they matched
+        Success(w, w.length)
+      else
+        Failure(s.loc.advanceBy(i).toError(msg), i != 0)
+    }
   }
 
   /* note, regex matching is 'all-or-nothing':
@@ -153,7 +160,7 @@ object Reference extends Parsers[Parser] {
       p(s) match {
         case Success(_, n)     => Success(s.slice(n), n)
         case f @ Failure(_, _) => f
-    }
+      }
 
   /* We provide an overridden version of `many` that accumulates
    * the list of results using a monolithic loop. This avoids

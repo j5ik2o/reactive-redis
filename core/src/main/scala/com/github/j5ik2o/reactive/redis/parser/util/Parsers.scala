@@ -114,6 +114,7 @@ trait Parsers[Parser[+ _]] {
     p <* eof
 
   final case class ParserOps[A](p: Parser[A]) {
+
     def |[B >: A](p2: => Parser[B]): Parser[B] =
       self.or(p, p2) // use `self` to explicitly disambiguate reference to the `or` method on the `trait`
     def or[B >: A](p2: => Parser[B]): Parser[B] = self.or(p, p2)
@@ -185,6 +186,7 @@ final case class Location(input: String, offset: Int = 0) {
 }
 
 final case class ParseError(stack: List[(Location, String)] = List()) {
+
   def push(loc: Location, msg: String): ParseError =
     copy(stack = (loc, msg) :: stack)
 
@@ -215,8 +217,8 @@ final case class ParseError(stack: List[(Location, String)] = List()) {
     else {
       val collapsed = collapseStack(stack)
       val context =
-      collapsed.lastOption.map("\n\n" + _._1.currentLine).getOrElse("") +
-      collapsed.lastOption.map("\n" + _._1.columnCaret).getOrElse("")
+        collapsed.lastOption.map("\n\n" + _._1.currentLine).getOrElse("") +
+        collapsed.lastOption.map("\n" + _._1.columnCaret).getOrElse("")
       collapsed.map { case (loc, msg) => loc.line.toString + "." + loc.col + " " + msg }.mkString("\n") +
       context
     }

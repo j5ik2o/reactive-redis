@@ -32,10 +32,13 @@ trait StringsAPI[M[_]] {
   def mSet(values: Map[String, Any]): M[Result[Unit]]
   def mSetNx(values: Map[String, Any]): M[Result[Boolean]]
   def pSetEx[A: Show](key: String, millis: FiniteDuration, value: A): M[Result[Unit]]
-  def set[A: Show](key: String,
-                   value: A,
-                   expiration: Option[SetExpiration] = None,
-                   setOption: Option[SetOption] = None): M[Result[Unit]]
+
+  def set[A: Show](
+      key: String,
+      value: A,
+      expiration: Option[SetExpiration] = None,
+      setOption: Option[SetOption] = None
+  ): M[Result[Unit]]
   def setBit(key: String, offset: Int, value: Int): M[Result[Long]]
   def setEx[A: Show](key: String, expires: FiniteDuration, value: A): M[Result[Unit]]
   def setNx[A: Show](key: String, value: A): M[Result[Boolean]]
@@ -53,35 +56,43 @@ trait StringsFeature extends StringsAPI[ReaderTTaskRedisConnection] {
       case AppendFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
-  override def bitCount(key: String,
-                        startAndEnd: Option[StartAndEnd] = None): ReaderTTaskRedisConnection[Result[Long]] =
+  override def bitCount(
+      key: String,
+      startAndEnd: Option[StartAndEnd] = None
+  ): ReaderTTaskRedisConnection[Result[Long]] =
     send(BitCountRequest(UUID.randomUUID(), key, startAndEnd)).flatMap {
       case BitCountSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case BitCountSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
       case BitCountFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
-  override def bitField(key: String,
-                        options: BitFieldRequest.SubOption*): ReaderTTaskRedisConnection[Result[Seq[Long]]] =
+  override def bitField(
+      key: String,
+      options: BitFieldRequest.SubOption*
+  ): ReaderTTaskRedisConnection[Result[Seq[Long]]] =
     send(BitFieldRequest(UUID.randomUUID(), key, options: _*)).flatMap {
       case BitFieldSuspended(_, _)          => ReaderTTask.pure(Suspended)
       case BitFieldSucceeded(_, _, results) => ReaderTTask.pure(Provided(results))
       case BitFieldFailed(_, _, ex)         => ReaderTTask.raiseError(ex)
     }
 
-  override def bitOp(operand: BitOpRequest.Operand,
-                     outputKey: String,
-                     inputKey1: String,
-                     inputKey2: String): ReaderTTaskRedisConnection[Result[Long]] =
+  override def bitOp(
+      operand: BitOpRequest.Operand,
+      outputKey: String,
+      inputKey1: String,
+      inputKey2: String
+  ): ReaderTTaskRedisConnection[Result[Long]] =
     send(BitOpRequest(UUID.randomUUID(), operand, outputKey, inputKey1, inputKey2)).flatMap {
       case BitOpSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case BitOpSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
       case BitOpFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
-  override def bitPos(key: String,
-                      bit: Int,
-                      startAndEnd: Option[BitPosRequest.StartAndEnd] = None): ReaderTTaskRedisConnection[Result[Long]] =
+  override def bitPos(
+      key: String,
+      bit: Int,
+      startAndEnd: Option[BitPosRequest.StartAndEnd] = None
+  ): ReaderTTaskRedisConnection[Result[Long]] =
     send(BitPosRequest(UUID.randomUUID(), key, bit, startAndEnd)).flatMap {
       case BitPosSuspended(_, _)         => ReaderTTask.pure(Suspended)
       case BitPosSucceeded(_, _, result) => ReaderTTask.pure(Provided(result))
@@ -175,19 +186,23 @@ trait StringsFeature extends StringsAPI[ReaderTTaskRedisConnection] {
       case MSetNxFailed(_, _, ex)   => ReaderTTask.raiseError(ex)
     }
 
-  override def pSetEx[A: Show](key: String,
-                               millis: FiniteDuration,
-                               value: A): ReaderTTaskRedisConnection[Result[Unit]] =
+  override def pSetEx[A: Show](
+      key: String,
+      millis: FiniteDuration,
+      value: A
+  ): ReaderTTaskRedisConnection[Result[Unit]] =
     send(PSetExRequest(UUID.randomUUID(), key, millis, value)).flatMap {
       case PSetExSuspended(_, _)  => ReaderTTask.pure(Suspended)
       case PSetExSucceeded(_, _)  => ReaderTTask.pure(Provided(()))
       case PSetExFailed(_, _, ex) => ReaderTTask.raiseError(ex)
     }
 
-  override def set[A: Show](key: String,
-                            value: A,
-                            expiration: Option[SetExpiration],
-                            setOption: Option[SetOption]): ReaderTTaskRedisConnection[Result[Unit]] =
+  override def set[A: Show](
+      key: String,
+      value: A,
+      expiration: Option[SetExpiration],
+      setOption: Option[SetOption]
+  ): ReaderTTaskRedisConnection[Result[Unit]] =
     send(SetRequest(UUID.randomUUID(), key, value, expiration, setOption)).flatMap {
       case SetSuspended(_, _)  => ReaderTTask.pure(Suspended)
       case SetSucceeded(_, _)  => ReaderTTask.pure(Provided(()))
@@ -201,9 +216,11 @@ trait StringsFeature extends StringsAPI[ReaderTTaskRedisConnection] {
       case SetBitFailed(_, _, ex)        => ReaderTTask.raiseError(ex)
     }
 
-  override def setEx[A: Show](key: String,
-                              expires: FiniteDuration,
-                              value: A): ReaderTTaskRedisConnection[Result[Unit]] =
+  override def setEx[A: Show](
+      key: String,
+      expires: FiniteDuration,
+      value: A
+  ): ReaderTTaskRedisConnection[Result[Unit]] =
     send(SetExRequest(UUID.randomUUID(), key, expires, value)).flatMap {
       case SetExSuspended(_, _)  => ReaderTTask.pure(Suspended)
       case SetExSucceeded(_, _)  => ReaderTTask.pure(Provided(()))

@@ -44,11 +44,13 @@ object RedisConnectionPool {
       supervisionDecider: Option[Supervision.Decider] = None,
       passingTimeout: FiniteDuration = 5 seconds
   )(implicit system: ActorSystem, scheduler: Scheduler, ME: MonadError[Task, Throwable]): RedisConnectionPool[Task] =
-    apply(RoundRobinPool(sizePerPeer, reSizer),
-          NonEmptyList.of(peerConfig),
-          newConnection,
-          supervisionDecider,
-          passingTimeout)(
+    apply(
+      RoundRobinPool(sizePerPeer, reSizer),
+      NonEmptyList.of(peerConfig),
+      newConnection,
+      supervisionDecider,
+      passingTimeout
+    )(
       system,
       scheduler
     )
@@ -98,21 +100,25 @@ object RedisConnectionPool {
       scheduler
     )
 
-  def apply(pool: Pool,
-            peerConfigs: NonEmptyList[PeerConfig],
-            newConnection: NewRedisConnection,
-            supervisionDecider: Option[Supervision.Decider] = None,
-            passingTimeout: FiniteDuration = 3 seconds)(
+  def apply(
+      pool: Pool,
+      peerConfigs: NonEmptyList[PeerConfig],
+      newConnection: NewRedisConnection,
+      supervisionDecider: Option[Supervision.Decider] = None,
+      passingTimeout: FiniteDuration = 3 seconds
+  )(
       implicit system: ActorSystem,
       scheduler: Scheduler
   ): RedisConnectionPool[Task] =
     new AkkaPool(pool, peerConfigs, newConnection, supervisionDecider, passingTimeout)(system, scheduler)
 
-  def create(pool: Pool,
-             peerConfigs: NonEmptyList[PeerConfig],
-             newConnection: NewRedisConnection,
-             supervisionDecider: Option[Supervision.Decider] = None,
-             passingTimeout: FiniteDuration = 3 seconds)(
+  def create(
+      pool: Pool,
+      peerConfigs: NonEmptyList[PeerConfig],
+      newConnection: NewRedisConnection,
+      supervisionDecider: Option[Supervision.Decider] = None,
+      passingTimeout: FiniteDuration = 3 seconds
+  )(
       implicit system: ActorSystem,
       scheduler: Scheduler
   ): RedisConnectionPool[Task] = apply(pool, peerConfigs, newConnection, supervisionDecider, passingTimeout)

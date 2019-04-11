@@ -20,14 +20,18 @@ import scala.concurrent.duration._
 import scala.concurrent.{ Future, Promise }
 
 @SuppressWarnings(
-  Array("org.wartremover.warts.Null",
-        "org.wartremover.warts.Var",
-        "org.wartremover.warts.Serializable",
-        "org.wartremover.warts.MutableDataStructures")
+  Array(
+    "org.wartremover.warts.Null",
+    "org.wartremover.warts.Var",
+    "org.wartremover.warts.Serializable",
+    "org.wartremover.warts.MutableDataStructures"
+  )
 )
-private[redis] class RedisConnectionOfJedis(val peerConfig: PeerConfig,
-                                            supervisionDecider: Option[Supervision.Decider],
-                                            listeners: Seq[EventHandler])(
+private[redis] class RedisConnectionOfJedis(
+    val peerConfig: PeerConfig,
+    supervisionDecider: Option[Supervision.Decider],
+    listeners: Seq[EventHandler]
+)(
     implicit val system: ActorSystem
 ) extends RedisConnection
     with RedisConnectionSupport {
@@ -47,30 +51,36 @@ private[redis] class RedisConnectionOfJedis(val peerConfig: PeerConfig,
     private lazy val jedisFlow: Flow[CommandRequestBase, CommandResponse, NotUsed] =
       peerConfig.connectionBackoffConfig match {
         case Some(_backoffConfig) =>
-          RestartFlow.withBackoff(_backoffConfig.minBackoff,
-                                  _backoffConfig.maxBackoff,
-                                  _backoffConfig.randomFactor,
-                                  _backoffConfig.maxRestarts) { () =>
+          RestartFlow.withBackoff(
+            _backoffConfig.minBackoff,
+            _backoffConfig.maxBackoff,
+            _backoffConfig.randomFactor,
+            _backoffConfig.maxRestarts
+          ) { () =>
             log.debug("create connection with backoff")
-            JedisFlow(peerConfig.remoteAddress.getHostName,
-                      peerConfig.remoteAddress.getPort,
-                      Some(peerConfig.connectTimeout),
-                      Some(peerConfig.connectTimeout))(
+            JedisFlow(
+              peerConfig.remoteAddress.getHostName,
+              peerConfig.remoteAddress.getPort,
+              Some(peerConfig.connectTimeout),
+              Some(peerConfig.connectTimeout)
+            )(
               system.dispatcher
             ).mapMaterializedValue(_ => NotUsed)
           }
         case None =>
           log.debug("create connection without backoff")
-          JedisFlow(peerConfig.remoteAddress.getHostName,
-                    peerConfig.remoteAddress.getPort,
-                    Some(peerConfig.connectTimeout),
-                    Some(peerConfig.connectTimeout))(
+          JedisFlow(
+            peerConfig.remoteAddress.getHostName,
+            peerConfig.remoteAddress.getPort,
+            Some(peerConfig.connectTimeout),
+            Some(peerConfig.connectTimeout)
+          )(
             system.dispatcher
           ).mapMaterializedValue(_ => NotUsed)
       }
 
     private lazy val requestFlow
-      : Flow[(CommandRequestBase, Promise[CommandResponse]), (CommandResponse, Promise[CommandResponse]), NotUsed] =
+        : Flow[(CommandRequestBase, Promise[CommandResponse]), (CommandResponse, Promise[CommandResponse]), NotUsed] =
       Flow.fromGraph(GraphDSL.create(jedisFlow) { implicit b => jf =>
         import GraphDSL.Implicits._
         val unzip = b.add(Unzip[CommandRequestBase, Promise[CommandResponse]]())
@@ -130,8 +140,10 @@ private[redis] class RedisConnectionOfJedis(val peerConfig: PeerConfig,
 
     private lazy val sourceQueueWithKillSwitchRunnableGraph =
       Source
-        .queue[(CommandRequestBase, Promise[CommandResponse])](peerConfig.requestBufferSize,
-                                                               peerConfig.overflowStrategyOnSourceQueueMode)
+        .queue[(CommandRequestBase, Promise[CommandResponse])](
+          peerConfig.requestBufferSize,
+          peerConfig.overflowStrategyOnSourceQueueMode
+        )
         .via(requestFlow)
         .map {
           case (res, promise) =>

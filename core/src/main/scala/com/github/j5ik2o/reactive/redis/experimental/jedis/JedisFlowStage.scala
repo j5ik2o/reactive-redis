@@ -1705,10 +1705,12 @@ class JedisFlowStage(host: String, port: Int, connectionTimeout: Option[Duration
               }
             }
           case (Some(ct), Some(st)) =>
-            new Jedis(host,
-                      port,
-                      if (ct.isFinite()) ct.toSeconds.toInt else 0,
-                      if (st.isFinite()) st.toSeconds.toInt else 0) with JedisEx[Id] {
+            new Jedis(
+              host,
+              port,
+              if (ct.isFinite()) ct.toSeconds.toInt else 0,
+              if (st.isFinite()) st.toSeconds.toInt else 0
+            ) with JedisEx[Id] {
               val custom = new Client(host, port) {
                 def pingArg(argOpt: Option[String]): Unit = {
                   argOpt match {

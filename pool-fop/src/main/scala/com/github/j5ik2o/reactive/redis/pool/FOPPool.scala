@@ -24,19 +24,23 @@ final case class FOPConnectionWithIndex(index: Int, redisConnection: RedisConnec
 
 object FOPPool {
 
-  def ofSingle(connectionPoolConfig: FOPConfig,
-               peerConfig: PeerConfig,
-               newConnection: NewRedisConnection,
-               supervisionDecider: Option[Supervision.Decider] = None)(
+  def ofSingle(
+      connectionPoolConfig: FOPConfig,
+      peerConfig: PeerConfig,
+      newConnection: NewRedisConnection,
+      supervisionDecider: Option[Supervision.Decider] = None
+  )(
       implicit system: ActorSystem,
       scheduler: Scheduler
   ): FOPPool =
     new FOPPool(connectionPoolConfig, NonEmptyList.of(peerConfig), newConnection, supervisionDecider)
 
-  def ofMultiple(connectionPoolConfig: FOPConfig,
-                 peerConfigs: NonEmptyList[PeerConfig],
-                 newConnection: NewRedisConnection,
-                 supervisionDecider: Option[Supervision.Decider] = None)(
+  def ofMultiple(
+      connectionPoolConfig: FOPConfig,
+      peerConfigs: NonEmptyList[PeerConfig],
+      newConnection: NewRedisConnection,
+      supervisionDecider: Option[Supervision.Decider] = None
+  )(
       implicit system: ActorSystem,
       scheduler: Scheduler
   ): FOPPool = new FOPPool(connectionPoolConfig, peerConfigs, newConnection, supervisionDecider)
