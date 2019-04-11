@@ -11,6 +11,7 @@ import fastparse.all._
 
 class ParsersSpec extends FreeSpec {
   val P = Reference
+
   def printResult[E](e: Either[E, Expr]) =
     e.fold(println, println)
 

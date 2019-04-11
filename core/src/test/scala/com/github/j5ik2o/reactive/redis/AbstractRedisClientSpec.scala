@@ -20,9 +20,11 @@ abstract class AbstractRedisClientSpec(system: ActorSystem) extends AbstractActo
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     val peerConfigs = NonEmptyList.of(
-      PeerConfig(new InetSocketAddress("127.0.0.1", redisMasterServer.getPort),
-                 requestTimeout = (30 * timeFactor) second,
-                 connectionBackoffConfig = Some(BackoffConfig()))
+      PeerConfig(
+        new InetSocketAddress("127.0.0.1", redisMasterServer.getPort),
+        requestTimeout = (30 * timeFactor) second,
+        connectionBackoffConfig = Some(BackoffConfig())
+      )
     )
     _connectionPool = createConnectionPool(peerConfigs)
     _redisClient = RedisClient()(system)
@@ -34,9 +36,9 @@ abstract class AbstractRedisClientSpec(system: ActorSystem) extends AbstractActo
   }
 
   protected def runProgram[A](program: ReaderTTaskRedisConnection[A]): A = {
-    Await.result(connectionPool.withConnectionF { con =>
+    connectionPool.withConnectionF { con =>
       program.run(con)
-    }.runToFuture, Duration.Inf)
+    }.runToFuture.futureValue
 
   }
 

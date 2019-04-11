@@ -30,7 +30,7 @@ abstract class AbstractActorSpec(_system: ActorSystem)
 
   override def waitFor(): Unit = Thread.sleep((100 * timeFactor).toInt)
 
-  implicit override val patienceConfig: PatienceConfig = PatienceConfig(60 * timeFactor seconds)
+  implicit override val patienceConfig: PatienceConfig = PatienceConfig(120 * timeFactor seconds, 1 * timeFactor seconds)
 
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
