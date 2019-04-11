@@ -102,7 +102,7 @@ val coreSettings = Seq(
   scapegoatVersion in ThisBuild := "1.3.7"
 ) ++ scalaStyleSettings
 
-val akkaVersion = "2.5.19"
+val akkaVersion = "2.5.21"
 
 lazy val test = (project in file("test"))
   .settings(
